@@ -1,0 +1,16 @@
+# Node / TypeScript
+node_modules/
+dist/
+# Logs
+npm-debug.log*
+.yarn-debug.log*
+.yarn-error.log*
+# IDE
+.vscode/
+.DS_Store
+# Coverage
+coverage/
+# Env
+.env
+# Beads issue state should be committed
+!.beads/issues.jsonl

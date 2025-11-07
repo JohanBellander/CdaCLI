@@ -1,0 +1,260 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`instructionEmitter > creates batch package snapshot 1`] = `
+{
+  "constraints": [
+    {
+      "constraintId": "domain-no-imports-from-app-or-infra",
+      "detectionSteps": [
+        "Enumerate every file under /domain/ excluding ignored paths.",
+        "Parse and classify each import specifier relative to the current file.",
+        "Record an initial violation whenever the resolved layer is app or infra.",
+      ],
+      "enforcementOrder": 1,
+      "fixStrategy": "Determine whether the import is orchestration or infrastructural.",
+      "objective": "Domain layer MUST NOT import code from app or infra layers.",
+      "passCriteria": "violations list empty after final pass.; Each initial violation referenced in fixes_applied.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "line",
+        "specifier",
+        "resolved_layer",
+      ],
+      "selfVerificationChecklist": [
+        "No domain file imports from '/app/' or '/infra/'.",
+        "Newly added files continue to satisfy single-responsibility and max-file-lines.",
+      ],
+    },
+    {
+      "constraintId": "app-no-imports-from-infra",
+      "detectionSteps": [
+        "Collect every /app/ file except ignored paths.",
+        "Parse import statements and classify their resolved layer.",
+        "Emit violations for any import mapped to infra.",
+      ],
+      "enforcementOrder": 2,
+      "fixStrategy": "Identify the concrete capability pulled from infra (database access, queue, etc.).",
+      "objective": "Application layer MUST NOT depend directly on infrastructure implementations.",
+      "passCriteria": "No app file imports infra modules.; fixes_applied references each original violation.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "line",
+        "specifier",
+        "resolved_layer",
+      ],
+      "selfVerificationChecklist": [
+        "App layer depends only on domain + external packages.",
+        "Any required infra capability exposed through a facade or service interface.",
+      ],
+    },
+    {
+      "constraintId": "domain-no-side-effects",
+      "detectionSteps": [
+        "Enumerate domain files.",
+        "Scan call expressions for known side-effect APIs (fs, process, console, timers, randomness).",
+        "Detect mutable globals or clock access performed without injection.",
+      ],
+      "enforcementOrder": 3,
+      "fixStrategy": "Classify violation as IO, logging, timing, randomness, or global mutation.",
+      "objective": "Domain logic MUST remain deterministic and side-effect free.",
+      "passCriteria": "violations list empty.; Domain files only depend on injected collaborators for side effects.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "line",
+        "expression",
+        "reason",
+      ],
+      "selfVerificationChecklist": [
+        "Each side-effectful concern lives in app or infra.",
+        "Domain tests run deterministically without stubs that hit IO.",
+      ],
+    },
+    {
+      "constraintId": "max-file-lines",
+      "detectionSteps": [
+        "List all .ts/.tsx files under src excluding ignored directories.",
+        "Count logical (non-comment, non-blank) lines for each file.",
+        "Record files whose counts exceed 300 lines.",
+      ],
+      "enforcementOrder": 4,
+      "fixStrategy": "Identify cohesive responsibilities within the oversized file.",
+      "objective": "All implementation files MUST remain at or below 300 logical lines.",
+      "passCriteria": "No files exceed 300 logical lines.; Each extracted module honors single-responsibility and export limits.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "line_start",
+        "line_end",
+        "logical_line_count",
+      ],
+      "selfVerificationChecklist": [
+        "Each new file reports <= 300 logical lines.",
+        "Unit tests reference new modules instead of the old monolith.",
+      ],
+    },
+    {
+      "constraintId": "single-responsibility",
+      "detectionSteps": [
+        "Enumerate .ts/.tsx files under src.",
+        "Parse every export (functions, classes, consts, types) plus inferred category.",
+        "Flag files exceeding three exports or mixing multiple responsibility categories.",
+      ],
+      "enforcementOrder": 5,
+      "fixStrategy": "Identify the core responsibility represented by the file.",
+      "objective": "Each implementation file MUST focus on a single responsibility with minimal exports.",
+      "passCriteria": "export_count <= 3 for every file.; All exports in a file share the same responsibility_category.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "export_count",
+        "primary_category",
+        "extra_exports",
+      ],
+      "selfVerificationChecklist": [
+        "Each new file name reflects its responsibility.",
+        "Barrel files do not reintroduce excessive exports via wildcard spreads.",
+      ],
+    },
+    {
+      "constraintId": "excessive-nesting",
+      "detectionSteps": [
+        "Enumerate .ts/.tsx files.",
+        "Parse each function/method body and compute maximum block depth.",
+        "Report functions whose max_nesting exceeds 3.",
+      ],
+      "enforcementOrder": 6,
+      "fixStrategy": "Identify decision points contributing to depth.",
+      "objective": "Control flow nesting depth MUST NOT exceed 3 levels in any function.",
+      "passCriteria": "max_nesting <= 3 for all functions.; Extracted helpers remain within single-responsibility bounds.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "function_name",
+        "max_nesting",
+        "line_start",
+        "line_end",
+      ],
+      "selfVerificationChecklist": [
+        "Guard clauses cover invalid states early.",
+        "Complex workflows are documented with sequence diagrams or ADRs when needed.",
+      ],
+    },
+    {
+      "constraintId": "file-naming",
+      "detectionSteps": [
+        "List all files under src excluding ignored directories.",
+        "Infer expected naming pattern (kebab vs Pascal) per file type.",
+        "Flag file names that do not match the expected pattern.",
+      ],
+      "enforcementOrder": 7,
+      "fixStrategy": "Determine the correct case rule for the file (kebab or Pascal).",
+      "objective": "File names MUST follow deterministic casing rules by layer and artifact type.",
+      "passCriteria": "All \`.ts\` files use kebab-case (plus optional \`.spec\`/\`.test\` suffix).; All \`.tsx\` component files use PascalCase.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "file_path",
+        "actual_name",
+        "expected_pattern",
+        "reason",
+      ],
+      "selfVerificationChecklist": [
+        "\`git status --short\` shows the rename operation on case-sensitive systems.",
+        "Storybook or routing metadata updated to reflect new casing when needed.",
+      ],
+    },
+    {
+      "constraintId": "folder-naming",
+      "detectionSteps": [
+        "Enumerate every directory under src (excluding ignored paths).",
+        "Validate each basename against kebab-case unless reserved root.",
+        "Detect case-collision groups that differ only by casing.",
+      ],
+      "enforcementOrder": 8,
+      "fixStrategy": "Rename offending folders to kebab-case (lowercase words separated by dashes).",
+      "objective": "Directory names MUST follow deterministic kebab-case conventions to avoid ambiguity on case-sensitive systems.",
+      "passCriteria": "All non-reserved directories are kebab-case.; No case-collision duplicates remain.; revalidated_zero equals true.",
+      "reportFields": [
+        "constraint_id",
+        "folder_path",
+        "actual_name",
+        "expected_pattern",
+      ],
+      "selfVerificationChecklist": [
+        "\`git status\` shows directory renames tracked correctly.",
+        "Path aliases (tsconfig paths, webpack) reflect the new casing.",
+      ],
+    },
+  ],
+  "ignoredPaths": [
+    "node_modules",
+    "dist",
+    "build",
+    ".git",
+  ],
+  "mode": "batch",
+  "recommendedOrder": [
+    "domain-no-imports-from-app-or-infra",
+    "app-no-imports-from-infra",
+    "domain-no-side-effects",
+    "max-file-lines",
+    "single-responsibility",
+    "excessive-nesting",
+    "file-naming",
+    "folder-naming",
+  ],
+  "reportTemplate": {
+    "fixesApplied": [],
+    "postFixStatus": {
+      "remainingViolations": 0,
+      "revalidated": false,
+    },
+    "summary": {
+      "analyzedFiles": 0,
+      "constraintsEvaluated": 8,
+      "totalViolations": 0,
+    },
+    "violations": [],
+  },
+  "runId": "snapshot-run",
+}
+`;
+
+exports[`instructionEmitter > creates single package snapshot 1`] = `
+{
+  "constraint": {
+    "constraintId": "domain-no-imports-from-app-or-infra",
+    "detectionSteps": [
+      "Enumerate every file under /domain/ excluding ignored paths.",
+      "Parse and classify each import specifier relative to the current file.",
+      "Record an initial violation whenever the resolved layer is app or infra.",
+    ],
+    "enforcementOrder": 1,
+    "fixStrategy": "Determine whether the import is orchestration or infrastructural.",
+    "objective": "Domain layer MUST NOT import code from app or infra layers.",
+    "passCriteria": "violations list empty after final pass.; Each initial violation referenced in fixes_applied.; revalidated_zero equals true.",
+    "reportFields": [
+      "constraint_id",
+      "file_path",
+      "line",
+      "specifier",
+      "resolved_layer",
+    ],
+    "selfVerificationChecklist": [
+      "No domain file imports from '/app/' or '/infra/'.",
+      "Newly added files continue to satisfy single-responsibility and max-file-lines.",
+    ],
+  },
+  "mode": "single",
+  "reportTemplate": {
+    "completionTimestamp": "",
+    "constraintId": "domain-no-imports-from-app-or-infra",
+    "fixesApplied": [],
+    "revalidatedZero": false,
+    "violations": [],
+  },
+  "runId": "snapshot-run",
+}
+`;
