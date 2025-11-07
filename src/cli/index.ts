@@ -74,8 +74,8 @@ function handleCliError(error: unknown): void {
   process.exitCode = getExitCode(error);
 }
 
-const executedFile = fileURLToPath(import.meta.url);
-const entryFile = process.argv[1] ? path.resolve(process.argv[1]) : "";
-if (executedFile === entryFile) {
-  run();
-}
+// Always invoke run() when this module is executed via the bin shim or directly.
+// The previous conditional prevented execution when loaded through the npm-generated wrapper
+// script (argv[1] pointed at the shim, not this file), resulting in no output.
+// Calling unconditionally is safe because it only performs CLI dispatch once.
+run();
