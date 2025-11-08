@@ -1,0 +1,187 @@
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { createError } from "./errors.js";
+export const CONSTRAINT_SECTION_ORDER = [
+    "HEADER",
+    "PURPOSE",
+    "SCOPE",
+    "DEFINITIONS",
+    "FORBIDDEN",
+    "ALLOWED",
+    "REQUIRED DATA COLLECTION",
+    "VALIDATION ALGORITHM (PSEUDOCODE)",
+    "REPORTING CONTRACT",
+    "FIX SEQUENCE (STRICT)",
+    "REVALIDATION LOOP",
+    "SUCCESS CRITERIA (MUST)",
+    "FAILURE HANDLING",
+    "COMMON MISTAKES",
+    "POST-FIX ASSERTIONS",
+    "FINAL REPORT SAMPLE",
+];
+const DEFAULT_CONSTRAINTS_DIR = fileURLToPath(new URL("../constraints/core", import.meta.url));
+export async function loadConstraints(options = {}) {
+    const constraintsDir = options.constraintsDir ?? DEFAULT_CONSTRAINTS_DIR;
+    const entries = await readdir(constraintsDir, { withFileTypes: true });
+    const files = entries
+        .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+        .map((entry) => path.join(constraintsDir, entry.name));
+    if (files.length === 0) {
+        throw bundleError("global", "No constraint markdown files found.");
+    }
+    const documents = await Promise.all(files.map((filePath) => parseConstraintFile(filePath)));
+    return documents.sort((a, b) => {
+        if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
+            return a.meta.id.localeCompare(b.meta.id);
+        }
+        return a.meta.enforcementOrder - b.meta.enforcementOrder;
+    });
+}
+async function parseConstraintFile(filePath) {
+    const rawContent = await readFile(filePath, "utf8");
+    const sanitized = rawContent.replace(/^\uFEFF/, "");
+    const { frontmatter, body } = extractFrontmatter(sanitized, filePath);
+    const id = asString(frontmatter.id, "id", filePath);
+    const name = asString(frontmatter.name, "name", filePath, id);
+    const category = asString(frontmatter.category, "category", filePath, id);
+    const severity = asString(frontmatter.severity, "severity", filePath, id);
+    const enabled = asBoolean(frontmatter.enabled, "enabled", filePath, id);
+    const version = asNumber(frontmatter.version, "version", filePath, id);
+    const sections = extractSections(body, id, filePath);
+    const headerFields = parseKeyValueBlock(sections.HEADER, id, filePath, "HEADER");
+    const header = {
+        constraintId: asString(headerFields.constraint_id, "constraint_id", filePath, id),
+        severity: asString(headerFields.severity, "severity", filePath, id),
+        enforcementOrder: asNumber(headerFields.enforcement_order, "enforcement_order", filePath, id),
+    };
+    if (header.constraintId !== id) {
+        throw bundleError(id, `Frontmatter id '${id}' does not match HEADER constraint_id '${header.constraintId}'.`);
+    }
+    if (header.severity !== severity) {
+        throw bundleError(id, `Frontmatter severity '${severity}' does not match HEADER severity '${header.severity}'.`);
+    }
+    if (severity !== "error") {
+        throw bundleError(id, `Unsupported severity '${severity}' in ${filePath}; only 'error' allowed.`);
+    }
+    const meta = {
+        id,
+        name,
+        category,
+        severity: "error",
+        enabled,
+        version,
+        enforcementOrder: header.enforcementOrder,
+    };
+    return {
+        filePath,
+        meta,
+        header,
+        sections,
+    };
+}
+function extractFrontmatter(content, filePath) {
+    const match = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?([\s\S]*)$/);
+    if (!match) {
+        throw bundleError("global", `File ${filePath} is missing YAML frontmatter.`);
+    }
+    const [, frontmatterRaw, body] = match;
+    const lines = frontmatterRaw.split(/\r?\n/);
+    const data = {};
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line)
+            continue;
+        const [key, ...rest] = line.split(":");
+        if (!key || rest.length === 0) {
+            throw bundleError("global", `Invalid frontmatter line '${line}' in ${filePath}.`);
+        }
+        const rawValue = rest.join(":").trim();
+        data[key.trim()] = coerceScalar(rawValue);
+    }
+    return { frontmatter: data, body };
+}
+function extractSections(body, constraintId, filePath) {
+    const sectionBuffers = new Map();
+    let currentSection = null;
+    let expectedIndex = 0;
+    const lines = body.split(/\r?\n/);
+    for (const line of lines) {
+        const trimmed = line.trim();
+        const foundIndex = CONSTRAINT_SECTION_ORDER.findIndex((section) => section === trimmed);
+        if (foundIndex !== -1) {
+            if (foundIndex !== expectedIndex) {
+                throw bundleError(constraintId, `Section '${CONSTRAINT_SECTION_ORDER[expectedIndex]}' missing before '${trimmed}' in ${filePath}.`);
+            }
+            currentSection = CONSTRAINT_SECTION_ORDER[foundIndex];
+            expectedIndex += 1;
+            sectionBuffers.set(currentSection, []);
+            continue;
+        }
+        if (currentSection === null) {
+            if (trimmed.length === 0)
+                continue;
+            throw bundleError(constraintId, `Unexpected content before first section in ${filePath}: '${line}'`);
+        }
+        sectionBuffers.get(currentSection).push(line);
+    }
+    if (expectedIndex !== CONSTRAINT_SECTION_ORDER.length) {
+        const missing = CONSTRAINT_SECTION_ORDER[expectedIndex];
+        throw bundleError(constraintId, `Missing section '${missing}' in ${filePath}.`);
+    }
+    const sections = {};
+    for (const sectionName of CONSTRAINT_SECTION_ORDER) {
+        const buffer = sectionBuffers.get(sectionName);
+        if (!buffer || buffer.length === 0) {
+            throw bundleError(constraintId, `Section '${sectionName}' is empty in ${filePath}.`);
+        }
+        sections[sectionName] = buffer.join("\n").trim();
+    }
+    return sections;
+}
+function parseKeyValueBlock(block, constraintId, filePath, sectionLabel) {
+    const lines = block.split(/\r?\n/);
+    const data = {};
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line)
+            continue;
+        const [key, ...rest] = line.split(":");
+        if (!key || rest.length === 0) {
+            throw bundleError(constraintId, `Invalid key-value pair '${line}' in ${sectionLabel} (${filePath}).`);
+        }
+        data[key.trim()] = coerceScalar(rest.join(":").trim());
+    }
+    return data;
+}
+function coerceScalar(value) {
+    if (/^\d+$/.test(value)) {
+        return Number(value);
+    }
+    if (value === "true")
+        return true;
+    if (value === "false")
+        return false;
+    return value;
+}
+function asString(value, key, filePath, constraintId = "global") {
+    if (typeof value === "string" && value.length > 0) {
+        return value;
+    }
+    throw bundleError(constraintId, `Expected string '${key}' in ${filePath}.`);
+}
+function asBoolean(value, key, filePath, constraintId = "global") {
+    if (typeof value === "boolean") {
+        return value;
+    }
+    throw bundleError(constraintId, `Expected boolean '${key}' in ${filePath}.`);
+}
+function asNumber(value, key, filePath, constraintId = "global") {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return value;
+    }
+    throw bundleError(constraintId, `Expected numeric '${key}' in ${filePath}.`);
+}
+function bundleError(constraintId, message) {
+    return createError("BUNDLE_ERROR", `BUNDLE_ERROR [${constraintId}]: ${message}`);
+}
