@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-constraints.mjs",
+    "prepare": "npm run build",
     "test": "vitest run",
     "dev": "tsc -w -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
