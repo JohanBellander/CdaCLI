@@ -1,5 +1,5 @@
 {
-  "name": "cdatool",
+  "name": "cdacli",
   "version": "0.2.5",
   "description": "Constraint-Driven Architecture CLI (MVP1)",
   "type": "module",
