@@ -9,7 +9,7 @@ const DEFAULT_AGENT_CONFIG = {
     agents: {
         copilot: {
             command: "copilot",
-            args: ["--model", "gpt-5", "--allow-all-tools"],
+            args: ["--model", "gpt-5", "--allow-all-tools", "--allow-all-paths"],
             mode: "arg",
             prompt_arg_flag: "-p",
             prompt_preamble: "You are a verification agent. Execute CDA architectural constraint detection steps strictly. IMPORTANT: ONLY DETECT and REPORT violations. DO NOT fix, modify, or edit any files. Report all findings in the EXPECTED AGENT REPORT FORMAT.",
@@ -19,7 +19,7 @@ const DEFAULT_AGENT_CONFIG = {
         },
         "copilot-stdin": {
             command: "copilot",
-            args: ["--model", "gpt-5", "--allow-all-tools"],
+            args: ["--model", "gpt-5", "--allow-all-tools", "--allow-all-paths"],
             mode: "stdin",
             prompt_preamble: "You are a verification agent. Execute CDA architectural constraint detection steps strictly. IMPORTANT: ONLY DETECT and REPORT violations. DO NOT fix, modify, or edit any files. Report all findings in the EXPECTED AGENT REPORT FORMAT.",
             postscript: "Return ONLY the populated EXPECTED AGENT REPORT FORMAT with all detected violations. DO NOT make any code changes or fixes.",
