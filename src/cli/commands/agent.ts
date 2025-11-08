@@ -348,13 +348,10 @@ async function spawnWithFallback(options: {
 
   for (const candidate of candidates) {
     try {
-      console.error(`[DEBUG] Attempting spawn: ${candidate}`);
-      console.error(`[DEBUG] Args (${options.args.length}):`, options.args.map((a, i) => `[${i}]=${a.substring(0, 50)}${a.length > 50 ? '...' : ''}`));
       const child = await attemptSpawn(candidate, options.args, options.stdio);
       return { child };
     } catch (error) {
       const nodeError = error as NodeJS.ErrnoException;
-      console.error(`[DEBUG] Spawn failed: ${nodeError.code} - ${nodeError.message}`);
       if (nodeError.code === "ENOENT") {
         continue;
       }
