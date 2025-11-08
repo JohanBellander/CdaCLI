@@ -59,13 +59,17 @@ Echo simply prints the prompt—useful for verifying formatting or debugging pip
 
 ### Notes
 - If `cda.agents.json` is missing, `cda agent --dry-run` still emits a prompt (attempting to execute prints a warning and exits 0).
-- Execution supports two modes: `stdin` (prompt piped via stdin, e.g., Echo) and `arg` (prompt passed via `-p`, used by Copilot).
+- Execution supports two modes: `stdin` (prompt piped via stdin, recommended for Windows) and `arg` (prompt passed via `-p` flag).
+- **Windows Command Line Limits**: The `arg` mode can fail with long prompts due to ~8K command-line limits. CDA displays a warning when prompts exceed 7000 characters. **Solution**: Use `copilot-stdin` agent (automatically created by `cda init`) or reduce constraints with `--constraint <id>`.
 - On Windows, when an `arg`-mode prompt would exceed the ~8K command-line limit, CDA writes the prompt to a temp file and swaps in `--prompt-file <path>` (configurable via `prompt_file_arg`) so the Copilot CLI reads from disk instead of inline args.
 - Exit codes reflect CDA errors (config, spawn issues, etc.). The agent's stdout/stderr are streamed directly but **not** interpreted by CDA.
 - `--allow-all-tools` (included in the Copilot example) grants the Copilot CLI broader permissions—enable only in trusted environments and document the risk acceptance.
 - Use `--legacy-format` when the downstream model cannot handle the banner/directive/metrics additions introduced in instruction format version 2.
 
 ### Copilot CLI Setup
+
+> **Windows Users**: If you encounter "No specific task provided" or argument length errors, switch to stdin mode by changing the `default` agent in `cda.agents.json` to `"copilot-stdin"`. This bypasses Windows command-line length limits and reliably delivers long prompts. The stdin mode is automatically included when running `cda init`.
+
 1. **Install the standalone `copilot` binary** using GitHub's official instructions (see the [Copilot CLI docs](https://docs.github.com/en/copilot/github-copilot-chat/copilot-cli)) or a package manager:
    - macOS/Linux (Homebrew): `brew install github-copilot-cli`
    - Windows (winget): `winget install GitHub.CopilotCLI`
