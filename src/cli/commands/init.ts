@@ -31,6 +31,16 @@ const DEFAULT_AGENT_CONFIG = {
       max_length: 8000,
       agent_model: "gpt-5",
     },
+    "copilot-stdin": {
+      command: "copilot",
+      args: ["--model", "gpt-5", "--allow-all-tools"],
+      mode: "stdin",
+      prompt_preamble:
+        "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+      postscript:
+        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT. Do not paraphrase instructions.",
+      agent_model: "gpt-5",
+    },
     echo: {
       command: "echo",
       args: [],

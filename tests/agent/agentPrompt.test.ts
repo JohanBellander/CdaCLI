@@ -158,10 +158,11 @@ describe("agent command prompt behaviour", () => {
       expect.any(Array),
       { stdio: ["ignore", "inherit", "inherit"] },
     );
+    // On Windows, .cmd files are executed through cmd.exe /c
     expect(spawnMock).toHaveBeenNthCalledWith(
       2,
-      "copilot.cmd",
-      expect.any(Array),
+      "cmd.exe",
+      expect.arrayContaining(["/c", "copilot.cmd"]),
       { stdio: ["ignore", "inherit", "inherit"] },
     );
   });

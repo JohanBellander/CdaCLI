@@ -183,6 +183,19 @@ async function executeAgentCommand(options: {
       ? ["ignore", "inherit", "inherit"]
       : ["pipe", "inherit", "inherit"];
 
+  // Warn about Windows command line length limits
+  if (resolvePlatform() === "win32" && options.definition.mode === "arg") {
+    const totalArgLength = execArgs.reduce((sum, arg) => sum + arg.length, 0);
+    if (totalArgLength > 7000) {
+      console.warn("⚠️  Warning: Long prompt may exceed Windows command line limits.");
+      console.warn("   If copilot fails to receive the prompt, try:");
+      console.warn("   1. Use fewer constraints (--constraint option)");
+      console.warn("   2. Switch agent mode to 'stdin' in cda.agents.json");
+      console.warn("   3. Use --dry-run to see and pipe the prompt manually");
+      console.warn("");
+    }
+  }
+
   try {
     const { child } = await spawnWithFallback({
       command: options.definition.command,
