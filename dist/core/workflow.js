@@ -4,6 +4,6 @@ export const WORKFLOW_CHECKLIST = [
     "IMPLEMENT only changes that satisfy ALL constraints simultaneously--do not defer violations.",
     "IF a violation appears during implementation, STOP and refactor immediately (no partial compliance).",
     "RUN `cda agent` after implementation; output must show 0 violations.",
-    "REMEDIATE every reported violation using its Agent Enforcement Protocol; re-run until clean.",
+    "REMEDIATE every reported violation; re-run `cda agent` until clean.",
     "ONLY AFTER zero violations: proceed to tests, review, or commit.",
 ];
