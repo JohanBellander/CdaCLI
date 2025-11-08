@@ -1,6 +1,6 @@
 {
   "name": "cdacli",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Constraint-Driven Architecture CLI (MVP1)",
   "type": "module",
   "bin": {
