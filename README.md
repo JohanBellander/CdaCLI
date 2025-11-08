@@ -65,6 +65,22 @@ Echo simply prints the prompt—useful for verifying formatting or debugging pip
 - `--allow-all-tools` (included in the Copilot example) grants the Copilot CLI broader permissions—enable only in trusted environments and document the risk acceptance.
 - Use `--legacy-format` when the downstream model cannot handle the banner/directive/metrics additions introduced in instruction format version 2.
 
+### Copilot CLI Setup
+1. **Install the standalone `copilot` binary** using GitHub's official instructions (see the [Copilot CLI docs](https://docs.github.com/en/copilot/github-copilot-chat/copilot-cli)) or a package manager:
+   - macOS/Linux (Homebrew): `brew install github-copilot-cli`
+   - Windows (winget): `winget install GitHub.CopilotCLI`
+   - Universal fallback: `npm install -g @githubnext/github-copilot-cli`
+2. **Verify the executable is on `PATH`:**
+   - Windows: `where copilot`
+   - macOS/Linux: `which copilot`
+   If these commands fail, set `agents.copilot.command` in `cda.agents.json` to the absolute path (for example, `C:\\Users\\me\\AppData\\Local\\Programs\\copilot\\copilot.exe`).
+3. **Fallback strategies when execution fails:**
+   - Switch to the bundled `echo` agent (`--agent echo`) to inspect prompts safely while diagnosing installation or security constraints (see bead CDATool-z76).
+   - If your Copilot build lacks `--prompt-file`, set the agent `mode` to `"stdin"` so CDA streams the prompt via stdin.
+   - For prompts that must stay inline but exceed command-line limits, lower the constraint scope or temporarily use a stdin-capable agent until your Copilot CLI supports file-based prompts (design context: bead CDATool-2wc).
+4. **Re-run `copilot auth login`** whenever GitHub tokens expire; CDA surfaces spawn errors but does not manage authentication on your behalf.
+5. **CDA automatically retries `copilot.cmd` on Windows** when the shimmed `copilot` command is missing; if it still fails, the CLI prints guidance to run `where`/`which`, set an absolute path, or fall back to `--agent echo` while you repair the installation.
+
 # Constraint-Driven Architecture (CDA) CLI
 
 CDA CLI emits deterministic instruction packages that guide AI agents through layered architecture enforcement. The tool never scans your codebase directly--instead it loads bundled constraint markdown files and exposes them through `cda` commands.

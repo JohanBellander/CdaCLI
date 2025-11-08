@@ -3,7 +3,7 @@
 import { writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 
 import { loadConstraints } from "../../core/constraintLoader.js";
 import {
@@ -49,6 +49,8 @@ interface AgentCommandPlan {
     estimatedLength: number;
   };
 }
+
+type AgentSpawnStdio = ["ignore" | "pipe", "inherit", "inherit"];
 
 export async function runAgentCommand(
   argv: string[] = [],
@@ -176,57 +178,25 @@ async function executeAgentCommand(options: {
     promptFileToCleanup = options.plan.promptFilePath;
   }
 
-  // Spawn logic with Windows fallback for CLI shims (.cmd) and enhanced guidance.
-  const spawnChild = (command: string) =>
+  const stdio: AgentSpawnStdio =
     options.definition.mode === "arg"
-      ? spawn(command, execArgs, { stdio: ["ignore", "inherit", "inherit"] })
-      : spawn(command, execArgs, { stdio: ["pipe", "inherit", "inherit"] });
-
-  let child = spawnChild(options.definition.command);
-
-  if (options.definition.mode === "stdin" && child.stdin) {
-    child.stdin.write(options.prompt);
-    child.stdin.end();
-  }
+      ? ["ignore", "inherit", "inherit"]
+      : ["pipe", "inherit", "inherit"];
 
   try {
+    const { child } = await spawnWithFallback({
+      command: options.definition.command,
+      args: execArgs,
+      stdio,
+    });
+
+    if (options.definition.mode === "stdin" && child.stdin) {
+      child.stdin.write(options.prompt);
+      child.stdin.end();
+    }
+
     const exitCode: number = await new Promise((resolve, reject) => {
-      child.once("error", async (error: NodeJS.ErrnoException) => {
-        if (error.code === "ENOENT") {
-          // Windows often installs CLI tools as .cmd shims; attempt fallback automatically.
-          if (process.platform === "win32" && !options.definition.command.includes(".")) {
-            try {
-              child = spawnChild(`${options.definition.command}.cmd`);
-              if (options.definition.mode === "stdin" && child.stdin) {
-                child.stdin.write(options.prompt);
-                child.stdin.end();
-              }
-              child.once("error", (secondaryErr: NodeJS.ErrnoException) => {
-                if (secondaryErr.code === "ENOENT") {
-                  reject(
-                    createError(
-                      "FATAL",
-                      buildSpawnErrorMessage(options.definition.command, execArgs),
-                    ),
-                  );
-                } else {
-                  reject(secondaryErr);
-                }
-              });
-              child.once("close", (code) => resolve(code ?? 0));
-              return; // Do not proceed with original reject
-            } catch {
-              // Fall through to reject
-            }
-          }
-          reject(
-            createError(
-              "FATAL",
-              buildSpawnErrorMessage(options.definition.command, execArgs),
-            ),
-          );
-          return;
-        }
+      child.once("error", (error: NodeJS.ErrnoException) => {
         reject(error);
       });
       child.once("close", (code) => resolve(code ?? 0));
@@ -247,18 +217,6 @@ async function executeAgentCommand(options: {
       }
     }
   }
-}
-
-function buildSpawnErrorMessage(command: string, args: string[]): string {
-  const cmdLine = [command, ...args].map((a) => formatArg(a)).join(" ");
-  return (
-    `Unable to spawn '${command}'. Is it installed and on PATH?\n` +
-    `Tried command line: ${cmdLine}\n` +
-    (process.platform === "win32"
-      ? "On Windows ensure the Copilot CLI is installed (e.g. via Winget or MSI) and accessible as 'copilot' or 'copilot.cmd'. Run: `where copilot` to verify."
-      : "Run: `which copilot` to verify installation.") +
-    "\nIf installed in a non-standard location, set the full path in cda.agents.json ('command': 'C:/Path/To/copilot.exe')."
-  );
 }
 
 function buildInstructionText({
@@ -378,6 +336,85 @@ function buildAgentCommandPlan({
     args: inlineArgs,
     promptDelivery: "arg-inline",
   };
+}
+
+async function spawnWithFallback(options: {
+  command: string;
+  args: string[];
+  stdio: AgentSpawnStdio;
+}): Promise<{ child: ChildProcess }> {
+  const candidates = buildCommandCandidates(options.command);
+  let lastNonEnoentError: NodeJS.ErrnoException | null = null;
+
+  for (const candidate of candidates) {
+    try {
+      const child = await attemptSpawn(candidate, options.args, options.stdio);
+      return { child };
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (nodeError.code === "ENOENT") {
+        continue;
+      }
+      lastNonEnoentError = nodeError;
+      break;
+    }
+  }
+
+  if (lastNonEnoentError) {
+    throw lastNonEnoentError;
+  }
+
+  const guidance = buildSpawnGuidance(options.command, candidates);
+  throw createError("FATAL", guidance);
+}
+
+function attemptSpawn(
+  command: string,
+  args: string[],
+  stdio: AgentSpawnStdio,
+): Promise<ChildProcess> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, { stdio });
+    const cleanup = () => {
+      child.removeListener("error", handleError);
+      child.removeListener("spawn", handleSpawn);
+    };
+    const handleError = (error: NodeJS.ErrnoException) => {
+      cleanup();
+      reject(error);
+    };
+    const handleSpawn = () => {
+      cleanup();
+      resolve(child);
+    };
+    child.once("error", handleError);
+    child.once("spawn", handleSpawn);
+  });
+}
+
+function buildCommandCandidates(command: string): string[] {
+  const candidates = [command];
+  if (resolvePlatform() === "win32" && shouldAppendCmdFallback(command)) {
+    candidates.push(`${command}.cmd`);
+  }
+  return candidates;
+}
+
+function shouldAppendCmdFallback(command: string): boolean {
+  const base = path.basename(command);
+  return !/\.[^\\/]+$/u.test(base);
+}
+
+function buildSpawnGuidance(
+  command: string,
+  attemptedCommands: string[],
+): string {
+  const attempts = attemptedCommands.join(", ");
+  const verification =
+    "Verify that the Copilot CLI is installed and on PATH (`where copilot` on Windows, `which copilot` on macOS/Linux), or set the absolute path in cda.agents.json.";
+  const fallback =
+    "Until it is installed, you can run `cda agent --agent echo --dry-run` or configure an agent that uses `mode: \"stdin\"` to stream prompts.";
+  return `Unable to spawn '${command}'. Tried commands: ${attempts}. ${verification} ${fallback}`;
 }
 
 function estimateCommandLength(command: string, args: string[]): number {

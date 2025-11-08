@@ -18,7 +18,7 @@ const CORE_PRINCIPLES = [
 ];
 
 const SAFETY_SWITCHES = [
-  "You MUST run `cda validate` before writing code to establish baseline instructions.",
+  "You MUST run `cda agent --dry-run` (batch mode) before writing code to capture the authoritative verification prompt.",
   "You SHOULD run `cda agent --dry-run` before executing an external agent to confirm the prompt contents.",
   "You MAY use `cda agent --no-exec` when you only need the prompt text (for off-line review).",
   "You MUST only run `cda agent` without `--dry-run` when you trust the configured external CLI.",
@@ -27,7 +27,7 @@ const SAFETY_SWITCHES = [
 const CHECKLIST_ITEMS = [
   "You MUST read the High-Level Purpose block before modifying any files.",
   "You MUST list every planned edit alongside the constraint(s) it satisfies.",
-  "You MUST run `cda validate` to obtain the latest instruction package.",
+  "You MUST run `cda agent --dry-run` (batch) to obtain the latest verification prompt and archive it with the run_id.",
   "You MUST execute each detection step exactly as written for every constraint block.",
   "You MUST record initial violations before attempting any remediation.",
   "You MUST apply remediation steps in the given FIX SEQUENCE order.",
@@ -84,7 +84,7 @@ function addHighLevelPurpose(lines: string[]): void {
     "You MUST treat this document as your authoritative playbook. It tells you how to plan implementation, how to execute verification, and how to report results. You MUST read each section before declaring any architectural compliance.",
   );
   lines.push(
-    "You MUST use `cda agent` to generate the verification prompt and to interact with the configured external CLI. You MUST use `cda validate` whenever you need raw instruction packages without the agent wrapper.",
+    "You MUST use `cda agent --dry-run` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda agent --constraint <id>` when you need a focused prompt, and fall back to `cda agent --dry-run --legacy-format` only when a downstream model cannot ingest the enriched structure.",
   );
   lines.push("");
 }
@@ -161,13 +161,13 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push("");
   lines.push("### Implementation Phase");
   lines.push(
-    "1. You MUST run `cda validate` before editing code to capture the current instruction package.",
+    "1. You MUST run `cda agent --dry-run` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.",
   );
   lines.push(
     "2. You MUST map every planned file change to at least one active constraint.",
   );
   lines.push(
-    "3. You SHOULD use `cda agent --dry-run` after editing files but before spawning the external agent to review the prompt.",
+    "3. You SHOULD re-run `cda agent --dry-run` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.",
   );
   lines.push("");
   lines.push("### Validation Phase");
@@ -175,10 +175,13 @@ function addCommandUsageSection(lines: string[]): void {
     "1. You MUST use `cda agent` to assemble the verification prompt and send it to the configured agent.",
   );
   lines.push(
-    "2. You MUST use `--constraint <id>` or `--sequential` when you need single-constraint focus; otherwise default to batch mode.",
+    "2. You MUST use `--constraint <id>` (or `--sequential` to walk the recommended order) whenever you need a single-constraint prompt; otherwise default to batch mode.",
   );
   lines.push(
     "3. You MUST store the generated agent report alongside the run_id for traceability.",
+  );
+  lines.push(
+    "4. You MAY supply `--legacy-format` only when the downstream tool cannot handle the agent metadata additions, and you MUST document that exception in your report.",
   );
   lines.push("");
   lines.push("### Batch Workflow");
@@ -317,7 +320,7 @@ function addVersionLinkageSection(lines: string[]): void {
   lines.push("## 13. Version Linkage");
   lines.push("");
   lines.push(
-    "You MUST re-run `cda validate` and `cda agent` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.",
+    "You MUST re-run `cda agent --dry-run` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.",
   );
   lines.push("");
 }

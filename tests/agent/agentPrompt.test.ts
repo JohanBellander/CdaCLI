@@ -28,8 +28,20 @@ function createSpawnSuccess() {
   } as any;
   child.__writeSpy = writeSpy;
   child.__endSpy = endSpy;
-  queueMicrotask(() => {
-    child.emit("close", 0);
+  setImmediate(() => {
+    child.emit("spawn");
+    setImmediate(() => {
+      child.emit("close", 0);
+    });
+  });
+  return child;
+}
+
+function createSpawnEnoent() {
+  const child = new EventEmitter() as any;
+  child.stdin = new PassThrough();
+  setImmediate(() => {
+    child.emit("error", Object.assign(new Error("missing"), { code: "ENOENT" }));
   });
   return child;
 }
@@ -132,6 +144,28 @@ describe("agent command prompt behaviour", () => {
     expect(child.__writeSpy).not.toHaveBeenCalled();
   });
 
+  it("retries with .cmd on Windows when the shimmed command is missing", async () => {
+    process.env.CDA_PLATFORM_OVERRIDE = "win32";
+    spawnMock
+      .mockImplementationOnce(() => createSpawnEnoent())
+      .mockImplementationOnce(() => createSpawnSuccess());
+
+    await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
+
+    expect(spawnMock).toHaveBeenNthCalledWith(
+      1,
+      "copilot",
+      expect.any(Array),
+      { stdio: ["ignore", "inherit", "inherit"] },
+    );
+    expect(spawnMock).toHaveBeenNthCalledWith(
+      2,
+      "copilot.cmd",
+      expect.any(Array),
+      { stdio: ["ignore", "inherit", "inherit"] },
+    );
+  });
+
   it("uses stdin piping for stdin-mode agents", async () => {
     spawnMock.mockImplementation(() => createSpawnSuccess());
     await runAgentCommand(["--agent", "echo"], {
@@ -147,17 +181,10 @@ describe("agent command prompt behaviour", () => {
   });
 
   it("maps ENOENT spawn errors to fatal CDA errors", async () => {
-    spawnMock.mockImplementation(() => {
-      const child = new EventEmitter() as any;
-      queueMicrotask(() => {
-        child.emit("error", Object.assign(new Error("cmd missing"), { code: "ENOENT" }));
-      });
-      child.stdin = new PassThrough();
-      return child;
-    });
+    spawnMock.mockImplementation(() => createSpawnEnoent());
 
     await expect(
       runAgentCommand([], { cwd: path.join(fixturesDir, "valid") }),
-    ).rejects.toThrow(/Unable to spawn/);
+    ).rejects.toThrow(/Unable to spawn 'copilot'.*Tried commands:/);
   });
 });
