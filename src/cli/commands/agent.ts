@@ -374,7 +374,7 @@ function attemptSpawn(
   stdio: AgentSpawnStdio,
 ): Promise<ChildProcess> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio });
+    const child = spawn(command, args, { stdio, shell: true });
     const cleanup = () => {
       child.removeListener("error", handleError);
       child.removeListener("spawn", handleSpawn);
