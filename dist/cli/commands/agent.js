@@ -226,11 +226,14 @@ async function spawnWithFallback(options) {
     let lastNonEnoentError = null;
     for (const candidate of candidates) {
         try {
+            console.error(`[DEBUG] Attempting spawn: ${candidate}`);
+            console.error(`[DEBUG] Args (${options.args.length}):`, options.args.map((a, i) => `[${i}]=${a.substring(0, 50)}${a.length > 50 ? '...' : ''}`));
             const child = await attemptSpawn(candidate, options.args, options.stdio);
             return { child };
         }
         catch (error) {
             const nodeError = error;
+            console.error(`[DEBUG] Spawn failed: ${nodeError.code} - ${nodeError.message}`);
             if (nodeError.code === "ENOENT") {
                 continue;
             }
@@ -246,7 +249,16 @@ async function spawnWithFallback(options) {
 }
 function attemptSpawn(command, args, stdio) {
     return new Promise((resolve, reject) => {
-        const child = spawn(command, args, { stdio });
+        // On Windows, .cmd files must be spawned through cmd.exe
+        const isWindows = resolvePlatform() === "win32";
+        const isCmdFile = command.toLowerCase().endsWith(".cmd");
+        let spawnCommand = command;
+        let spawnArgs = args;
+        if (isWindows && isCmdFile) {
+            spawnCommand = "cmd.exe";
+            spawnArgs = ["/c", command, ...args];
+        }
+        const child = spawn(spawnCommand, spawnArgs, { stdio });
         const cleanup = () => {
             child.removeListener("error", handleError);
             child.removeListener("spawn", handleSpawn);
