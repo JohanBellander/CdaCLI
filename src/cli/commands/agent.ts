@@ -176,14 +176,13 @@ async function executeAgentCommand(options: {
     promptFileToCleanup = options.plan.promptFilePath;
   }
 
-  const child =
+  // Spawn logic with Windows fallback for CLI shims (.cmd) and enhanced guidance.
+  const spawnChild = (command: string) =>
     options.definition.mode === "arg"
-      ? spawn(options.definition.command, execArgs, {
-          stdio: ["ignore", "inherit", "inherit"],
-        })
-      : spawn(options.definition.command, execArgs, {
-          stdio: ["pipe", "inherit", "inherit"],
-        });
+      ? spawn(command, execArgs, { stdio: ["ignore", "inherit", "inherit"] })
+      : spawn(command, execArgs, { stdio: ["pipe", "inherit", "inherit"] });
+
+  let child = spawnChild(options.definition.command);
 
   if (options.definition.mode === "stdin" && child.stdin) {
     child.stdin.write(options.prompt);
@@ -192,12 +191,38 @@ async function executeAgentCommand(options: {
 
   try {
     const exitCode: number = await new Promise((resolve, reject) => {
-      child.once("error", (error: NodeJS.ErrnoException) => {
+      child.once("error", async (error: NodeJS.ErrnoException) => {
         if (error.code === "ENOENT") {
+          // Windows often installs CLI tools as .cmd shims; attempt fallback automatically.
+          if (process.platform === "win32" && !options.definition.command.includes(".")) {
+            try {
+              child = spawnChild(`${options.definition.command}.cmd`);
+              if (options.definition.mode === "stdin" && child.stdin) {
+                child.stdin.write(options.prompt);
+                child.stdin.end();
+              }
+              child.once("error", (secondaryErr: NodeJS.ErrnoException) => {
+                if (secondaryErr.code === "ENOENT") {
+                  reject(
+                    createError(
+                      "FATAL",
+                      buildSpawnErrorMessage(options.definition.command, execArgs),
+                    ),
+                  );
+                } else {
+                  reject(secondaryErr);
+                }
+              });
+              child.once("close", (code) => resolve(code ?? 0));
+              return; // Do not proceed with original reject
+            } catch {
+              // Fall through to reject
+            }
+          }
           reject(
             createError(
               "FATAL",
-              `Unable to spawn '${options.definition.command}'. Is it installed?`,
+              buildSpawnErrorMessage(options.definition.command, execArgs),
             ),
           );
           return;
@@ -222,6 +247,18 @@ async function executeAgentCommand(options: {
       }
     }
   }
+}
+
+function buildSpawnErrorMessage(command: string, args: string[]): string {
+  const cmdLine = [command, ...args].map((a) => formatArg(a)).join(" ");
+  return (
+    `Unable to spawn '${command}'. Is it installed and on PATH?\n` +
+    `Tried command line: ${cmdLine}\n` +
+    (process.platform === "win32"
+      ? "On Windows ensure the Copilot CLI is installed (e.g. via Winget or MSI) and accessible as 'copilot' or 'copilot.cmd'. Run: `where copilot` to verify."
+      : "Run: `which copilot` to verify installation.") +
+    "\nIf installed in a non-standard location, set the full path in cda.agents.json ('command': 'C:/Path/To/copilot.exe')."
+  );
 }
 
 function buildInstructionText({
