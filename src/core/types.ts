@@ -20,6 +20,12 @@ export interface InstructionConstraintBlock {
 }
 
 export interface BatchReportTemplate {
+  reportKind: string;
+  runId: string;
+  executionState: string;
+  analysisPerformed: boolean;
+  enumeratedFilesCount: number;
+  constraintBlocksReceived: number;
   summary: {
     analyzedFiles: number;
     constraintsEvaluated: number;
@@ -31,15 +37,54 @@ export interface BatchReportTemplate {
     revalidated: boolean;
     remainingViolations: number;
   };
+  initialViolationCount: number;
+  remainingViolationCount: number;
+  revalidationAttemptsUsed: number;
+  successConditions: {
+    allConstraintsEvaluated: boolean;
+    noRemainingViolations: boolean;
+  };
+  selfAudit: {
+    allConstraintsPresent: boolean;
+    allRequiredFieldsPopulated: boolean;
+    revalidationAttemptsDocumented: boolean;
+    schemaConformance: boolean;
+  };
+  agentExecutionSignature: string | null;
+  completionTimestamp: string | null;
+  status: string | null;
 }
 
 export interface SequentialReportTemplate {
   constraintId: string;
+  reportKind: string;
+  runId: string;
+  executionState: string;
+  analysisPerformed: boolean;
+  enumeratedFilesCount: number;
+  constraintBlocksReceived: number;
   violations: Array<Record<string, unknown>>;
   fixesApplied: string[];
-  revalidatedZero: boolean;
-  completionTimestamp: string;
-  status?: "failed";
+  postFixStatus: {
+    revalidated: boolean;
+    remainingViolations: number;
+  };
+  initialViolationCount: number;
+  remainingViolationCount: number;
+  revalidationAttemptsUsed: number;
+  successConditions: {
+    allConstraintsEvaluated: boolean;
+    noRemainingViolations: boolean;
+  };
+  selfAudit: {
+    allConstraintsPresent: boolean;
+    allRequiredFieldsPopulated: boolean;
+    revalidationAttemptsDocumented: boolean;
+    schemaConformance: boolean;
+  };
+  agentExecutionSignature: string | null;
+  completionTimestamp: string | null;
+  status: string | null;
 }
 
 export interface BatchInstructionPackage {

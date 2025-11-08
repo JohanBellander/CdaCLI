@@ -44,6 +44,12 @@ export function buildBatchInstructionPackage(
     ignoredPaths: ignoredPaths ?? [...DEFAULT_IGNORED_PATHS],
     constraints: blocks,
     reportTemplate: {
+      reportKind: "cda_validation_result",
+      runId,
+      executionState: "unvalidated",
+      analysisPerformed: false,
+      enumeratedFilesCount: 0,
+      constraintBlocksReceived: blocks.length,
       summary: {
         analyzedFiles: 0,
         constraintsEvaluated: blocks.length,
@@ -55,6 +61,22 @@ export function buildBatchInstructionPackage(
         revalidated: false,
         remainingViolations: 0,
       },
+      initialViolationCount: 0,
+      remainingViolationCount: 0,
+      revalidationAttemptsUsed: 0,
+      successConditions: {
+        allConstraintsEvaluated: false,
+        noRemainingViolations: false,
+      },
+      selfAudit: {
+        allConstraintsPresent: false,
+        allRequiredFieldsPopulated: false,
+        revalidationAttemptsDocumented: false,
+        schemaConformance: false,
+      },
+      agentExecutionSignature: null,
+      completionTimestamp: null,
+      status: null,
     },
   };
 }
@@ -70,11 +92,35 @@ export function buildSingleInstructionPackage(
     mode: "single",
     constraint: block,
     reportTemplate: {
+      reportKind: "cda_single_constraint_validation_result",
+      runId,
       constraintId: block.constraintId,
+      executionState: "unvalidated",
+      analysisPerformed: false,
+      enumeratedFilesCount: 0,
+      constraintBlocksReceived: 1,
       violations: [],
       fixesApplied: [],
-      revalidatedZero: false,
-      completionTimestamp: "",
+      postFixStatus: {
+        revalidated: false,
+        remainingViolations: 0,
+      },
+      initialViolationCount: 0,
+      remainingViolationCount: 0,
+      revalidationAttemptsUsed: 0,
+      successConditions: {
+        allConstraintsEvaluated: false,
+        noRemainingViolations: false,
+      },
+      selfAudit: {
+        allConstraintsPresent: false,
+        allRequiredFieldsPopulated: false,
+        revalidationAttemptsDocumented: false,
+        schemaConformance: false,
+      },
+      agentExecutionSignature: null,
+      completionTimestamp: null,
+      status: null,
     },
   };
 }

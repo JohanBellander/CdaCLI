@@ -22,6 +22,9 @@ export function buildCdaGuide(constraints: ConstraintDocument[]): string {
   lines.push(
     "This document contains the authoritative Constraint Enforcement Protocols bundled with the CDA CLI. Follow it verbatim to plan, execute, and verify every architecture change.",
   );
+  lines.push(
+    "> NOTE: `cda validate` emits instruction packages only; no source analysis runs until an agent executes these steps.",
+  );
   lines.push("");
 
   lines.push("## Workflow Checklist");

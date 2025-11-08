@@ -2,12 +2,24 @@
 
 CDA CLI emits deterministic instruction packages that guide AI agents through layered architecture enforcement. The tool never scans your codebase directly--instead it loads bundled constraint markdown files and exposes them through `cda` commands.
 
+> NOTE: `cda validate` emits **instructions only**. Exit code `0` means the instruction package was generated successfully—it does **not** indicate architectural compliance.
+
 ## Requirements
 
 - Node.js 18 or newer
 - npm (for installing dependencies)
 
 ## Installation
+
+### Windows PowerShell One-Liner
+
+For a fresh clone, install dependencies, build, and link globally:
+
+```powershell
+git clone https://github.com/JohanBellander/CdaCLI.git; cd CdaCLI; npm install; npm run build; npm link
+```
+
+### Standard Steps
 
 ```bash
 git clone <repo-url>
@@ -48,6 +60,38 @@ Emit a full batch instruction package (consumed by the AI agent):
 
 ```bash
 cda validate
+```
+
+Example output (truncated):
+
+```text
+CDA VALIDATION INSTRUCTION PACKAGE (MVP1)
+analysis_performed: false
+execution_state: unvalidated
+instruction_format_version: 2
+AGENT ACTION REQUIRED:
+  1. Do NOT assume zero violations.
+  ...
+DO NOT:
+- Omit required keys when arrays are empty.
+...
+===== BEGIN CDA INSTRUCTIONS (TO EXECUTE) =====
+run_id: 2025-11-07T12:05:31Z-abc123
+mode: batch
+CONSTRAINT (INSTRUCTION ONLY - NO DETECTION YET): domain-no-imports-from-app-or-infra
+...
+===== END CDA INSTRUCTIONS =====
+===== BEGIN EXPECTED AGENT REPORT FORMAT (FILL AFTER EXECUTION) =====
+report_kind: cda_validation_result
+analysis_performed: false
+constraint_blocks_received: 8
+success_conditions:
+  all_constraints_evaluated: false
+  no_remaining_violations: false
+self_audit:
+  all_constraints_present: false
+  ...
+===== END EXPECTED AGENT REPORT FORMAT =====
 ```
 
 Run a single constraint in recommended sequence:

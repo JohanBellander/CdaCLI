@@ -7,6 +7,8 @@ import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
 import {
   formatBatchInstructionPackage,
+  formatLegacyBatchInstructionPackage,
+  formatLegacySingleInstructionPackage,
   formatSingleInstructionPackage,
 } from "../formatters.js";
 
@@ -36,20 +38,32 @@ export async function runValidateCommand(args: string[] = []): Promise<void> {
     }
 
     const pkg = buildSingleInstructionPackage({ runId, constraint });
-    console.log(formatSingleInstructionPackage(pkg));
+    const rendered = options.legacyFormat
+      ? formatLegacySingleInstructionPackage(pkg)
+      : formatSingleInstructionPackage(pkg);
+    console.log(rendered);
     return;
   }
 
   const pkg = buildBatchInstructionPackage({ runId, constraints });
-  console.log(formatBatchInstructionPackage(pkg));
+  const rendered = options.legacyFormat
+    ? formatLegacyBatchInstructionPackage(pkg)
+    : formatBatchInstructionPackage(pkg);
+  console.log(rendered);
 }
 
 function parseValidateArgs(args: string[]): {
   constraintId?: string;
   sequential: boolean;
+  legacyFormat: boolean;
 } {
-  const result: { constraintId?: string; sequential: boolean } = {
+  const result: {
+    constraintId?: string;
+    sequential: boolean;
+    legacyFormat: boolean;
+  } = {
     sequential: false,
+    legacyFormat: false,
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -69,6 +83,11 @@ function parseValidateArgs(args: string[]): {
 
     if (arg === "--sequential") {
       result.sequential = true;
+      continue;
+    }
+
+    if (arg === "--legacy-format") {
+      result.legacyFormat = true;
       continue;
     }
 
@@ -92,5 +111,8 @@ function printValidateHelp(): void {
   console.log("  --constraint, -c <id>   Emit instructions for a single constraint.");
   console.log(
     "  --sequential            Alias for the first constraint in recommended order.",
+  );
+  console.log(
+    "  --legacy-format         Emit the deprecated pre-update output (instruction-only banner omitted).",
   );
 }
