@@ -25,9 +25,9 @@ const DEFAULT_AGENT_CONFIG = {
       mode: "arg",
       prompt_arg_flag: "-p",
       prompt_preamble:
-        "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+        "You are a verification agent. Execute CDA architectural constraint detection steps strictly. IMPORTANT: ONLY DETECT and REPORT violations. DO NOT fix, modify, or edit any files. Report all findings in the EXPECTED AGENT REPORT FORMAT.",
       postscript:
-        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT. Do not paraphrase instructions.",
+        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT with all detected violations. DO NOT make any code changes or fixes.",
       max_length: 8000,
       agent_model: "gpt-5",
     },
@@ -36,9 +36,9 @@ const DEFAULT_AGENT_CONFIG = {
       args: ["--model", "gpt-5", "--allow-all-tools"],
       mode: "stdin",
       prompt_preamble:
-        "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+        "You are a verification agent. Execute CDA architectural constraint detection steps strictly. IMPORTANT: ONLY DETECT and REPORT violations. DO NOT fix, modify, or edit any files. Report all findings in the EXPECTED AGENT REPORT FORMAT.",
       postscript:
-        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT. Do not paraphrase instructions.",
+        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT with all detected violations. DO NOT make any code changes or fixes.",
       agent_model: "gpt-5",
     },
     echo: {

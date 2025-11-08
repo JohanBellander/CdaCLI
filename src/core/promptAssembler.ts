@@ -29,10 +29,11 @@ const TOKEN_ESTIMATE_METHOD = "heuristic_chars_div_4";
 
 const DIRECTIVE_BLOCK = [
   "AGENT DIRECTIVE:",
-  "1. You MUST execute every detection and remediation step for each constraint block before responding.",
+  "1. DETECTION ONLY MODE: You MUST execute ONLY the detection steps for each constraint. DO NOT perform any remediation, fixes, or code modifications.",
   "2. You MUST populate the EXPECTED AGENT REPORT FORMAT exactly as provided, preserving ordering and required keys.",
-  "3. You MUST NOT declare validation success until you have rerun detection and satisfied all success_conditions; otherwise set execution_state: failed.",
-  "4. You MUST report disputed or remaining violations instead of omitting them and explain any incomplete work.",
+  "3. Report all violations found in the 'violations' array. Leave 'fixes_applied' as an empty array.",
+  "4. Set execution_state to 'validated' if detection completed successfully, regardless of whether violations were found.",
+  "5. You MUST report all detected violations; do not omit them or attempt to fix them.",
 ];
 
 export function assemblePrompt(
