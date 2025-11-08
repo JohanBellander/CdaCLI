@@ -11,7 +11,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/copy-constraints.mjs",
+    "build": "npx tsc -p tsconfig.json && node scripts/copy-constraints.mjs",
     "postinstall": "npm run build",
     "test": "vitest run",
     "dev": "tsc -w -p tsconfig.json",
