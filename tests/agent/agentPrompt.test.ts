@@ -15,10 +15,19 @@ vi.mock("node:child_process", () => ({
 import { runAgentCommand } from "../../src/cli/commands/agent.js";
 
 const fixturesDir = path.resolve("tests/fixtures/agents");
+const originalPlatformOverride = process.env.CDA_PLATFORM_OVERRIDE;
+const originalWindowsLimit = process.env.CDA_WINDOWS_ARG_LIMIT;
 
 function createSpawnSuccess() {
   const child = new EventEmitter() as any;
-  child.stdin = new PassThrough();
+  const writeSpy = vi.fn();
+  const endSpy = vi.fn();
+  child.stdin = {
+    write: writeSpy,
+    end: endSpy,
+  } as any;
+  child.__writeSpy = writeSpy;
+  child.__endSpy = endSpy;
   queueMicrotask(() => {
     child.emit("close", 0);
   });
@@ -37,6 +46,16 @@ beforeEach(() => {
 afterEach(() => {
   logSpy.mockRestore();
   warnSpy.mockRestore();
+  if (originalPlatformOverride === undefined) {
+    delete process.env.CDA_PLATFORM_OVERRIDE;
+  } else {
+    process.env.CDA_PLATFORM_OVERRIDE = originalPlatformOverride;
+  }
+  if (originalWindowsLimit === undefined) {
+    delete process.env.CDA_WINDOWS_ARG_LIMIT;
+  } else {
+    process.env.CDA_WINDOWS_ARG_LIMIT = originalWindowsLimit;
+  }
 });
 
 describe("agent command prompt behaviour", () => {
@@ -77,14 +96,54 @@ describe("agent command prompt behaviour", () => {
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  it("spawns external command when not in dry-run/no-exec", async () => {
+  it("spawns external command in arg mode when not in dry-run/no-exec", async () => {
     spawnMock.mockImplementation(() => createSpawnSuccess());
     await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
+    const [command, args, options] = spawnMock.mock.calls[0]!;
+    expect(command).toBe("copilot");
+    expect(args).toEqual(expect.arrayContaining(["--model", "gpt-5", "--allow-all-tools"]));
+    if (process.platform === "win32") {
+      expect(args).toEqual(
+        expect.arrayContaining(["--prompt-file", expect.stringMatching(/cda-agent-prompt/)]),
+      );
+    } else {
+      expect(args).toEqual(
+        expect.arrayContaining(["-p", expect.any(String)]),
+      );
+    }
+    expect(options).toEqual({ stdio: ["ignore", "inherit", "inherit"] });
+    const child = spawnMock.mock.results[0]!.value as any;
+    expect(child.__writeSpy).not.toHaveBeenCalled();
+  });
+
+  it("uses prompt file fallback on Windows when inline args would exceed limit", async () => {
+    process.env.CDA_PLATFORM_OVERRIDE = "win32";
+    process.env.CDA_WINDOWS_ARG_LIMIT = "100";
+    spawnMock.mockImplementation(() => createSpawnSuccess());
+
+    await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
+
     expect(spawnMock).toHaveBeenCalledWith(
-      "gh",
-      ["copilot", "chat", "--model", "gpt-5"],
+      "copilot",
+      expect.arrayContaining(["--prompt-file", expect.stringMatching(/cda-agent-prompt/)]),
+      { stdio: ["ignore", "inherit", "inherit"] },
+    );
+    const child = spawnMock.mock.results[0].value as any;
+    expect(child.__writeSpy).not.toHaveBeenCalled();
+  });
+
+  it("uses stdin piping for stdin-mode agents", async () => {
+    spawnMock.mockImplementation(() => createSpawnSuccess());
+    await runAgentCommand(["--agent", "echo"], {
+      cwd: path.join(fixturesDir, "valid"),
+    });
+    expect(spawnMock).toHaveBeenCalledWith(
+      "echo",
+      [],
       { stdio: ["pipe", "inherit", "inherit"] },
     );
+    const child = spawnMock.mock.results[0].value as any;
+    expect(child.__writeSpy).toHaveBeenCalled();
   });
 
   it("maps ENOENT spawn errors to fatal CDA errors", async () => {

@@ -7,13 +7,15 @@ import { createError } from "./errors.js";
 
 export const AGENT_CONFIG_FILENAME = "cda.agents.json";
 
-export type AgentExecutionMode = "stdin";
+export type AgentExecutionMode = "stdin" | "arg";
 
 export interface AgentDefinition {
   name: string;
   command: string;
   args: string[];
   mode: AgentExecutionMode;
+  promptArgFlag?: string;
+  promptFileArg?: string;
   promptPreamble?: string;
   postscript?: string;
   maxLength?: number;
@@ -205,12 +207,24 @@ function normalizeAgentDefinition(
     `agents.${name}.agent_model`,
     configPath,
   );
+  const promptArgFlag = asOptionalString(
+    value.prompt_arg_flag,
+    `agents.${name}.prompt_arg_flag`,
+    configPath,
+  );
+  const promptFileArg = asOptionalString(
+    value.prompt_file_arg,
+    `agents.${name}.prompt_file_arg`,
+    configPath,
+  );
 
   return {
     name,
     command,
     args,
     mode,
+    promptArgFlag: promptArgFlag ?? undefined,
+    promptFileArg: promptFileArg ?? undefined,
     promptPreamble: promptPreamble ?? undefined,
     postscript: postscript ?? undefined,
     maxLength: maxLength ?? undefined,
@@ -253,16 +267,16 @@ function parseMode(
   if (typeof value !== "string" || value.length === 0) {
     throw createError(
       "CONFIG_ERROR",
-      `agents.${agentName}.mode in ${configPath} must be 'stdin'.`,
+      `agents.${agentName}.mode in ${configPath} must be 'stdin' or 'arg'.`,
     );
   }
-  if (value !== "stdin") {
+  if (value !== "stdin" && value !== "arg") {
     throw createError(
       "CONFIG_ERROR",
-      `Unsupported agent mode '${value}' for agent '${agentName}'. MVP only supports 'stdin'.`,
+      `Unsupported agent mode '${value}' for agent '${agentName}'.`,
     );
   }
-  return "stdin";
+  return value;
 }
 
 function asNonEmptyString(

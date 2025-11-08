@@ -20,9 +20,11 @@ const DEFAULT_AGENT_CONFIG = {
   default: "copilot",
   agents: {
     copilot: {
-      command: "gh",
-      args: ["copilot", "chat", "--model", "gpt-5"],
-      mode: "stdin",
+      command: "copilot",
+      args: ["--model", "gpt-5", "--allow-all-tools"],
+      mode: "arg",
+      prompt_arg_flag: "-p",
+      prompt_file_arg: "--prompt-file",
       prompt_preamble:
         "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       postscript:

@@ -13,6 +13,8 @@ vi.mock("node:child_process", () => ({
 }));
 
 const fixturesDir = path.resolve("tests/fixtures/agents");
+const originalPlatformOverride = process.env.CDA_PLATFORM_OVERRIDE;
+const originalWindowsLimit = process.env.CDA_WINDOWS_ARG_LIMIT;
 
 let logSpy: ReturnType<typeof vi.spyOn>;
 let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -25,6 +27,16 @@ beforeEach(() => {
 afterEach(() => {
   logSpy.mockRestore();
   warnSpy.mockRestore();
+  if (originalPlatformOverride === undefined) {
+    delete process.env.CDA_PLATFORM_OVERRIDE;
+  } else {
+    process.env.CDA_PLATFORM_OVERRIDE = originalPlatformOverride;
+  }
+  if (originalWindowsLimit === undefined) {
+    delete process.env.CDA_WINDOWS_ARG_LIMIT;
+  } else {
+    process.env.CDA_WINDOWS_ARG_LIMIT = originalWindowsLimit;
+  }
 });
 
 describe("cda agent --dry-run", () => {
@@ -34,7 +46,13 @@ describe("cda agent --dry-run", () => {
     });
 
     const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
-    expect(outputs).toMatch(/AGENT COMMAND: gh copilot chat --model gpt-5/);
+    if (process.platform === "win32") {
+      expect(outputs).toMatch(/AGENT COMMAND: copilot --model gpt-5 --allow-all-tools --prompt-file/);
+    } else {
+      expect(outputs).toMatch(
+        /AGENT COMMAND: copilot --model gpt-5 --allow-all-tools -p "/,
+      );
+    }
     expect(outputs).toMatch(
       /AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION/,
     );
@@ -105,5 +123,17 @@ describe("cda agent --dry-run", () => {
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringMatching(/No cda\.agents\.json found/i),
     );
+  });
+
+  it("falls back to prompt-file mode on Windows when inline args exceed limit", async () => {
+    process.env.CDA_PLATFORM_OVERRIDE = "win32";
+    process.env.CDA_WINDOWS_ARG_LIMIT = "100";
+
+    await runAgentCommand(["--dry-run"], {
+      cwd: path.join(fixturesDir, "valid"),
+    });
+
+    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    expect(outputs).toMatch(/--prompt-file/);
   });
 });

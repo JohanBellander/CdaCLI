@@ -35,9 +35,11 @@ Dry-run output (and the prompt sent to agents) always follows this order:
   "default": "copilot",
   "agents": {
     "copilot": {
-      "command": "gh",
-      "args": ["copilot", "chat", "--model", "gpt-5"],
-      "mode": "stdin",
+      "command": "copilot",
+      "args": ["--model", "gpt-5", "--allow-all-tools"],
+      "mode": "arg",
+      "prompt_arg_flag": "-p",
+      "prompt_file_arg": "--prompt-file",
       "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
       "max_length": 20000,
@@ -57,8 +59,10 @@ Echo simply prints the prompt—useful for verifying formatting or debugging pip
 
 ### Notes
 - If `cda.agents.json` is missing, `cda agent --dry-run` still emits a prompt (attempting to execute prints a warning and exits 0).
-- Execution currently supports `stdin` mode only.
+- Execution supports two modes: `stdin` (prompt piped via stdin, e.g., Echo) and `arg` (prompt passed via `-p`, used by Copilot).
+- On Windows, when an `arg`-mode prompt would exceed the ~8K command-line limit, CDA writes the prompt to a temp file and swaps in `--prompt-file <path>` (configurable via `prompt_file_arg`) so the Copilot CLI reads from disk instead of inline args.
 - Exit codes reflect CDA errors (config, spawn issues, etc.). The agent's stdout/stderr are streamed directly but **not** interpreted by CDA.
+- `--allow-all-tools` (included in the Copilot example) grants the Copilot CLI broader permissions—enable only in trusted environments and document the risk acceptance.
 - Use `--legacy-format` when the downstream model cannot handle the banner/directive/metrics additions introduced in instruction format version 2.
 
 # Constraint-Driven Architecture (CDA) CLI
@@ -194,7 +198,7 @@ All error codes exit with status `1` and a descriptive message.
 - **CLI not found after build** -- Run `npm link` (development) or invoke via `node dist/cli/index.js <command>`.
 - **Snapshots/tests failing** -- Regenerate via `npm run test` after intentional structural changes, then review `tests/__snapshots__`.
 - **`cda agent` warns about missing config** -- Create `cda.agents.json` (rerun `cda init` or supply your own). Dry-run still emits prompts; execution remains disabled until the file exists.
-- **`Unable to spawn 'gh'`** -- Install GitHub CLI or switch to the Echo agent (`--agent echo`) to verify prompts without remote execution.
+- **`Unable to spawn 'copilot'`** -- Install the standalone Copilot CLI or switch to the Echo agent (`--agent echo`) to verify prompts without remote execution.
 
 ## Development Scripts
 

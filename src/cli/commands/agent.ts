@@ -1,7 +1,8 @@
 // Beads: CDATool-kmz CDATool-4e1 CDATool-8nj CDATool-qpa CDATool-6md CDATool-ga7 CDATool-87t CDATool-80h
 
-import { writeFile } from "node:fs/promises";
+import { writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
+import os from "node:os";
 import { spawn } from "node:child_process";
 
 import { loadConstraints } from "../../core/constraintLoader.js";
@@ -37,6 +38,16 @@ interface ParsedAgentArgs {
   outputPath?: string;
   legacyFormat: boolean;
   helpRequested: boolean;
+}
+
+interface AgentCommandPlan {
+  args: string[];
+  promptDelivery: "stdin" | "arg-inline" | "arg-file";
+  promptFilePath?: string;
+  inlineLengthMetadata?: {
+    limit: number;
+    estimatedLength: number;
+  };
 }
 
 export async function runAgentCommand(
@@ -100,15 +111,32 @@ export async function runAgentCommand(
     console.warn(missingConfigWarning);
   }
 
+  const plan =
+    agentDefinition &&
+    buildAgentCommandPlan({
+      definition: agentDefinition,
+      prompt: promptResult.prompt,
+      runId,
+    });
+
+  if (plan?.promptDelivery === "arg-file" && plan.promptFilePath) {
+    const limitInfo = plan.inlineLengthMetadata;
+    const limitText = limitInfo ? `${limitInfo.limit}` : "8192";
+    const estimatedText = limitInfo ? `${limitInfo.estimatedLength}` : `${promptResult.charCount}`;
+    console.log(
+      `Prompt length ${estimatedText} exceeds Windows inline argument limit (~${limitText}). Using prompt file ${plan.promptFilePath}.`,
+    );
+  }
+
   const displayPrompt = () => {
     console.log(promptResult.prompt);
   };
 
+  const previewArgs = plan?.args;
   const commandLine =
-    agentDefinition &&
-    [agentDefinition.command, ...agentDefinition.args]
-      .map((part) => formatArg(part))
-      .join(" ");
+    agentDefinition && previewArgs
+      ? [agentDefinition.command, ...previewArgs].map((part) => formatArg(part)).join(" ")
+      : null;
 
   if (parsed.noExec || !agentDefinition) {
     if (parsed.dryRun && commandLine && !parsed.noExec) {
@@ -129,43 +157,70 @@ export async function runAgentCommand(
   await executeAgentCommand({
     definition: agentDefinition,
     prompt: promptResult.prompt,
-    constraintIdUsed,
+    plan: plan!,
   });
 }
 
 async function executeAgentCommand(options: {
   definition: AgentDefinition;
   prompt: string;
-  constraintIdUsed?: string;
+  plan: AgentCommandPlan;
 }): Promise<void> {
-  const child = spawn(options.definition.command, options.definition.args, {
-    stdio: ["pipe", "inherit", "inherit"],
-  });
+  const execArgs = options.plan.args;
+  let promptFileToCleanup: string | null = null;
+  if (
+    options.plan.promptDelivery === "arg-file" &&
+    options.plan.promptFilePath
+  ) {
+    await writeFile(options.plan.promptFilePath, options.prompt, "utf8");
+    promptFileToCleanup = options.plan.promptFilePath;
+  }
 
-  child.stdin.write(options.prompt);
-  child.stdin.end();
+  const child =
+    options.definition.mode === "arg"
+      ? spawn(options.definition.command, execArgs, {
+          stdio: ["ignore", "inherit", "inherit"],
+        })
+      : spawn(options.definition.command, execArgs, {
+          stdio: ["pipe", "inherit", "inherit"],
+        });
 
-  const exitCode: number = await new Promise((resolve, reject) => {
-    child.once("error", (error: NodeJS.ErrnoException) => {
-      if (error.code === "ENOENT") {
-        reject(
-          createError(
-            "FATAL",
-            `Unable to spawn '${options.definition.command}'. Is it installed?`,
-          ),
-        );
-        return;
-      }
-      reject(error);
+  if (options.definition.mode === "stdin" && child.stdin) {
+    child.stdin.write(options.prompt);
+    child.stdin.end();
+  }
+
+  try {
+    const exitCode: number = await new Promise((resolve, reject) => {
+      child.once("error", (error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT") {
+          reject(
+            createError(
+              "FATAL",
+              `Unable to spawn '${options.definition.command}'. Is it installed?`,
+            ),
+          );
+          return;
+        }
+        reject(error);
+      });
+      child.once("close", (code) => resolve(code ?? 0));
     });
-    child.once("close", (code) => resolve(code ?? 0));
-  });
 
-  // Specification states that we do not alter exit code based on child result.
-  if (exitCode !== 0) {
-    console.warn(
-      `Agent command exited with code ${exitCode}. CDA agent finished without interpreting the response.`,
-    );
+    // Specification states that we do not alter exit code based on child result.
+    if (exitCode !== 0) {
+      console.warn(
+        `Agent command exited with code ${exitCode}. CDA agent finished without interpreting the response.`,
+      );
+    }
+  } finally {
+    if (promptFileToCleanup) {
+      try {
+        await unlink(promptFileToCleanup);
+      } catch {
+        // ignore cleanup failures
+      }
+    }
   }
 }
 
@@ -235,6 +290,96 @@ function buildInstructionText({
   return {
     instructionText: formatter(pkg),
   };
+}
+
+function buildAgentCommandPlan({
+  definition,
+  prompt,
+  runId,
+}: {
+  definition: AgentDefinition;
+  prompt: string;
+  runId: string;
+}): AgentCommandPlan {
+  const baseArgs = [...definition.args];
+  if (definition.mode === "stdin") {
+    return {
+      args: baseArgs,
+      promptDelivery: "stdin",
+    };
+  }
+
+  const promptArgFlag = definition.promptArgFlag ?? "-p";
+  const inlineArgs = [...baseArgs, promptArgFlag, prompt];
+  const platform = resolvePlatform();
+
+  if (platform === "win32") {
+    const limit = getWindowsArgLimit();
+    const estimatedLength = estimateCommandLength(
+      definition.command,
+      inlineArgs,
+    );
+    if (estimatedLength >= limit) {
+      const promptFileArg = definition.promptFileArg ?? "--prompt-file";
+      const promptFilePath = path.join(
+        os.tmpdir(),
+        `cda-agent-prompt-${sanitizeForFilename(runId)}.txt`,
+      );
+      return {
+        args: [...baseArgs, promptFileArg, promptFilePath],
+        promptDelivery: "arg-file",
+        promptFilePath,
+        inlineLengthMetadata: {
+          limit,
+          estimatedLength,
+        },
+      };
+    }
+  }
+
+  return {
+    args: inlineArgs,
+    promptDelivery: "arg-inline",
+  };
+}
+
+function estimateCommandLength(command: string, args: string[]): number {
+  let length = command.length;
+  for (const arg of args) {
+    length += 1 + arg.length;
+  }
+  return length;
+}
+
+function resolvePlatform(): NodeJS.Platform {
+  const override = process.env.CDA_PLATFORM_OVERRIDE;
+  if (
+    override === "aix" ||
+    override === "darwin" ||
+    override === "freebsd" ||
+    override === "linux" ||
+    override === "openbsd" ||
+    override === "sunos" ||
+    override === "win32"
+  ) {
+    return override;
+  }
+  return process.platform;
+}
+
+function getWindowsArgLimit(): number {
+  const override = process.env.CDA_WINDOWS_ARG_LIMIT;
+  if (override) {
+    const parsed = Number.parseInt(override, 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+  return 8000;
+}
+
+function sanitizeForFilename(value: string): string {
+  return value.replace(/[^a-zA-Z0-9-_]/g, "-");
 }
 
 function parseAgentArgs(args: string[]): ParsedAgentArgs {

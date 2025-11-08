@@ -22,9 +22,11 @@ describe("agentConfig loader", () => {
     expect(Object.keys(config?.agents ?? {})).toEqual(["copilot", "echo"]);
 
     const copilot = config!.agents.copilot;
-    expect(copilot.command).toBe("gh");
-    expect(copilot.args).toEqual(["copilot", "chat", "--model", "gpt-5"]);
-    expect(copilot.mode).toBe("stdin");
+    expect(copilot.command).toBe("copilot");
+    expect(copilot.args).toEqual(["--model", "gpt-5", "--allow-all-tools"]);
+    expect(copilot.mode).toBe("arg");
+    expect(copilot.promptArgFlag).toBe("-p");
+    expect(copilot.promptFileArg).toBe("--prompt-file");
     expect(copilot.promptPreamble).toMatch(/verification agent/i);
     expect(copilot.postscript).toMatch(/Return ONLY/i);
     expect(copilot.maxLength).toBe(20000);
