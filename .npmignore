@@ -1,0 +1,23 @@
+# Source files - only ship dist/
+src/
+tests/
+*.test.ts
+*.test.js
+
+# Config files for development
+tsconfig.json
+vitest.config.ts
+
+# Documentation that's not needed in package
+SPECIFICATION.md
+AGENTS.md
+
+# IDE
+.vscode/
+
+# Beads tracking (development only)
+.beads/
+
+# Git
+.git/
+.gitignore
