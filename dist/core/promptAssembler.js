@@ -6,7 +6,7 @@ const TOKEN_ESTIMATE_METHOD = "heuristic_chars_div_4";
 const DIRECTIVE_BLOCK = [
     "AGENT DIRECTIVE:",
     "1. DETECTION ONLY MODE: You MUST execute ONLY the detection steps for each constraint. DO NOT perform any remediation, fixes, or code modifications.",
-    "2. EXECUTE ALL COMMANDS: You MUST run all file system commands, read operations, and search commands specified in the constraint detection steps. Use your available tools to enumerate files, read their contents, and analyze imports.",
+    "2. USE NATIVE TOOLS: You MUST use your built-in file system tools (list_dir, read_file, etc.) to enumerate files, read their contents, and analyze imports. DO NOT generate shell scripts or execute complex one-liners. Break down detection into simple, direct tool calls.",
     "3. You MUST populate the EXPECTED AGENT REPORT FORMAT exactly as provided, preserving ordering and required keys.",
     "4. Report all violations found in the 'violations' array. Leave 'fixes_applied' as an empty array.",
     "5. Set execution_state to 'validated' if detection completed successfully, regardless of whether violations were found.",
