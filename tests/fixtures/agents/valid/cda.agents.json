@@ -1,0 +1,21 @@
+{
+  "default": "copilot",
+  "agents": {
+    "copilot": {
+      "command": "gh",
+      "args": ["copilot", "chat", "--model", "gpt-5"],
+      "mode": "stdin",
+      "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+      "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
+      "max_length": 20000,
+      "agent_model": "gpt-5"
+    },
+    "echo": {
+      "command": "echo",
+      "args": [],
+      "mode": "stdin",
+      "prompt_preamble": "Echo test agent. Do NOT treat output as evaluation.",
+      "postscript": "End of echo agent."
+    }
+  }
+}

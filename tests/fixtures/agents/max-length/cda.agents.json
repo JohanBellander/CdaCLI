@@ -1,0 +1,10 @@
+{
+  "agents": {
+    "copilot": {
+      "command": "gh",
+      "args": ["copilot", "chat"],
+      "mode": "stdin",
+      "max_length": 10
+    }
+  }
+}

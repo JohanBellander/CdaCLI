@@ -1,3 +1,66 @@
+# Constraint-Driven Architecture CLI (CDA)
+## Agent Verification Command (MVP)
+
+The `cda agent` command assembles an agent-ready verification prompt (wrapping the standard instruction package) and can optionally invoke an external AI CLI (e.g. GitHub Copilot CLI) via stdin.
+
+### Usage
+
+```
+cda agent [--constraint <id> | --sequential] [--agent <name>] [--dry-run] [--no-exec]
+          [--output <file>] [--legacy-format]
+```
+
+Flags:
+- `--agent <name>`: Select an agent defined in `cda.agents.json`. Resolution order: explicit `--agent`, then the `default` field, then `copilot` if present. Unknown names raise `CONFIG_ERROR`.
+- `--constraint <id>` / `--sequential`: Single-constraint modes (mirrors `cda validate`). Omit both for batch prompts.
+- `--dry-run`: Print the prompt and intended command without executing external tooling.
+- `--no-exec`: Print only the prompt body (implies `--dry-run` and suppresses the command preview).
+- `--output <file>`: Overwrite the specified file with the assembled prompt.
+- `--legacy-format`: Suppress the agent wrapper banner, directive block, and metrics—output matches the pre-Spec-Update-1 instruction package.
+
+### Prompt Structure
+Dry-run output (and the prompt sent to agents) always follows this order:
+1. Banner: `AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION`.
+2. Metadata block: `run_id`, ISO timestamp, `instruction_format_version`, `agent_name`, optional `agent_model`, `token_estimate_method`.
+3. Optional `prompt_preamble` from the agent config.
+4. Raw instruction package emitted by `cda validate` (batch or single) with AGENT ACTION REQUIRED / DO NOT blocks, sentinel markers, and expanded report skeleton.
+5. Directive block reminding the agent to execute detection/remediation steps and populate the EXPECTED AGENT REPORT FORMAT exactly as written.
+6. Optional `postscript` from the agent config.
+7. Metrics: `original_char_count` and `approx_token_length` (simple chars ÷ 4 heuristic). These are checked against any `max_length` defined in the agent config.
+
+### Sample `cda.agents.json`
+`cda init` scaffolds a default config unless `--no-agents` is provided. Copilot + Echo agents are included:
+```json
+{
+  "default": "copilot",
+  "agents": {
+    "copilot": {
+      "command": "gh",
+      "args": ["copilot", "chat", "--model", "gpt-5"],
+      "mode": "stdin",
+      "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+      "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
+      "max_length": 20000,
+      "agent_model": "gpt-5"
+    },
+    "echo": {
+      "command": "echo",
+      "args": [],
+      "mode": "stdin",
+      "prompt_preamble": "Echo agent: mirrors the prompt for debugging purposes.",
+      "postscript": "Echo agent execution complete."
+    }
+  }
+}
+```
+Echo simply prints the prompt—useful for verifying formatting or debugging pipelines.
+
+### Notes
+- If `cda.agents.json` is missing, `cda agent --dry-run` still emits a prompt (attempting to execute prints a warning and exits 0).
+- Execution currently supports `stdin` mode only.
+- Exit codes reflect CDA errors (config, spawn issues, etc.). The agent's stdout/stderr are streamed directly but **not** interpreted by CDA.
+- Use `--legacy-format` when the downstream model cannot handle the banner/directive/metrics additions introduced in instruction format version 2.
+
 # Constraint-Driven Architecture (CDA) CLI
 
 CDA CLI emits deterministic instruction packages that guide AI agents through layered architecture enforcement. The tool never scans your codebase directly--instead it loads bundled constraint markdown files and exposes them through `cda` commands.
@@ -38,6 +101,7 @@ Initialize CDA in the current repository (creates `cda.config.json` + `CDA.md`):
 ```bash
 cda init
 ```
+`cda init --no-agents` skips creation of `cda.agents.json` (useful for repositories that manage agent configs elsewhere). Re-running `cda init` in an existing directory still aborts to protect `cda.config.json`.
 
 List bundled constraints in enforcement order:
 
@@ -129,6 +193,8 @@ All error codes exit with status `1` and a descriptive message.
 - **`BUNDLE_ERROR [...] Missing section 'PURPOSE'`** -- Inspect the referenced markdown file; all 16 authoritative sections must be present and ordered.
 - **CLI not found after build** -- Run `npm link` (development) or invoke via `node dist/cli/index.js <command>`.
 - **Snapshots/tests failing** -- Regenerate via `npm run test` after intentional structural changes, then review `tests/__snapshots__`.
+- **`cda agent` warns about missing config** -- Create `cda.agents.json` (rerun `cda init` or supply your own). Dry-run still emits prompts; execution remains disabled until the file exists.
+- **`Unable to spawn 'gh'`** -- Install GitHub CLI or switch to the Echo agent (`--agent echo`) to verify prompts without remote execution.
 
 ## Development Scripts
 
@@ -136,3 +202,8 @@ All error codes exit with status `1` and a descriptive message.
 - `npm run test` -- Execute Vitest suite (loader integrity, error taxonomy, emitter snapshots).
 - `npm run typecheck` -- TypeScript compilation with `--noEmit`.
 - `npm run dev` -- `tsc --watch` for local iteration.
+
+## Spec Changes
+
+- Instruction format version `2` (Spec Update 1) introduced the banner, execution-state flags, sentinel markers, AGENT ACTION REQUIRED / DO NOT blocks, and the expanded report skeleton.
+- Spec Update 2 added the `cda agent` command, prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. See `CHANGELOG.md` for release-level details.

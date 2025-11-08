@@ -1,20 +1,59 @@
-import { access, writeFile } from "node:fs/promises";
+// Beads: CDATool-m8x CDATool-juc
+
+import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { loadConstraints } from "../../core/constraintLoader.js";
 import { buildCdaGuide } from "../../core/cdaGuideBuilder.js";
 import { createError } from "../../core/errors.js";
 
-export interface InitCommandOptions {
+interface InitCommandOptions {
   cwd?: string;
 }
 
+interface ParsedInitArgs {
+  helpRequested: boolean;
+  skipAgents: boolean;
+}
+
+const DEFAULT_AGENT_CONFIG = {
+  default: "copilot",
+  agents: {
+    copilot: {
+      command: "gh",
+      args: ["copilot", "chat", "--model", "gpt-5"],
+      mode: "stdin",
+      prompt_preamble:
+        "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+      postscript:
+        "Return ONLY the populated EXPECTED AGENT REPORT FORMAT. Do not paraphrase instructions.",
+      max_length: 20000,
+      agent_model: "gpt-5",
+    },
+    echo: {
+      command: "echo",
+      args: [],
+      mode: "stdin",
+      prompt_preamble: "Echo agent: mirrors the prompt for debugging purposes.",
+      postscript: "Echo agent execution complete.",
+    },
+  },
+};
+
 export async function runInitCommand(
+  args: string[] = [],
   options: InitCommandOptions = {},
 ): Promise<void> {
+  const parsed = parseArgs(args);
+  if (parsed.helpRequested) {
+    printInitHelp();
+    return;
+  }
+
   const cwd = options.cwd ?? process.cwd();
   const configPath = path.join(cwd, "cda.config.json");
   const guidePath = path.join(cwd, "CDA.md");
+  const agentsPath = path.join(cwd, "cda.agents.json");
 
   if (await fileExists(configPath)) {
     throw createError(
@@ -30,11 +69,60 @@ export async function runInitCommand(
     2,
   );
 
+  await mkdir(cwd, { recursive: true });
   await writeFile(configPath, `${configPayload}\n`, "utf8");
+
   const guideContent = buildCdaGuide(constraints);
   await writeFile(guidePath, guideContent, "utf8");
 
-  console.log("Created cda.config.json and CDA.md");
+  if (parsed.skipAgents) {
+    console.log("Created cda.config.json and CDA.md");
+    console.log("Skipped cda.agents.json (--no-agents supplied).");
+    return;
+  }
+
+  if (await fileExists(agentsPath)) {
+    console.log("Created cda.config.json and CDA.md");
+    console.log("cda.agents.json already exists; leaving it untouched.");
+    return;
+  }
+
+  await writeFile(
+    agentsPath,
+    `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`,
+    "utf8",
+  );
+  console.log("Created cda.config.json, CDA.md, and cda.agents.json");
+}
+
+function parseArgs(args: string[]): ParsedInitArgs {
+  const parsed: ParsedInitArgs = {
+    helpRequested: false,
+    skipAgents: false,
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--help" || arg === "-h") {
+      parsed.helpRequested = true;
+      return parsed;
+    }
+    if (arg === "--no-agents") {
+      parsed.skipAgents = true;
+      continue;
+    }
+    throw createError("CONFIG_ERROR", `Unknown option '${arg}' for cda init.`);
+  }
+
+  return parsed;
+}
+
+function printInitHelp(): void {
+  console.log("Usage: cda init [--no-agents]");
+  console.log("");
+  console.log("Options:");
+  console.log("  --no-agents   Skip creation of cda.agents.json scaffold.");
+  console.log("  --help        Show this message.");
 }
 
 async function fileExists(filePath: string): Promise<boolean> {

@@ -8,6 +8,7 @@ import { runInitCommand } from "./commands/init.js";
 import { runValidateCommand } from "./commands/validate.js";
 import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
+import { runAgentCommand } from "./commands/agent.js";
 import { createError, getExitCode, isCdaError } from "../core/errors.js";
 
 const require = createRequire(import.meta.url);
@@ -16,10 +17,11 @@ const { version } = require("../../package.json") as { version: string };
 type CommandHandler = (args: string[]) => Promise<void>;
 
 const COMMANDS: Record<string, CommandHandler> = {
-  init: async () => runInitCommand(),
+  init: async (args) => runInitCommand(args),
   list: async () => runListCommand(),
   describe: async (args) => runDescribeCommand(args),
   validate: async (args) => runValidateCommand(args),
+  agent: async (args) => runAgentCommand(args),
 };
 
 export async function run(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -59,6 +61,7 @@ function printHelp(): void {
   console.log("  list       List bundled constraints");
   console.log("  describe   Show full enforcement protocol for a constraint");
   console.log("  validate   Emit instruction packages");
+  console.log("  agent      Assemble agent prompt and optionally invoke external CLI");
   console.log("");
   console.log("Use `cda <command> --help` for command-specific options.");
 }

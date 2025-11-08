@@ -1,0 +1,9 @@
+{
+  "agents": {
+    "copilot": {
+      "command": "gh",
+      "args": "copilot",
+      "mode": "stdin"
+    }
+  }
+}

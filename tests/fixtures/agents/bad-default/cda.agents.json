@@ -1,0 +1,10 @@
+{
+  "default": "missing",
+  "agents": {
+    "echo": {
+      "command": "echo",
+      "args": [],
+      "mode": "stdin"
+    }
+  }
+}
