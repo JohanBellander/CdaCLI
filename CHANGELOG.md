@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — 2025-11-09
+- **BREAKING**: Removed mandatory constraint guardrails. All bundled constraints can now be disabled via `constraint_overrides` configuration without restrictions.
+- Simplified CLI status output: `cda list` now shows only `active` or `disabled` (removed `optional-enabled` and `optional-disabled` states).
+- Updated error messages for disabled constraints: changed "disabled by configuration" to "disabled" for brevity.
+- Revised documentation (README, SPECIFICATION_NEW.md, CDA.md generator) to remove mandatory constraint language and clarify that any constraint can be toggled.
+- Updated skip logging text to "Constraint '<id>' disabled via configuration."
+- **Upgrade guidance**: Review your `constraint_overrides` in `cda.config.json`. Previously mandatory constraints can now be disabled if needed. See `SPECIFICATION_ALL_OPTIONAL.md` for full details on the new behavior.
+
 ## 0.3.0 — 2025-11-09
 - Added optional-constraint parsing and config overrides: `loadConstraints` now honors frontmatter `optional` flags, merges `constraint_overrides` from `cda.config.json`, and blocks disabling mandatory rules.
 - Filtered `cda validate`/`cda agent` to active constraints, logging skipped ids, surfacing `disabled_constraints: [...]` metadata in prompts, and rejecting disabled ids in single-constraint modes.
