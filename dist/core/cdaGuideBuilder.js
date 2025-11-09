@@ -46,9 +46,7 @@ export function buildCdaGuide(constraints) {
     addHighLevelPurpose(lines);
     addCorePrinciples(lines);
     addConstraintSummaryTable(lines, ordered);
-    if (ordered.some((constraint) => constraint.meta.optional)) {
-        addOptionalConstraintGuidance(lines);
-    }
+    addConstraintConfigurationGuidance(lines);
     addPerConstraintGuidance(lines, ordered);
     addCommandUsageSection(lines);
     addDetectionRemediationSection(lines);
@@ -120,11 +118,11 @@ function addPerConstraintGuidance(lines, ordered) {
         lines.push("");
     }
 }
-function addOptionalConstraintGuidance(lines) {
-    lines.push("## Optional Constraint Toggles");
+function addConstraintConfigurationGuidance(lines) {
+    lines.push("## Constraint Configuration");
     lines.push("");
-    lines.push("Constraints labeled `(Optional)` may be disabled by editing the `constraint_overrides` object in `cda.config.json`. Mandatory constraints (no `(Optional)` tag) cannot be disabled.");
-    lines.push("Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable an optional constraint, or `true` to force-enable bundles that ship disabled. See SPECIFICATION_OPTIONAL.md for details.");
+    lines.push("Any constraint may be disabled by editing the `constraint_overrides` object in `cda.config.json`.");
+    lines.push("Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.");
     lines.push("");
 }
 function addCommandUsageSection(lines) {

@@ -68,7 +68,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - `--no-agents` prevents agent config creation but still prints success summaries.
 
 ### 7.2 `cda list`
-- Loads bundled constraints (respecting `constraint_overrides`) and prints a fixed-width table containing `order`, `constraint_id`, `name`, and `status`. Status values: `active` (mandatory), `optional-enabled`, `optional-disabled`. Output remains sorted by enforcement order.
+- Loads bundled constraints (respecting `constraint_overrides`) and prints a fixed-width table containing `order`, `constraint_id`, `name`, and `status`. Status values: `active`, `disabled`. Output remains sorted by enforcement order.
 
 ### 7.3 `cda describe <constraint_id>`
 - Emits selected sections (PURPOSE, VALIDATION ALGORITHM, REPORTING CONTRACT, FIX SEQUENCE, SUCCESS CRITERIA, POST-FIX ASSERTIONS) for active constraints.
