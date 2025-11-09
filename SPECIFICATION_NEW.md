@@ -249,6 +249,9 @@ status: null
 6. `excessive-nesting`
 7. `file-naming`
 8. `folder-naming`
+9. `mvc-layer-separation`
+10. `mvp-presenter-boundaries`
+11. `mvvm-binding-integrity`
 
 All constraints are enforced in every instruction package with their canonical enforcement order.
 

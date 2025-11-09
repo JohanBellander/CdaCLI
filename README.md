@@ -180,7 +180,7 @@ CONSTRAINT (INSTRUCTION ONLY - NO DETECTION YET): domain-no-imports-from-app-or-
 ===== BEGIN EXPECTED AGENT REPORT FORMAT (FILL AFTER EXECUTION) =====
 report_kind: cda_validation_result
 analysis_performed: false
-constraint_blocks_received: 8
+constraint_blocks_received: 11
 success_conditions:
   all_constraints_evaluated: false
   no_remaining_violations: false

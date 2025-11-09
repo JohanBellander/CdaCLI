@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+- _No changes yet._
+
+## 0.4.1 — 2025-11-09
+- Added three architecture pattern constraints: `mvc-layer-separation`, `mvp-presenter-boundaries`, and `mvvm-binding-integrity`, extending the bundled set to eleven enforced rules.
+- Updated specs, documentation, and tests to reflect the expanded constraint list and enforcement order.
+- Strengthened the new pattern constraints so they fail when required layers, view interfaces, or MVVM bindings are missing, ensuring teams actively implement the patterns rather than only avoiding cross-layer violations.
+
 ## 0.4.0 — 2025-11-09
 - **BREAKING**: Removed mandatory constraint guardrails. All bundled constraints can now be disabled via `constraint_overrides` configuration without restrictions.
 - Simplified CLI status output: `cda list` now shows only `active` or `disabled` (removed `optional-enabled` and `optional-disabled` states).

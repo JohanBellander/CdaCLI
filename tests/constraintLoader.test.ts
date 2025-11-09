@@ -16,7 +16,7 @@ describe("constraintLoader", () => {
     const constraints = await loadConstraints({
       constraintsDir: SOURCE_CONSTRAINTS,
     });
-    expect(constraints).toHaveLength(8);
+    expect(constraints).toHaveLength(11);
     expect(constraints.map((c) => c.meta.id)).toEqual([
       "domain-no-imports-from-app-or-infra",
       "app-no-imports-from-infra",
@@ -26,6 +26,9 @@ describe("constraintLoader", () => {
       "excessive-nesting",
       "file-naming",
       "folder-naming",
+      "mvc-layer-separation",
+      "mvp-presenter-boundaries",
+      "mvvm-binding-integrity",
     ]);
   });
 
@@ -99,6 +102,30 @@ describe("constraintLoader", () => {
         "folder_path",
         "actual_name",
         "expected_pattern",
+      ],
+      "mvc-layer-separation": [
+        "constraint_id",
+        "layer",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "mvp-presenter-boundaries": [
+        "constraint_id",
+        "layer",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "mvvm-binding-integrity": [
+        "constraint_id",
+        "layer",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
       ],
     };
 
