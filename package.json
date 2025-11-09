@@ -14,9 +14,16 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json && node scripts/copy-constraints.mjs",
+    "build:exe": "npm run build && pkg . --targets node18-win-x64 --output dist-exe/cda.exe",
     "test": "vitest run",
     "dev": "tsc -w -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "pkg": {
+    "assets": [
+      "dist/constraints/**/*"
+    ],
+    "outputPath": "dist-exe"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -24,6 +31,7 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "22.9.4",
+    "@yao-pkg/pkg": "^6.10.1",
     "patch-package": "^8.0.1",
     "typescript": "5.6.3",
     "vitest": "^4.0.8"
