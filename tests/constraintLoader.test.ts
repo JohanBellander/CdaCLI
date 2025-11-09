@@ -9,6 +9,7 @@ const SOURCE_CONSTRAINTS = path.resolve("src/constraints/core");
 const MALFORMED_DIR = path.resolve(
   "tests/fixtures/malformed-missing-section",
 );
+const OPTIONAL_DIR = path.resolve("tests/fixtures/optional-constraints");
 
 describe("constraintLoader", () => {
   it("loads constraints sorted by enforcement order", async () => {
@@ -106,5 +107,47 @@ describe("constraintLoader", () => {
         reportFieldExpectations[block.constraintId],
       );
     });
+  });
+
+  it("defaults optional flag to false when frontmatter omits it", async () => {
+    const constraints = await loadConstraints({
+      constraintsDir: OPTIONAL_DIR,
+    });
+    const mandatory = constraints.find(
+      (doc) => doc.meta.id === "mandatory-default",
+    );
+    expect(mandatory).toBeDefined();
+    expect(mandatory?.meta.optional).toBe(false);
+    expect(mandatory?.meta.isActive).toBe(true);
+  });
+
+  it("applies overrides that enable bundled disabled constraints", async () => {
+    const baseline = await loadConstraints({ constraintsDir: OPTIONAL_DIR });
+    const defaultDisabled = baseline.find(
+      (doc) => doc.meta.id === "optional-disabled",
+    );
+    expect(defaultDisabled?.meta.isActive).toBe(false);
+
+    const merged = await loadConstraints({
+      constraintsDir: OPTIONAL_DIR,
+      constraintOverrides: {
+        "optional-disabled": { enabled: true },
+      },
+    });
+    const activated = merged.find(
+      (doc) => doc.meta.id === "optional-disabled",
+    );
+    expect(activated?.meta.isActive).toBe(true);
+  });
+
+  it("rejects overrides that attempt to disable mandatory constraints", async () => {
+    await expect(
+      loadConstraints({
+        constraintsDir: OPTIONAL_DIR,
+        constraintOverrides: {
+          "mandatory-default": { enabled: false },
+        },
+      }),
+    ).rejects.toThrow(/mandatory and cannot be disabled/);
   });
 });

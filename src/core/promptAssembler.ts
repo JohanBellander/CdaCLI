@@ -12,6 +12,7 @@ export interface PromptAssemblerOptions {
   promptPreamble?: string;
   postscript?: string;
   legacyFormat?: boolean;
+  disabledConstraints?: string[];
 }
 
 export interface PromptAssemblyResult {
@@ -47,6 +48,7 @@ export function assemblePrompt(
     promptPreamble,
     postscript,
     legacyFormat = false,
+    disabledConstraints = [],
   } = options;
   const instructionFormatVersion =
     options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
@@ -64,6 +66,11 @@ export function assemblePrompt(
       lines.push(`agent_model: ${options.agentModel}`);
     }
     lines.push(`token_estimate_method: ${TOKEN_ESTIMATE_METHOD}`);
+    lines.push(
+      disabledConstraints.length > 0
+        ? `disabled_constraints: [${disabledConstraints.join(", ")}]`
+        : "disabled_constraints: []",
+    );
     lines.push("");
   }
 

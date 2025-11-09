@@ -42,7 +42,8 @@ const SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter(
 );
 
 export function buildCdaGuide(constraints: ConstraintDocument[]): string {
-  const ordered = [...constraints].sort((a, b) => {
+  const active = constraints.filter((doc) => doc.meta.isActive);
+  const ordered = [...active].sort((a, b) => {
     if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
       return a.meta.id.localeCompare(b.meta.id);
     }
@@ -60,6 +61,9 @@ export function buildCdaGuide(constraints: ConstraintDocument[]): string {
   addHighLevelPurpose(lines);
   addCorePrinciples(lines);
   addConstraintSummaryTable(lines, ordered);
+  if (ordered.some((constraint) => constraint.meta.optional)) {
+    addOptionalConstraintGuidance(lines);
+  }
   addPerConstraintGuidance(lines, ordered);
   addCommandUsageSection(lines);
   addDetectionRemediationSection(lines);
@@ -105,8 +109,11 @@ function addConstraintSummaryTable(
   lines.push("| Order | Constraint ID | Name | Intent |");
   lines.push("|-------|---------------|------|--------|");
   for (const constraint of ordered) {
+    const nameCell = constraint.meta.optional
+      ? `${constraint.meta.name} (Optional)`
+      : constraint.meta.name;
     lines.push(
-      `| ${constraint.meta.enforcementOrder} | \`${constraint.meta.id}\` | ${constraint.meta.name} | ${sanitize(
+      `| ${constraint.meta.enforcementOrder} | \`${constraint.meta.id}\` | ${nameCell} | ${sanitize(
         constraint.sections.PURPOSE,
       )} |`,
     );
@@ -122,8 +129,11 @@ function addPerConstraintGuidance(
   lines.push("");
 
   for (const constraint of ordered) {
+    const headingName = constraint.meta.optional
+      ? `${constraint.meta.name} (Optional)`
+      : constraint.meta.name;
     lines.push(
-      `### ${constraint.meta.name} (\`${constraint.meta.id}\`, order ${constraint.meta.enforcementOrder})`,
+      `### ${headingName} (\`${constraint.meta.id}\`, order ${constraint.meta.enforcementOrder})`,
     );
     lines.push("");
     lines.push(
@@ -154,6 +164,18 @@ function addPerConstraintGuidance(
     lines.push(constraint.sections["POST-FIX ASSERTIONS"]);
     lines.push("");
   }
+}
+
+function addOptionalConstraintGuidance(lines: string[]): void {
+  lines.push("## Optional Constraint Toggles");
+  lines.push("");
+  lines.push(
+    "Constraints labeled `(Optional)` may be disabled by editing the `constraint_overrides` object in `cda.config.json`. Mandatory constraints (no `(Optional)` tag) cannot be disabled.",
+  );
+  lines.push(
+    "Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable an optional constraint, or `true` to force-enable bundles that ship disabled. See SPECIFICATION_OPTIONAL.md for details.",
+  );
+  lines.push("");
 }
 
 function addCommandUsageSection(lines: string[]): void {

@@ -31,6 +31,10 @@ describe("cda init command", () => {
     const cwd = await createTempDir();
     await runInitCommand([], { cwd });
 
+    const configRaw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
+    const config = JSON.parse(configRaw);
+    expect(config.constraint_overrides).toEqual({});
+
     const guide = await readFile(path.join(cwd, "CDA.md"), "utf8");
     expect(guide).toMatch(/You MUST/);
     expect(guide).toMatch(/High-Level Purpose/);

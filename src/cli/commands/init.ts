@@ -75,7 +75,7 @@ export async function runInitCommand(
 
   const constraints = await loadConstraints();
   const configPayload = JSON.stringify(
-    { version: 1, constraints: "builtin" },
+    { version: 1, constraints: "builtin", constraint_overrides: {} },
     null,
     2,
   );

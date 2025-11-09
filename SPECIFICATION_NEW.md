@@ -49,7 +49,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - Default ignored paths for instruction packages: `node_modules`, `dist`, `build`, `.git`.
 
 ## 6. Generated Artifacts (`cda init`)
-- Writes `cda.config.json` containing `{ "version": 1, "constraints": "builtin" }`.
+- Writes `cda.config.json` containing `{ "version": 1, "constraints": "builtin", "constraint_overrides": {} }`. The overrides object maps constraint ids to `{ "enabled": true|false }` and is used to toggle optional rules (see `SPECIFICATION_OPTIONAL.md`).
 - Generates `CDA.md` via `buildCdaGuide`, producing a second-person, imperative playbook that covers:
   - high-level purpose and core principles,
   - constraint summary table with intent statements,
@@ -60,6 +60,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
   - `copilot-stdin` (stdin mode) → same command/args without max length, streaming prompt through stdin.
   - `echo` (stdin mode) → diagnostic agent that echoes prompts.
 - `cda init` aborts if `cda.config.json` already exists; it never overwrites existing `cda.agents.json`.
+- Optional constraints are annotated `(Optional)` in the generated `CDA.md`. They are omitted entirely when disabled via `constraint_overrides`.
 
 ## 7. CLI Commands
 ### 7.1 `cda init [--no-agents]`
@@ -67,20 +68,20 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - `--no-agents` prevents agent config creation but still prints success summaries.
 
 ### 7.2 `cda list`
-- Loads bundled constraints and prints a fixed-width table containing `order`, `constraint_id`, and `name`. Output is sorted by enforcement order.
+- Loads bundled constraints (respecting `constraint_overrides`) and prints a fixed-width table containing `order`, `constraint_id`, `name`, and `status`. Status values: `active` (mandatory), `optional-enabled`, `optional-disabled`. Output remains sorted by enforcement order.
 
 ### 7.3 `cda describe <constraint_id>`
-- Emits selected sections (PURPOSE, VALIDATION ALGORITHM, REPORTING CONTRACT, FIX SEQUENCE, SUCCESS CRITERIA, POST-FIX ASSERTIONS).
-- Errors with `CONFIG_ERROR` if the constraint id is unknown.
+- Emits selected sections (PURPOSE, VALIDATION ALGORITHM, REPORTING CONTRACT, FIX SEQUENCE, SUCCESS CRITERIA, POST-FIX ASSERTIONS) for active constraints.
+- Errors with `CONFIG_ERROR` if the constraint id is unknown **or** disabled by configuration.
 
 ### 7.4 `cda validate [--constraint <id>|--sequential] [--legacy-format]`
-- Generates instruction packages with a fresh `run_id` (ISO timestamp + 6-character base36 suffix).
+- Generates instruction packages with a fresh `run_id` (ISO timestamp + 6-character base36 suffix) using only active constraints (after applying `constraint_overrides`).
 - Modes:
   - Batch (default) → includes all constraints.
   - Single (`--constraint <id>`) → emits selected constraint.
   - Sequential (`--sequential`) → alias for the first constraint in recommended order.
 - `--legacy-format` omits Spec Update 1/2 decorations, restoring the pre-update layout.
-- Throws `CONFIG_ERROR` if unknown options are provided or mutually exclusive flags are combined.
+- Throws `CONFIG_ERROR` if unknown options are provided, mutually exclusive flags are combined, no active constraints remain, or a disabled constraint id is requested explicitly.
 
 ### 7.5 `cda agent [options]`
 - Options: `--agent <name>`, `--constraint <id>`, `--sequential`, `--dry-run`, `--no-exec`, `--output <path>`, `--legacy-format`, `--help`.
@@ -88,11 +89,11 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - Attempts to load `cda.agents.json` when present. Resolution order: explicit `--agent`, config `default`, fallback `copilot` entry.
 - When config absent, emits a warning and prints the prompt without spawning any agent process, regardless of `--dry-run`.
 - Prompt assembly (`assemblePrompt`):
-  - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, and `token_estimate_method`.
+  - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, `token_estimate_method`, and `disabled_constraints: []` (list of ids skipped by configuration).
   - Optional `prompt_preamble`/`postscript` from config flank the instruction text.
   - Appends a directive block that enforces detection-only execution (no fixes, no shell commands) and prescribes report population rules.
   - Adds `original_char_count` and `approx_token_length` (char count ÷ 4 heuristic).
-- Execution path:
+- Execution path (active constraints only):
   - `--output <path>` writes the assembled prompt to disk (overwrites existing file) before further processing.
   - `--no-exec` implies `--dry-run`, suppresses command preview, and prints only the prompt.
   - `--dry-run` prints the fully quoted command line (including fallback `--prompt-file` when triggered) and the prompt content.

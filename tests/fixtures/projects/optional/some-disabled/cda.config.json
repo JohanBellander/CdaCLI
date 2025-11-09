@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "constraints": "builtin",
+  "constraint_overrides": {
+    "optional-enabled": {
+      "enabled": false
+    },
+    "optional-disabled": {
+      "enabled": true
+    }
+  }
+}

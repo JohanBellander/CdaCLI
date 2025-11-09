@@ -1,36 +1,77 @@
-import { loadConstraints } from "../../core/constraintLoader.js";
+import {
+  loadConstraints,
+  partitionConstraints,
+} from "../../core/constraintLoader.js";
 import {
   buildBatchInstructionPackage,
   buildSingleInstructionPackage,
 } from "../../core/instructionEmitter.js";
 import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
+import { loadProjectConfig } from "../../core/projectConfig.js";
 import {
   formatBatchInstructionPackage,
   formatLegacyBatchInstructionPackage,
   formatLegacySingleInstructionPackage,
   formatSingleInstructionPackage,
 } from "../formatters.js";
+import { logDisabledConstraints } from "../constraintLogging.js";
 
-export async function runValidateCommand(args: string[] = []): Promise<void> {
+interface ValidateCommandOptions {
+  cwd?: string;
+  constraintsDir?: string;
+}
+
+export async function runValidateCommand(
+  args: string[] = [],
+  options: ValidateCommandOptions = {},
+): Promise<void> {
   if (args.includes("-h") || args.includes("--help")) {
     printValidateHelp();
     return;
   }
 
-  const options = parseValidateArgs(args);
-  const constraints = await loadConstraints();
+  const parsed = parseValidateArgs(args);
+  const cwd = options.cwd ?? process.cwd();
+  const projectConfig = await loadProjectConfig({ cwd, required: false });
+  const constraints = await loadConstraints({
+    constraintsDir: options.constraintsDir,
+    constraintOverrides: projectConfig?.constraintOverrides,
+  });
   if (constraints.length === 0) {
     throw createError("BUNDLE_ERROR", "No constraints available to validate.");
+  }
+  const { active: activeConstraints, disabled } = partitionConstraints(
+    constraints,
+  );
+  if (disabled.length > 0) {
+    logDisabledConstraints(disabled, console.error);
+  }
+  if (activeConstraints.length === 0) {
+    throw createError("CONFIG_ERROR", "No active constraints available.");
   }
 
   const runId = generateRunId();
 
-  if (options.constraintId || options.sequential) {
+  if (parsed.constraintId || parsed.sequential) {
     const targetId =
-      options.constraintId ?? constraints[0].meta.id;
-    const constraint = constraints.find((doc) => doc.meta.id === targetId);
+      parsed.constraintId ?? activeConstraints[0]?.meta.id;
+    if (!targetId) {
+      throw createError("CONFIG_ERROR", "No constraints available.");
+    }
+    const constraint = activeConstraints.find(
+      (doc) => doc.meta.id === targetId,
+    );
     if (!constraint) {
+      const disabledMatch = constraints.find(
+        (doc) => doc.meta.id === targetId,
+      );
+      if (disabledMatch) {
+        throw createError(
+          "CONFIG_ERROR",
+          `Constraint '${targetId}' is disabled by configuration.`,
+        );
+      }
       throw createError(
         "CONFIG_ERROR",
         `Unknown constraint '${targetId}'.`,
@@ -38,15 +79,15 @@ export async function runValidateCommand(args: string[] = []): Promise<void> {
     }
 
     const pkg = buildSingleInstructionPackage({ runId, constraint });
-    const rendered = options.legacyFormat
+    const rendered = parsed.legacyFormat
       ? formatLegacySingleInstructionPackage(pkg)
       : formatSingleInstructionPackage(pkg);
     console.log(rendered);
     return;
   }
 
-  const pkg = buildBatchInstructionPackage({ runId, constraints });
-  const rendered = options.legacyFormat
+  const pkg = buildBatchInstructionPackage({ runId, constraints: activeConstraints });
+  const rendered = parsed.legacyFormat
     ? formatLegacyBatchInstructionPackage(pkg)
     : formatBatchInstructionPackage(pkg);
   console.log(rendered);

@@ -1,6 +1,11 @@
 # Changelog
 
-# Changelog
+## 0.3.0 — 2025-11-09
+- Added optional-constraint parsing and config overrides: `loadConstraints` now honors frontmatter `optional` flags, merges `constraint_overrides` from `cda.config.json`, and blocks disabling mandatory rules.
+- Filtered `cda validate`/`cda agent` to active constraints, logging skipped ids, surfacing `disabled_constraints: [...]` metadata in prompts, and rejecting disabled ids in single-constraint modes.
+- Expanded CLI UX with a `status` column in `cda list`, describe guards, and agent/validate skip messaging.
+- Refreshed `cda init` scaffolding (`constraint_overrides` stub, `(Optional)` labeling in `CDA.md`, optional-toggle guidance) plus README/SPEC updates referencing `SPECIFICATION_OPTIONAL.md`.
+- Added fixtures and Vitest coverage for optional flows across loader, list/describe, validate, agent dry-run/exec, and init scaffolding. **Upgrade note:** edit `constraint_overrides` explicitly before disabling `(Optional)` constraints; defaults keep all bundled rules active.
 
 ## 0.2.2 — 2025-11-08
 - Added Windows arg-mode fallback: when Copilot prompts exceed the ~8K Windows command-line limit the CLI now writes the prompt to a sanitized temp file, swaps in `--prompt-file <path>`, surfaces the path in dry-run output, and cleans the file after execution.

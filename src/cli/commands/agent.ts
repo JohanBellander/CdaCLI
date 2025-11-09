@@ -5,7 +5,10 @@ import path from "node:path";
 import os from "node:os";
 import { spawn, type ChildProcess } from "node:child_process";
 
-import { loadConstraints } from "../../core/constraintLoader.js";
+import {
+  loadConstraints,
+  partitionConstraints,
+} from "../../core/constraintLoader.js";
 import {
   buildBatchInstructionPackage,
   buildSingleInstructionPackage,
@@ -24,9 +27,12 @@ import {
 import { assemblePrompt } from "../../core/promptAssembler.js";
 import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
+import { loadProjectConfig } from "../../core/projectConfig.js";
+import { logDisabledConstraints } from "../constraintLogging.js";
 
 interface AgentCommandOptions {
   cwd?: string;
+  constraintsDir?: string;
 }
 
 interface ParsedAgentArgs {
@@ -63,10 +69,25 @@ export async function runAgentCommand(
   }
 
   const cwd = options.cwd ?? process.cwd();
-  const constraints = await loadConstraints();
+  const projectConfig = await loadProjectConfig({ cwd, required: false });
+  const constraints = await loadConstraints({
+    constraintsDir: options.constraintsDir,
+    constraintOverrides: projectConfig?.constraintOverrides,
+  });
+  if (constraints.length === 0) {
+    throw createError("BUNDLE_ERROR", "No constraints available to validate.");
+  }
+  const { active: activeConstraints, disabled } = partitionConstraints(
+    constraints,
+  );
+  if (activeConstraints.length === 0) {
+    throw createError("CONFIG_ERROR", "No active constraints available.");
+  }
+
   const runId = generateRunId();
   const { instructionText, constraintIdUsed } = buildInstructionText({
-    constraints,
+    activeConstraints,
+    allConstraints: constraints,
     explicitConstraintId: parsed.constraintId,
     sequential: parsed.sequential,
     legacyFormat: parsed.legacyFormat,
@@ -86,6 +107,7 @@ export async function runAgentCommand(
       "WARNING: No cda.agents.json found. Use --dry-run to inspect prompts or run `cda validate`.";
   }
 
+  const disabledConstraintIds = disabled.map((doc) => doc.meta.id);
   const promptResult = assemblePrompt({
     runId,
     agentName,
@@ -94,6 +116,7 @@ export async function runAgentCommand(
     promptPreamble: agentDefinition?.promptPreamble,
     postscript: agentDefinition?.postscript,
     legacyFormat: parsed.legacyFormat,
+    disabledConstraints: disabledConstraintIds,
   });
 
   if (agentDefinition?.maxLength && promptResult.charCount > agentDefinition.maxLength) {
@@ -101,6 +124,12 @@ export async function runAgentCommand(
       "CONFIG_ERROR",
       `Prompt length ${promptResult.charCount} exceeds max_length ${agentDefinition.maxLength}.`,
     );
+  }
+
+  const isPreviewMode = parsed.dryRun || parsed.noExec || !agentDefinition;
+  if (disabled.length > 0) {
+    const writer = isPreviewMode ? console.log : console.error;
+    logDisabledConstraints(disabled, writer);
   }
 
   if (parsed.outputPath) {
@@ -233,25 +262,34 @@ async function executeAgentCommand(options: {
 }
 
 function buildInstructionText({
-  constraints,
+  activeConstraints,
+  allConstraints,
   explicitConstraintId,
   sequential,
   legacyFormat,
   runId,
 }: {
-  constraints: Awaited<ReturnType<typeof loadConstraints>>;
+  activeConstraints: Awaited<ReturnType<typeof loadConstraints>>;
+  allConstraints: Awaited<ReturnType<typeof loadConstraints>>;
   explicitConstraintId?: string;
   sequential: boolean;
   legacyFormat: boolean;
   runId: string;
 }): { instructionText: string; constraintIdUsed?: string } {
-  const selectedConstraints = constraints;
-
   if (explicitConstraintId) {
-    const match = selectedConstraints.find(
+    const match = activeConstraints.find(
       (constraint) => constraint.meta.id === explicitConstraintId,
     );
     if (!match) {
+      const disabledMatch = allConstraints.find(
+        (constraint) => constraint.meta.id === explicitConstraintId,
+      );
+      if (disabledMatch) {
+        throw createError(
+          "CONFIG_ERROR",
+          `Constraint '${explicitConstraintId}' is disabled by configuration.`,
+        );
+      }
       throw createError(
         "CONFIG_ERROR",
         `Unknown constraint '${explicitConstraintId}'.`,
@@ -271,7 +309,7 @@ function buildInstructionText({
   }
 
   if (sequential) {
-    const first = selectedConstraints[0];
+    const first = activeConstraints[0];
     if (!first) {
       throw createError("CONFIG_ERROR", "No constraints available.");
     }
@@ -290,7 +328,7 @@ function buildInstructionText({
 
   const pkg = buildBatchInstructionPackage({
     runId,
-    constraints: selectedConstraints,
+    constraints: activeConstraints,
   });
   const formatter = legacyFormat
     ? formatLegacyBatchInstructionPackage

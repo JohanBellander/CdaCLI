@@ -13,20 +13,35 @@ vi.mock("node:child_process", () => ({
 }));
 
 const fixturesDir = path.resolve("tests/fixtures/agents");
+const optionalProjectDir = path.resolve(
+  "tests/fixtures/projects/optional/some-disabled",
+);
+const optionalConstraintsDir = path.resolve(
+  "tests/fixtures/optional-constraints",
+);
+const optionalOnlyConstraintsDir = path.resolve(
+  "tests/fixtures/optional-constraints-only",
+);
+const optionalAllDisabledProject = path.resolve(
+  "tests/fixtures/projects/optional/all-disabled",
+);
 const originalPlatformOverride = process.env.CDA_PLATFORM_OVERRIDE;
 const originalWindowsLimit = process.env.CDA_WINDOWS_ARG_LIMIT;
 
 let logSpy: ReturnType<typeof vi.spyOn>;
 let warnSpy: ReturnType<typeof vi.spyOn>;
+let errorSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(() => {
   logSpy.mockRestore();
   warnSpy.mockRestore();
+  errorSpy.mockRestore();
   if (originalPlatformOverride === undefined) {
     delete process.env.CDA_PLATFORM_OVERRIDE;
   } else {
@@ -58,6 +73,7 @@ describe("cda agent --dry-run", () => {
     );
     expect(outputs).toMatch(/agent_name: copilot/);
     expect(outputs).toMatch(/token_estimate_method: heuristic_chars_div_4/);
+    expect(outputs).toMatch(/disabled_constraints: \[\]/);
     expect(outputs).toMatch(/AGENT DIRECTIVE:/);
     expect(outputs).toMatch(/original_char_count:/);
     expect(outputs).toMatch(/approx_token_length:/);
@@ -135,5 +151,29 @@ describe("cda agent --dry-run", () => {
 
     const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
     expect(outputs).toMatch(/--prompt-file/);
+  });
+});
+
+describe("optional constraint filtering (dry-run)", () => {
+  it("logs skipped constraints to stdout during dry-run", async () => {
+    await runAgentCommand(["--dry-run"], {
+      cwd: optionalProjectDir,
+      constraintsDir: optionalConstraintsDir,
+    });
+
+    expect(logSpy).toHaveBeenCalledWith(
+      "Constraint 'optional-enabled' skipped (disabled by configuration).",
+    );
+    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    expect(outputs).toMatch(/disabled_constraints: \[optional-enabled]/);
+  });
+
+  it("errors when no active constraints remain", async () => {
+    await expect(
+      runAgentCommand(["--dry-run"], {
+        cwd: optionalAllDisabledProject,
+        constraintsDir: optionalOnlyConstraintsDir,
+      }),
+    ).rejects.toThrow(/No active constraints available/);
   });
 });

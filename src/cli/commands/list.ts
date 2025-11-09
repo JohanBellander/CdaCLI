@@ -1,17 +1,32 @@
 import { loadConstraints } from "../../core/constraintLoader.js";
+import { loadProjectConfig } from "../../core/projectConfig.js";
+import type { ConstraintMeta } from "../../core/types.js";
 
-export async function runListCommand(): Promise<void> {
-  const constraints = await loadConstraints();
+interface ListCommandOptions {
+  cwd?: string;
+  constraintsDir?: string;
+}
+
+export async function runListCommand(
+  options: ListCommandOptions = {},
+): Promise<void> {
+  const cwd = options.cwd ?? process.cwd();
+  const projectConfig = await loadProjectConfig({ cwd, required: false });
+  const constraints = await loadConstraints({
+    constraintsDir: options.constraintsDir,
+    constraintOverrides: projectConfig?.constraintOverrides,
+  });
   if (constraints.length === 0) {
     console.log("No constraints found.");
     return;
   }
 
-  const header = ["order", "constraint_id", "name"];
+  const header = ["order", "constraint_id", "name", "status"];
   const rows = constraints.map((constraint) => [
     String(constraint.meta.enforcementOrder),
     constraint.meta.id,
     constraint.meta.name,
+    formatStatus(constraint.meta),
   ]);
 
   const widths = header.map((column, index) =>
@@ -36,4 +51,11 @@ function formatRow(
     return value.padEnd(widths[index]);
   });
   return padded.join("  ");
+}
+
+function formatStatus(meta: ConstraintMeta): string {
+  if (!meta.optional) {
+    return "active";
+  }
+  return meta.isActive ? "optional-enabled" : "optional-disabled";
 }

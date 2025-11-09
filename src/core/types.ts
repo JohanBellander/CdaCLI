@@ -4,9 +4,17 @@ export interface ConstraintMeta {
   category: string;
   severity: "error";
   enabled: boolean;
+  optional: boolean;
+  isActive: boolean;
   version: number;
   enforcementOrder: number;
 }
+
+export interface ConstraintOverrideConfig {
+  enabled: boolean;
+}
+
+export type ConstraintOverrides = Record<string, ConstraintOverrideConfig>;
 
 export interface InstructionConstraintBlock {
   constraintId: string;

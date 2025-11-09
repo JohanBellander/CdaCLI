@@ -220,6 +220,22 @@ All error codes exit with status `1` and a descriptive message.
 - **`cda agent` warns about missing config** -- Create `cda.agents.json` (rerun `cda init` or supply your own). Dry-run still emits prompts; execution remains disabled until the file exists.
 - **`Unable to spawn 'copilot'`** -- Install the standalone Copilot CLI or switch to the Echo agent (`--agent echo`) to verify prompts without remote execution.
 
+## Optional Constraints
+
+- `cda init` now scaffolds a `constraint_overrides` object inside `cda.config.json`. Use this to toggle optional constraints without deleting their markdown:
+
+```json
+{
+  "constraint_overrides": {
+    "optional-constraint-id": { "enabled": false }
+  }
+}
+```
+
+- Constraints labeled `(Optional)` in `CDA.md` and `cda list` can be disabled (set `enabled: false`) or force-enabled (set `true`). Mandatory constraints ignore overrides.
+- Disabled optional constraints automatically drop out of `cda list`, `cda validate`, and `cda agent` outputs. Prompts include a `disabled_constraints` metadata line for auditing, and describe/single-constraint flows raise `CONFIG_ERROR` if you target a disabled id.
+- See `SPECIFICATION_OPTIONAL.md` for the full workflow and guardrails.
+
 ## Development Scripts
 
 - `npm run build` -- Compile TypeScript and copy constraints to `dist/constraints`.
