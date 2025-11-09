@@ -10,7 +10,7 @@ export function logDisabledConstraints(
 
   for (const doc of disabled) {
     writer(
-      `Constraint '${doc.meta.id}' skipped (disabled by configuration).`,
+      `Constraint '${doc.meta.id}' disabled via configuration.`,
     );
   }
 }

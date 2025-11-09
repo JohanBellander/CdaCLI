@@ -8,6 +8,7 @@ export interface PromptAssemblerOptions {
     promptPreamble?: string;
     postscript?: string;
     legacyFormat?: boolean;
+    disabledConstraints?: string[];
 }
 export interface PromptAssemblyResult {
     prompt: string;

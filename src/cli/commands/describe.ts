@@ -42,7 +42,7 @@ export async function runDescribeCommand(
   if (!constraint.meta.isActive) {
     throw createError(
       "CONFIG_ERROR",
-      `Constraint '${constraintId}' is disabled by configuration.`,
+      `Constraint '${constraintId}' is disabled.`,
     );
   }
 

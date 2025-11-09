@@ -1,15 +1,22 @@
 import { loadConstraints } from "../../core/constraintLoader.js";
-export async function runListCommand() {
-    const constraints = await loadConstraints();
+import { loadProjectConfig } from "../../core/projectConfig.js";
+export async function runListCommand(options = {}) {
+    const cwd = options.cwd ?? process.cwd();
+    const projectConfig = await loadProjectConfig({ cwd, required: false });
+    const constraints = await loadConstraints({
+        constraintsDir: options.constraintsDir,
+        constraintOverrides: projectConfig?.constraintOverrides,
+    });
     if (constraints.length === 0) {
         console.log("No constraints found.");
         return;
     }
-    const header = ["order", "constraint_id", "name"];
+    const header = ["order", "constraint_id", "name", "status"];
     const rows = constraints.map((constraint) => [
         String(constraint.meta.enforcementOrder),
         constraint.meta.id,
         constraint.meta.name,
+        formatStatus(constraint.meta),
     ]);
     const widths = header.map((column, index) => Math.max(column.length, ...rows.map((row) => row[index].length)));
     const lines = [];
@@ -24,4 +31,7 @@ function formatRow(cells, widths, uppercase = false) {
         return value.padEnd(widths[index]);
     });
     return padded.join("  ");
+}
+function formatStatus(meta) {
+    return meta.isActive ? "active" : "disabled";
 }

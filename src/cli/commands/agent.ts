@@ -287,7 +287,7 @@ function buildInstructionText({
       if (disabledMatch) {
         throw createError(
           "CONFIG_ERROR",
-          `Constraint '${explicitConstraintId}' is disabled by configuration.`,
+          `Constraint '${explicitConstraintId}' is disabled.`,
         );
       }
       throw createError(

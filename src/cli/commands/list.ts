@@ -54,8 +54,5 @@ function formatRow(
 }
 
 function formatStatus(meta: ConstraintMeta): string {
-  if (!meta.optional) {
-    return "active";
-  }
-  return meta.isActive ? "optional-enabled" : "optional-disabled";
+  return meta.isActive ? "active" : "disabled";
 }

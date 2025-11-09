@@ -13,7 +13,7 @@ const DIRECTIVE_BLOCK = [
     "6. You MUST report all detected violations; do not omit them or attempt to fix them.",
 ];
 export function assemblePrompt(options) {
-    const { runId, instructionText, agentName, promptPreamble, postscript, legacyFormat = false, } = options;
+    const { runId, instructionText, agentName, promptPreamble, postscript, legacyFormat = false, disabledConstraints = [], } = options;
     const instructionFormatVersion = options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
     const generatedAt = (options.generatedAt ?? new Date()).toISOString();
     const lines = [];
@@ -28,6 +28,9 @@ export function assemblePrompt(options) {
             lines.push(`agent_model: ${options.agentModel}`);
         }
         lines.push(`token_estimate_method: ${TOKEN_ESTIMATE_METHOD}`);
+        lines.push(disabledConstraints.length > 0
+            ? `disabled_constraints: [${disabledConstraints.join(", ")}]`
+            : "disabled_constraints: []");
         lines.push("");
     }
     if (promptPreamble) {

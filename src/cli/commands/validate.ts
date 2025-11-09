@@ -69,7 +69,7 @@ export async function runValidateCommand(
       if (disabledMatch) {
         throw createError(
           "CONFIG_ERROR",
-          `Constraint '${targetId}' is disabled by configuration.`,
+          `Constraint '${targetId}' is disabled.`,
         );
       }
       throw createError(

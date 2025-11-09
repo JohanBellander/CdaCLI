@@ -48,7 +48,7 @@ export async function runInitCommand(args = [], options = {}) {
         throw createError("CONFIG_ERROR", "cda.config.json already exists in this directory.");
     }
     const constraints = await loadConstraints();
-    const configPayload = JSON.stringify({ version: 1, constraints: "builtin" }, null, 2);
+    const configPayload = JSON.stringify({ version: 1, constraints: "builtin", constraint_overrides: {} }, null, 2);
     await mkdir(cwd, { recursive: true });
     await writeFile(configPath, `${configPayload}\n`, "utf8");
     const guideContent = buildCdaGuide(constraints);

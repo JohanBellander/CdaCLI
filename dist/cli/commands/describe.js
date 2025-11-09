@@ -1,5 +1,6 @@
 import { loadConstraints } from "../../core/constraintLoader.js";
 import { createError } from "../../core/errors.js";
+import { loadProjectConfig } from "../../core/projectConfig.js";
 const SECTIONS_TO_PRINT = [
     "PURPOSE",
     "VALIDATION ALGORITHM (PSEUDOCODE)",
@@ -8,16 +9,24 @@ const SECTIONS_TO_PRINT = [
     "SUCCESS CRITERIA (MUST)",
     "POST-FIX ASSERTIONS",
 ];
-export async function runDescribeCommand(args = []) {
+export async function runDescribeCommand(args = [], options = {}) {
     if (args.length === 0 || args.includes("-h") || args.includes("--help")) {
         printDescribeHelp();
         return;
     }
     const [constraintId] = args;
-    const constraints = await loadConstraints();
+    const cwd = options.cwd ?? process.cwd();
+    const projectConfig = await loadProjectConfig({ cwd, required: false });
+    const constraints = await loadConstraints({
+        constraintsDir: options.constraintsDir,
+        constraintOverrides: projectConfig?.constraintOverrides,
+    });
     const constraint = constraints.find((doc) => doc.meta.id === constraintId);
     if (!constraint) {
         throw createError("CONFIG_ERROR", `Unknown constraint '${constraintId}'.`);
+    }
+    if (!constraint.meta.isActive) {
+        throw createError("CONFIG_ERROR", `Constraint '${constraintId}' is disabled.`);
     }
     const lines = [];
     lines.push(`CONSTRAINT: ${constraint.meta.name} (${constraint.meta.id})`);
