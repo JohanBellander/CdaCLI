@@ -18,12 +18,21 @@ describe("agentConfig loader", () => {
     });
 
     expect(config).not.toBeNull();
-    expect(config?.defaultAgent).toBe("copilot");
-    expect(Object.keys(config?.agents ?? {})).toEqual(["copilot", "echo"]);
+    expect(config?.defaultAgent).toBe("copilot-stdin");
+    expect(Object.keys(config?.agents ?? {})).toEqual([
+      "copilot",
+      "copilot-stdin",
+      "echo",
+    ]);
 
     const copilot = config!.agents.copilot;
     expect(copilot.command).toBe("copilot");
-    expect(copilot.args).toEqual(["--model", "gpt-5", "--allow-all-tools"]);
+    expect(copilot.args).toEqual([
+      "--model",
+      "gpt-5",
+      "--allow-all-tools",
+      "--allow-all-paths",
+    ]);
     expect(copilot.mode).toBe("arg");
     expect(copilot.promptArgFlag).toBe("-p");
     expect(copilot.promptFileArg).toBe("--prompt-file");
@@ -31,6 +40,20 @@ describe("agentConfig loader", () => {
     expect(copilot.postscript).toMatch(/Return ONLY/i);
     expect(copilot.maxLength).toBe(20000);
     expect(copilot.agentModel).toBe("gpt-5");
+
+    const copilotStdin = config!.agents["copilot-stdin"];
+    expect(copilotStdin.command).toBe("copilot");
+    expect(copilotStdin.args).toEqual([
+      "--model",
+      "gpt-5",
+      "--allow-all-tools",
+      "--allow-all-paths",
+    ]);
+    expect(copilotStdin.mode).toBe("stdin");
+    expect(copilotStdin.promptPreamble).toMatch(/verification agent/i);
+    expect(copilotStdin.postscript).toMatch(/Return ONLY/i);
+    expect(copilotStdin.maxLength).toBeUndefined();
+    expect(copilotStdin.agentModel).toBe("gpt-5");
   });
 
   it("returns null when file missing and required=false", async () => {
@@ -93,10 +116,32 @@ describe("resolveAgent", () => {
       cwd: path.join(fixturesDir, "valid"),
     });
     const resolved = resolveAgent(config!);
-    expect(resolved.agentName).toBe("copilot");
+    expect(resolved.agentName).toBe("copilot-stdin");
   });
 
-  it("falls back to copilot when default missing but agent exists", () => {
+  it("falls back to copilot-stdin when default missing but stdin agent present", () => {
+    const config = {
+      path: "virtual",
+      agents: {
+        "copilot-stdin": {
+          name: "copilot-stdin",
+          command: "gh",
+          args: [],
+          mode: "stdin" as const,
+        },
+        copilot: {
+          name: "copilot",
+          command: "gh",
+          args: [],
+          mode: "arg" as const,
+        },
+      },
+    };
+    const resolved = resolveAgent(config as any);
+    expect(resolved.agentName).toBe("copilot-stdin");
+  });
+
+  it("falls back to copilot when default and stdin variant missing", () => {
     const config = {
       path: "virtual",
       agents: {
@@ -108,7 +153,7 @@ describe("resolveAgent", () => {
         },
       },
     };
-    const resolved = resolveAgent(config);
+    const resolved = resolveAgent(config as any);
     expect(resolved.agentName).toBe("copilot");
   });
 

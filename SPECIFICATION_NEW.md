@@ -55,9 +55,9 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
   - constraint summary table with intent statements,
   - per-constraint detection/remediation guidance (rendered sections from constraint markdown),
   - command usage sequencing, detection/remediation protocol, reporting templates, outcome actions, escalation guidance, token management, forbidden shortcuts, version linkage, validation checklist (10 MUST items), future enhancements (informative), and a mandatory reminder that all instructions are binding.
-- Unless `--no-agents` is passed and no prior config exists, scaffolds `cda.agents.json` with three agents:
-  - `copilot` (arg mode) → command `copilot`, args `--model gpt-5 --allow-all-tools --allow-all-paths`, `prompt_arg_flag: -p`, detection-only preamble/postscript, `max_length: 8000`, `agent_model: gpt-5` (the CLI falls back to `--prompt-file` automatically when inline prompts exceed Windows limits).
-  - `copilot-stdin` (stdin mode) → same command/args without max length, streaming prompt through stdin.
+- Unless `--no-agents` is passed and no prior config exists, scaffolds `cda.agents.json` with three agents (defaulting to the stdin variant):
+  - `copilot-stdin` (default, stdin mode) → command `copilot`, args `--model gpt-5 --allow-all-tools --allow-all-paths`, detection-only preamble/postscript, `agent_model: gpt-5`.
+  - `copilot` (arg mode) → same command/args, `prompt_arg_flag: -p`, detection-only preamble/postscript, `max_length: 8000`, `agent_model: gpt-5` (the CLI falls back to `--prompt-file` automatically when inline prompts exceed Windows limits).
   - `echo` (stdin mode) → diagnostic agent that echoes prompts.
 - `cda init` aborts if `cda.config.json` already exists; it never overwrites existing `cda.agents.json`.
 - Optional constraints are annotated `(Optional)` in the generated `CDA.md`. They are omitted entirely when disabled via `constraint_overrides`.
@@ -86,7 +86,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 ### 7.5 `cda agent [options]`
 - Options: `--agent <name>`, `--constraint <id>`, `--sequential`, `--dry-run`, `--no-exec`, `--output <path>`, `--legacy-format`, `--help`.
 - Always assembles instruction text via `buildBatchInstructionPackage` or `buildSingleInstructionPackage`. Legacy flag passes through to formatter/assembler.
-- Attempts to load `cda.agents.json` when present. Resolution order: explicit `--agent`, config `default`, fallback `copilot` entry.
+- Attempts to load `cda.agents.json` when present. Resolution order: explicit `--agent`, config `default`, fallback `copilot-stdin` entry, then `copilot`.
 - When config absent, emits a warning and prints the prompt without spawning any agent process, regardless of `--dry-run`.
 - Prompt assembly (`assemblePrompt`):
   - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, `token_estimate_method`, and `disabled_constraints: []` (list of ids skipped by configuration).

@@ -17,7 +17,7 @@ interface ParsedInitArgs {
 }
 
 const DEFAULT_AGENT_CONFIG = {
-  default: "copilot",
+  default: "copilot-stdin",
   agents: {
     copilot: {
       command: "copilot",

@@ -51,7 +51,7 @@ describe("cda agent optional constraint logging (exec mode)", () => {
     });
 
     expect(errorSpy).toHaveBeenCalledWith(
-      "Constraint 'optional-enabled' skipped (disabled by configuration).",
+      "Constraint 'optional-enabled' disabled via configuration.",
     );
     expect(spawnMock).toHaveBeenCalled();
   });

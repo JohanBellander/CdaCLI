@@ -30,7 +30,9 @@ describe("cda list optional constraint UX", () => {
       constraintsDir: OPTIONAL_CONSTRAINTS,
     });
 
-    const output = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const output = logSpy.mock.calls
+      .map((call: unknown[]) => String(call[0]))
+      .join("\n");
     expect(output).toContain("STATUS");
     expect(output).toContain("optional-enabled");
     expect(output).toContain("optional-disabled");
@@ -45,6 +47,6 @@ describe("cda describe optional guardrails", () => {
         cwd: OPTIONAL_PROJECT,
         constraintsDir: OPTIONAL_CONSTRAINTS,
       }),
-    ).rejects.toThrow(/disabled by configuration/);
+    ).rejects.toThrow(/is disabled/);
   });
 });

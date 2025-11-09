@@ -32,6 +32,12 @@ let logSpy: ReturnType<typeof vi.spyOn>;
 let warnSpy: ReturnType<typeof vi.spyOn>;
 let errorSpy: ReturnType<typeof vi.spyOn>;
 
+function collectLogs(): string {
+  return logSpy.mock.calls
+    .map((args: unknown[]) => String(args[0]))
+    .join("\n");
+}
+
 beforeEach(() => {
   logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -60,18 +66,14 @@ describe("cda agent --dry-run", () => {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
-    if (process.platform === "win32") {
-      expect(outputs).toMatch(/AGENT COMMAND: copilot --model gpt-5 --allow-all-tools --prompt-file/);
-    } else {
-      expect(outputs).toMatch(
-        /AGENT COMMAND: copilot --model gpt-5 --allow-all-tools -p "/,
-      );
-    }
+    const outputs = collectLogs();
+    expect(outputs).toMatch(
+      /AGENT COMMAND: copilot --model gpt-5 --allow-all-tools --allow-all-paths/,
+    );
     expect(outputs).toMatch(
       /AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION/,
     );
-    expect(outputs).toMatch(/agent_name: copilot/);
+    expect(outputs).toMatch(/agent_name: copilot-stdin/);
     expect(outputs).toMatch(/token_estimate_method: heuristic_chars_div_4/);
     expect(outputs).toMatch(/disabled_constraints: \[\]/);
     expect(outputs).toMatch(/AGENT DIRECTIVE:/);
@@ -93,7 +95,7 @@ describe("cda agent --dry-run", () => {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const outputs = collectLogs();
     expect(outputs).not.toMatch(
       /AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION/,
     );
@@ -106,7 +108,7 @@ describe("cda agent --dry-run", () => {
       { cwd: path.join(fixturesDir, "valid") },
     );
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const outputs = collectLogs();
     expect(outputs).toMatch(/mode: single/);
     expect(outputs).toMatch(/domain-no-side-effects/);
   });
@@ -116,7 +118,7 @@ describe("cda agent --dry-run", () => {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const outputs = collectLogs();
     expect(outputs).toMatch(/mode: single/);
     expect(outputs).toMatch(/domain-no-imports-from-app-or-infra/);
   });
@@ -126,7 +128,7 @@ describe("cda agent --dry-run", () => {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const outputs = collectLogs();
     expect(outputs).toMatch(/AGENT COMMAND: echo/);
     expect(outputs).toMatch(/agent_name: echo/);
   });
@@ -145,11 +147,11 @@ describe("cda agent --dry-run", () => {
     process.env.CDA_PLATFORM_OVERRIDE = "win32";
     process.env.CDA_WINDOWS_ARG_LIMIT = "100";
 
-    await runAgentCommand(["--dry-run"], {
+    await runAgentCommand(["--dry-run", "--agent", "copilot"], {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const outputs = collectLogs();
     expect(outputs).toMatch(/--prompt-file/);
   });
 });
@@ -162,9 +164,10 @@ describe("optional constraint filtering (dry-run)", () => {
     });
 
     expect(logSpy).toHaveBeenCalledWith(
-      "Constraint 'optional-enabled' skipped (disabled by configuration).",
+      "Constraint 'optional-enabled' disabled via configuration.",
     );
-    const outputs = logSpy.mock.calls.map((call) => call[0]).join("\n");
+
+    const outputs = collectLogs();
     expect(outputs).toMatch(/disabled_constraints: \[optional-enabled]/);
   });
 

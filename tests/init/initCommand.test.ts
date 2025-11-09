@@ -45,7 +45,7 @@ describe("cda init command", () => {
       "utf8",
     );
     const agentConfig = JSON.parse(agentConfigRaw);
-    expect(agentConfig.default).toBe("copilot");
+  expect(agentConfig.default).toBe("copilot-stdin");
     expect(agentConfig.agents.echo).toBeDefined();
   });
 

@@ -101,13 +101,20 @@ export function resolveAgent(
     return { agentName: config.defaultAgent, definition: defaultAgent };
   }
 
+  if (config.agents["copilot-stdin"]) {
+    return {
+      agentName: "copilot-stdin",
+      definition: config.agents["copilot-stdin"],
+    };
+  }
+
   if (config.agents.copilot) {
     return { agentName: "copilot", definition: config.agents.copilot };
   }
 
   throw createError(
     "CONFIG_ERROR",
-    "No default agent configured and 'copilot' agent not available. Specify --agent <name>.",
+    "No default agent configured and neither 'copilot-stdin' nor 'copilot' agents are available. Specify --agent <name>.",
   );
 }
 

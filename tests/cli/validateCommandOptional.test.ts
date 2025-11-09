@@ -34,9 +34,11 @@ describe("runValidateCommand optional constraint handling", () => {
     });
 
     expect(errorSpy).toHaveBeenCalledWith(
-      "Constraint 'optional-enabled' skipped (disabled by configuration).",
+      "Constraint 'optional-enabled' disabled via configuration.",
     );
-    const output = logSpy.mock.calls.map((call) => call[0]).join("\n");
+    const output = logSpy.mock.calls
+      .map((call: unknown[]) => String(call[0]))
+      .join("\n");
     expect(output).toContain("optional-disabled");
     expect(output).not.toContain("optional-enabled");
   });
@@ -56,6 +58,6 @@ describe("runValidateCommand optional constraint handling", () => {
         cwd: SOME_DISABLED_PROJECT,
         constraintsDir: OPTIONAL_CONSTRAINTS,
       }),
-    ).rejects.toThrow(/disabled by configuration/);
+    ).rejects.toThrow(/is disabled/);
   });
 });

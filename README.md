@@ -11,7 +11,7 @@ cda agent [--constraint <id> | --sequential] [--agent <name>] [--dry-run] [--no-
 ```
 
 Flags:
-- `--agent <name>`: Select an agent defined in `cda.agents.json`. Resolution order: explicit `--agent`, then the `default` field, then `copilot` if present. Unknown names raise `CONFIG_ERROR`.
+- `--agent <name>`: Select an agent defined in `cda.agents.json`. Resolution order: explicit `--agent`, then the `default` field, then `copilot-stdin`, then `copilot` if present. Unknown names raise `CONFIG_ERROR`.
 - `--constraint <id>` / `--sequential`: Single-constraint modes (mirrors `cda validate`). Omit both for batch prompts.
 - `--dry-run`: Print the prompt and intended command without executing external tooling.
 - `--no-exec`: Print only the prompt body (implies `--dry-run` and suppresses the command preview).
@@ -32,17 +32,25 @@ Dry-run output (and the prompt sent to agents) always follows this order:
 `cda init` scaffolds a default config unless `--no-agents` is provided. Copilot + Echo agents are included:
 ```json
 {
-  "default": "copilot",
+  "default": "copilot-stdin",
   "agents": {
     "copilot": {
       "command": "copilot",
-      "args": ["--model", "gpt-5", "--allow-all-tools"],
+      "args": ["--model", "gpt-5", "--allow-all-tools", "--allow-all-paths"],
       "mode": "arg",
       "prompt_arg_flag": "-p",
       "prompt_file_arg": "--prompt-file",
       "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
       "max_length": 20000,
+      "agent_model": "gpt-5"
+    },
+    "copilot-stdin": {
+      "command": "copilot",
+      "args": ["--model", "gpt-5", "--allow-all-tools", "--allow-all-paths"],
+      "mode": "stdin",
+      "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
+      "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
       "agent_model": "gpt-5"
     },
     "echo": {
@@ -55,12 +63,12 @@ Dry-run output (and the prompt sent to agents) always follows this order:
   }
 }
 ```
-Echo simply prints the prompt—useful for verifying formatting or debugging pipelines.
+`copilot-stdin` streams prompts directly to the Copilot CLI and serves as the default. `copilot` retains inline-argument mode for teams that need it, and `echo` simply prints the prompt—useful for verifying formatting or debugging pipelines.
 
 ### Notes
 - If `cda.agents.json` is missing, `cda agent --dry-run` still emits a prompt (attempting to execute prints a warning and exits 0).
 - Execution supports two modes: `stdin` (prompt piped via stdin, recommended for Windows) and `arg` (prompt passed via `-p` flag).
-- **Windows Command Line Limits**: The `arg` mode can fail with long prompts due to ~8K command-line limits. CDA displays a warning when prompts exceed 7000 characters. **Solution**: Use `copilot-stdin` agent (automatically created by `cda init`) or reduce constraints with `--constraint <id>`.
+- **Windows Command Line Limits**: The `arg` mode can fail with long prompts due to ~8K command-line limits. CDA displays a warning when prompts exceed 7000 characters. The default `copilot-stdin` agent bypasses this limit by streaming prompts; switch to the arg-mode `copilot` agent only when inline arguments are required.
 - On Windows, when an `arg`-mode prompt would exceed the ~8K command-line limit, CDA writes the prompt to a temp file and swaps in `--prompt-file <path>` (configurable via `prompt_file_arg`) so the Copilot CLI reads from disk instead of inline args.
 - Exit codes reflect CDA errors (config, spawn issues, etc.). The agent's stdout/stderr are streamed directly but **not** interpreted by CDA.
 - `--allow-all-tools` (included in the Copilot example) grants the Copilot CLI broader permissions—enable only in trusted environments and document the risk acceptance.
@@ -68,7 +76,7 @@ Echo simply prints the prompt—useful for verifying formatting or debugging pip
 
 ### Copilot CLI Setup
 
-> **Windows Users**: If you encounter "No specific task provided" or argument length errors, switch to stdin mode by changing the `default` agent in `cda.agents.json` to `"copilot-stdin"`. This bypasses Windows command-line length limits and reliably delivers long prompts. The stdin mode is automatically included when running `cda init`.
+> **Windows Users**: `cda init` sets `copilot-stdin` as the default agent so prompts stream over stdin without hitting command-line length limits. Switch to the arg-mode `copilot` agent only if you specifically need inline argument delivery and confirm prompts remain under the limit.
 
 1. **Install the standalone `copilot` binary** using GitHub's official instructions (see the [Copilot CLI docs](https://docs.github.com/en/copilot/github-copilot-chat/copilot-cli)) or a package manager:
    - macOS/Linux (Homebrew): `brew install github-copilot-cli`

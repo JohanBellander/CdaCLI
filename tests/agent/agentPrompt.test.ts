@@ -108,24 +108,23 @@ describe("agent command prompt behaviour", () => {
     expect(spawnMock).not.toHaveBeenCalled();
   });
 
-  it("spawns external command in arg mode when not in dry-run/no-exec", async () => {
+  it("streams prompt over stdin for default agent when executing", async () => {
     spawnMock.mockImplementation(() => createSpawnSuccess());
     await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
     const [command, args, options] = spawnMock.mock.calls[0]!;
     expect(command).toBe("copilot");
-    expect(args).toEqual(expect.arrayContaining(["--model", "gpt-5", "--allow-all-tools"]));
-    if (process.platform === "win32") {
-      expect(args).toEqual(
-        expect.arrayContaining(["--prompt-file", expect.stringMatching(/cda-agent-prompt/)]),
-      );
-    } else {
-      expect(args).toEqual(
-        expect.arrayContaining(["-p", expect.any(String)]),
-      );
-    }
-    expect(options).toEqual({ stdio: ["ignore", "inherit", "inherit"] });
+    expect(args).toEqual([
+      "--model",
+      "gpt-5",
+      "--allow-all-tools",
+      "--allow-all-paths",
+    ]);
+    expect(options).toEqual({ stdio: ["pipe", "inherit", "inherit"] });
     const child = spawnMock.mock.results[0]!.value as any;
-    expect(child.__writeSpy).not.toHaveBeenCalled();
+    expect(child.__writeSpy).toHaveBeenCalledWith(
+      expect.stringContaining("AGENT VERIFICATION MODE"),
+    );
+    expect(child.__endSpy).toHaveBeenCalled();
   });
 
   it("uses prompt file fallback on Windows when inline args would exceed limit", async () => {
@@ -133,7 +132,9 @@ describe("agent command prompt behaviour", () => {
     process.env.CDA_WINDOWS_ARG_LIMIT = "100";
     spawnMock.mockImplementation(() => createSpawnSuccess());
 
-    await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
+    await runAgentCommand(["--agent", "copilot"], {
+      cwd: path.join(fixturesDir, "valid"),
+    });
 
     expect(spawnMock).toHaveBeenCalledWith(
       "copilot",
@@ -150,7 +151,9 @@ describe("agent command prompt behaviour", () => {
       .mockImplementationOnce(() => createSpawnEnoent())
       .mockImplementationOnce(() => createSpawnSuccess());
 
-    await runAgentCommand([], { cwd: path.join(fixturesDir, "valid") });
+    await runAgentCommand(["--agent", "copilot"], {
+      cwd: path.join(fixturesDir, "valid"),
+    });
 
     expect(spawnMock).toHaveBeenNthCalledWith(
       1,
