@@ -334,13 +334,6 @@ function applyConstraintOverrides(
       );
     }
 
-    if (!target.meta.optional && override.enabled === false) {
-      throw createError(
-        "CONFIG_ERROR",
-        `Constraint '${constraintId}' is mandatory and cannot be disabled.`,
-      );
-    }
-
     target.meta.isActive = override.enabled;
   }
 

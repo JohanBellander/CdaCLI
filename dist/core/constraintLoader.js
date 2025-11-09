@@ -31,12 +31,26 @@ export async function loadConstraints(options = {}) {
         throw bundleError("global", "No constraint markdown files found.");
     }
     const documents = await Promise.all(files.map((filePath) => parseConstraintFile(filePath)));
-    return documents.sort((a, b) => {
+    const merged = applyConstraintOverrides(documents, options.constraintOverrides);
+    return merged.sort((a, b) => {
         if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
             return a.meta.id.localeCompare(b.meta.id);
         }
         return a.meta.enforcementOrder - b.meta.enforcementOrder;
     });
+}
+export function partitionConstraints(documents) {
+    const active = [];
+    const disabled = [];
+    for (const doc of documents) {
+        if (doc.meta.isActive) {
+            active.push(doc);
+        }
+        else {
+            disabled.push(doc);
+        }
+    }
+    return { active, disabled };
 }
 async function parseConstraintFile(filePath) {
     const rawContent = await readFile(filePath, "utf8");
@@ -46,7 +60,8 @@ async function parseConstraintFile(filePath) {
     const name = asString(frontmatter.name, "name", filePath, id);
     const category = asString(frontmatter.category, "category", filePath, id);
     const severity = asString(frontmatter.severity, "severity", filePath, id);
-    const enabled = asBoolean(frontmatter.enabled, "enabled", filePath, id);
+    const enabled = asBoolean(frontmatter.enabled, "enabled", filePath, id, true);
+    const optional = asBoolean(frontmatter.optional, "optional", filePath, id, false);
     const version = asNumber(frontmatter.version, "version", filePath, id);
     const sections = extractSections(body, id, filePath);
     const headerFields = parseKeyValueBlock(sections.HEADER, id, filePath, "HEADER");
@@ -70,6 +85,8 @@ async function parseConstraintFile(filePath) {
         category,
         severity: "error",
         enabled,
+        optional,
+        isActive: enabled,
         version,
         enforcementOrder: header.enforcementOrder,
     };
@@ -170,9 +187,29 @@ function asString(value, key, filePath, constraintId = "global") {
     }
     throw bundleError(constraintId, `Expected string '${key}' in ${filePath}.`);
 }
-function asBoolean(value, key, filePath, constraintId = "global") {
+function applyConstraintOverrides(documents, overrides) {
+    if (!overrides || Object.keys(overrides).length === 0) {
+        return documents;
+    }
+    const lookup = new Map(documents.map((doc) => [doc.meta.id, doc]));
+    for (const [constraintId, override] of Object.entries(overrides)) {
+        const target = lookup.get(constraintId);
+        if (!target) {
+            throw createError("CONFIG_ERROR", `constraint_overrides references unknown constraint '${constraintId}'.`);
+        }
+        if (typeof override.enabled !== "boolean") {
+            throw createError("CONFIG_ERROR", `constraint_overrides.${constraintId}.enabled must be a boolean.`);
+        }
+        target.meta.isActive = override.enabled;
+    }
+    return documents;
+}
+function asBoolean(value, key, filePath, constraintId = "global", defaultValue) {
     if (typeof value === "boolean") {
         return value;
+    }
+    if (value === undefined && defaultValue !== undefined) {
+        return defaultValue;
     }
     throw bundleError(constraintId, `Expected boolean '${key}' in ${filePath}.`);
 }

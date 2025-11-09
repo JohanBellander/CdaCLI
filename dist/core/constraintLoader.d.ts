@@ -1,4 +1,4 @@
-import { ConstraintMeta } from "./types.js";
+import { ConstraintMeta, ConstraintOverrides } from "./types.js";
 export declare const CONSTRAINT_SECTION_ORDER: readonly ["HEADER", "PURPOSE", "SCOPE", "DEFINITIONS", "FORBIDDEN", "ALLOWED", "REQUIRED DATA COLLECTION", "VALIDATION ALGORITHM (PSEUDOCODE)", "REPORTING CONTRACT", "FIX SEQUENCE (STRICT)", "REVALIDATION LOOP", "SUCCESS CRITERIA (MUST)", "FAILURE HANDLING", "COMMON MISTAKES", "POST-FIX ASSERTIONS", "FINAL REPORT SAMPLE"];
 type SectionName = (typeof CONSTRAINT_SECTION_ORDER)[number];
 export type ConstraintSections = Record<SectionName, string>;
@@ -15,6 +15,11 @@ export interface ConstraintDocument {
 }
 export interface LoadConstraintsOptions {
     constraintsDir?: string;
+    constraintOverrides?: ConstraintOverrides;
 }
 export declare function loadConstraints(options?: LoadConstraintsOptions): Promise<ConstraintDocument[]>;
+export declare function partitionConstraints(documents: ConstraintDocument[]): {
+    active: ConstraintDocument[];
+    disabled: ConstraintDocument[];
+};
 export {};

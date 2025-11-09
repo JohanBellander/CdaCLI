@@ -140,14 +140,16 @@ describe("constraintLoader", () => {
     expect(activated?.meta.isActive).toBe(true);
   });
 
-  it("rejects overrides that attempt to disable mandatory constraints", async () => {
-    await expect(
-      loadConstraints({
-        constraintsDir: OPTIONAL_DIR,
-        constraintOverrides: {
-          "mandatory-default": { enabled: false },
-        },
-      }),
-    ).rejects.toThrow(/mandatory and cannot be disabled/);
+  it("allows disabling any constraint via overrides", async () => {
+    const merged = await loadConstraints({
+      constraintsDir: OPTIONAL_DIR,
+      constraintOverrides: {
+        "mandatory-default": { enabled: false },
+      },
+    });
+    const disabled = merged.find(
+      (doc) => doc.meta.id === "mandatory-default",
+    );
+    expect(disabled?.meta.isActive).toBe(false);
   });
 });
