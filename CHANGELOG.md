@@ -3,6 +3,13 @@
 ## Unreleased
 - _No changes yet._
 
+## 0.5.1 — 2025-11-10
+- Introduced the consolidated `cda run` command with validation/plan/exec modes, flag compatibility checks, and audit placeholder handling (CDATool-jg6, CDATool-x3j).
+- Added legacy wrappers for `cda validate`/`cda agent` that reroute through `cda run`, emit v0.6.0 deprecation warnings, and preserve CLI help output (CDATool-b8w).
+- Updated README, CDA.md scaffolding, and workflow guidance to highlight the new entry point, document the legacy mapping, and call out the removal timeline (CDATool-5dd).
+- Expanded Vitest coverage to exercise `cda run` in default, plan, and exec modes (unit + integration) and tightened flag-conflict assertions (CDATool-1p8).
+- Bumped the package to v0.5.1 and recorded the release per bd tracking (CDATool-9hu).
+
 ## 0.4.1 — 2025-11-09
 - Added three architecture pattern constraints: `mvc-layer-separation`, `mvp-presenter-boundaries`, and `mvvm-binding-integrity`, extending the bundled set to eleven enforced rules.
 - Updated specs, documentation, and tests to reflect the expanded constraint list and enforcement order.

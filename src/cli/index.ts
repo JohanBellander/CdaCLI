@@ -5,10 +5,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { runInitCommand } from "./commands/init.js";
-import { runValidateCommand } from "./commands/validate.js";
 import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
-import { runAgentCommand } from "./commands/agent.js";
+import { runRunCommand } from "./commands/run.js";
+import {
+  runLegacyAgentCommand,
+  runLegacyValidateCommand,
+} from "./legacyWrappers.js";
 import { createError, getExitCode, isCdaError } from "../core/errors.js";
 
 const require = createRequire(import.meta.url);
@@ -20,8 +23,9 @@ const COMMANDS: Record<string, CommandHandler> = {
   init: async (args) => runInitCommand(args),
   list: async () => runListCommand(),
   describe: async (args) => runDescribeCommand(args),
-  validate: async (args) => runValidateCommand(args),
-  agent: async (args) => runAgentCommand(args),
+  run: async (args) => runRunCommand(args),
+  validate: async (args) => runLegacyValidateCommand(args),
+  agent: async (args) => runLegacyAgentCommand(args),
 };
 
 export async function run(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -60,6 +64,7 @@ function printHelp(): void {
   console.log("  init       Initialize CDA config and generate CDA.md");
   console.log("  list       List bundled constraints");
   console.log("  describe   Show full enforcement protocol for a constraint");
+  console.log("  run        Consolidated validation/plan/exec workflow");
   console.log("  validate   Emit instruction packages");
   console.log("  agent      Assemble agent prompt and optionally invoke external CLI");
   console.log("");

@@ -104,7 +104,7 @@ export async function runAgentCommand(
     agentName = resolved.agentName;
   } else {
     missingConfigWarning =
-      "WARNING: No cda.agents.json found. Use --dry-run to inspect prompts or run `cda validate`.";
+      "WARNING: No cda.agents.json found. Use `cda run --plan` to inspect prompts or add an agent configuration before executing.";
   }
 
   const disabledConstraintIds = disabled.map((doc) => doc.meta.id);
@@ -476,7 +476,7 @@ function buildSpawnGuidance(
   const verification =
     "Verify that the Copilot CLI is installed and on PATH (`where copilot` on Windows, `which copilot` on macOS/Linux), or set the absolute path in cda.agents.json.";
   const fallback =
-    "Until it is installed, you can run `cda agent --agent echo --dry-run` or configure an agent that uses `mode: \"stdin\"` to stream prompts.";
+    "Until it is installed, you can run `cda run --plan --agent echo` or configure an agent that uses `mode: \"stdin\"` to stream prompts.";
   return `Unable to spawn '${command}'. Tried commands: ${attempts}. ${verification} ${fallback}`;
 }
 

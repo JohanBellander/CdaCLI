@@ -1,35 +1,48 @@
 # Constraint-Driven Architecture CLI (CDA)
-## Agent Verification Command (MVP)
+## Unified `cda run` Workflow (0.5.0+)
 
-The `cda agent` command assembles an agent-ready verification prompt (wrapping the standard instruction package) and can optionally invoke an external AI CLI (e.g. GitHub Copilot CLI) via stdin.
+The `cda run` command is the single entry point for validation, prompt planning, and execution. It replaces the separate `cda validate` and `cda agent` flows while preserving all existing flags (`--constraint`, `--sequential`, `--agent`, `--legacy-format`, etc.).
 
 ### Usage
 
 ```
-cda agent [--constraint <id> | --sequential] [--agent <name>] [--dry-run] [--no-exec]
-          [--output <file>] [--legacy-format]
+cda run [--plan|--exec|--audit] [--constraint <id> | --sequential]
+        [--agent <name>] [--output <file>] [--legacy-format]
 ```
 
-Flags:
-- `--agent <name>`: Select an agent defined in `cda.agents.json`. Resolution order: explicit `--agent`, then the `default` field, then `copilot-stdin`, then `copilot` if present. Unknown names raise `CONFIG_ERROR`.
-- `--constraint <id>` / `--sequential`: Single-constraint modes (mirrors `cda validate`). Omit both for batch prompts.
-- `--dry-run`: Print the prompt and intended command without executing external tooling.
-- `--no-exec`: Print only the prompt body (implies `--dry-run` and suppresses the command preview).
-- `--output <file>`: Overwrite the specified file with the assembled prompt.
-- `--legacy-format`: Suppress the agent wrapper banner, directive block, and metrics—output matches the pre-Spec-Update-1 instruction package.
+Modes:
+- *(default)* – Emit the standard instruction package (legacy `cda validate`).
+- `--plan` – Assemble the full agent prompt without spawning external tooling (legacy `cda agent --dry-run` / `--no-exec`).
+- `--exec` – Assemble the prompt and invoke the configured external CLI (legacy `cda agent`).
+- `--audit` – Reserved for future auditor profiles (flag accepted, not yet implemented).
+
+Key flags:
+- `--constraint <id>` / `--sequential` – Single-constraint modes. Works across all modes.
+- `--agent <name>` – Override the default `cda.agents.json` entry for `--plan`/`--exec`.
+- `--output <file>` – Persist the assembled prompt before printing/executing.
+- `--legacy-format` – Emit the pre-Spec-Update-1 layout (no banner/directive/metrics).
+
+Legacy wrappers (`cda validate` and `cda agent`) now forward arguments to `cda run` and emit deprecation warnings. They will be removed in **v0.6.0**.
+
+| Legacy command                         | Replacement                    | Removal |
+|----------------------------------------|--------------------------------|---------|
+| `cda validate [flags]`                 | `cda run [flags]`              | 0.6.0   |
+| `cda agent [flags]`                    | `cda run --exec [flags]`       | 0.6.0   |
+| `cda agent --dry-run/--no-exec [flags]`| `cda run --plan [flags]`       | 0.6.0   |
 
 ### Prompt Structure
-Dry-run output (and the prompt sent to agents) always follows this order:
+`cda run --plan` and `cda run --exec` both emit the same agent prompt:
 1. Banner: `AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION`.
 2. Metadata block: `run_id`, ISO timestamp, `instruction_format_version`, `agent_name`, optional `agent_model`, `token_estimate_method`.
-3. Optional `prompt_preamble` from the agent config.
-4. Raw instruction package emitted by `cda validate` (batch or single) with AGENT ACTION REQUIRED / DO NOT blocks, sentinel markers, and expanded report skeleton.
-5. Directive block reminding the agent to execute detection/remediation steps and populate the EXPECTED AGENT REPORT FORMAT exactly as written.
-6. Optional `postscript` from the agent config.
-7. Metrics: `original_char_count` and `approx_token_length` (simple chars ÷ 4 heuristic). These are checked against any `max_length` defined in the agent config.
+3. Optional `prompt_preamble` from `cda.agents.json`.
+4. Raw instruction package emitted by `cda run` (batch or single constraint) with AGENT ACTION REQUIRED / DO NOT blocks and the expanded report skeleton.
+5. Directive block reminding the agent to execute detection/remediation steps verbatim.
+6. Optional `postscript`.
+7. Metrics: `original_char_count` and `approx_token_length` (chars ÷ 4 heuristic). CDA enforces any `max_length` in the agent definition.
 
 ### Sample `cda.agents.json`
-`cda init` scaffolds a default config unless `--no-agents` is provided. Copilot + Echo agents are included:
+`cda init` scaffolds a default config unless `--no-agents` is supplied:
+
 ```json
 {
   "default": "copilot-stdin",
@@ -63,52 +76,46 @@ Dry-run output (and the prompt sent to agents) always follows this order:
   }
 }
 ```
-`copilot-stdin` streams prompts directly to the Copilot CLI and serves as the default. `copilot` retains inline-argument mode for teams that need it, and `echo` simply prints the prompt—useful for verifying formatting or debugging pipelines.
+
+`copilot-stdin` streams prompts via stdin and is the default; `copilot` retains inline-argument mode; `echo` is a safe diagnostic target for `cda run --plan`/`--exec`.
 
 ### Notes
-- If `cda.agents.json` is missing, `cda agent --dry-run` still emits a prompt (attempting to execute prints a warning and exits 0).
-- Execution supports two modes: `stdin` (prompt piped via stdin, recommended for Windows) and `arg` (prompt passed via `-p` flag).
-- **Windows Command Line Limits**: The `arg` mode can fail with long prompts due to ~8K command-line limits. CDA displays a warning when prompts exceed 7000 characters. The default `copilot-stdin` agent bypasses this limit by streaming prompts; switch to the arg-mode `copilot` agent only when inline arguments are required.
-- On Windows, when an `arg`-mode prompt would exceed the ~8K command-line limit, CDA writes the prompt to a temp file and swaps in `--prompt-file <path>` (configurable via `prompt_file_arg`) so the Copilot CLI reads from disk instead of inline args.
-- Exit codes reflect CDA errors (config, spawn issues, etc.). The agent's stdout/stderr are streamed directly but **not** interpreted by CDA.
-- `--allow-all-tools` (included in the Copilot example) grants the Copilot CLI broader permissions—enable only in trusted environments and document the risk acceptance.
-- Use `--legacy-format` when the downstream model cannot handle the banner/directive/metrics additions introduced in instruction format version 2.
+- If `cda.agents.json` is missing, `cda run --plan` still emits prompts. `cda run --exec` warns that execution is disabled until an agent definition exists.
+- Execution supports `stdin` and inline-argument (`mode: "arg"`) agents. CDA automatically flips to `--prompt-file` when inline prompts exceed Windows limits.
+- **Windows Command Line Limits**: Inline `arg` mode fails near 8K characters. CDA warns once the prompt eclipses ~7000 characters and suggests switching to stdin mode (`copilot-stdin`) or narrowing the constraint scope.
+- CDA streams stdout/stderr from the external agent but never interprets the response. Exit codes reflect CDA errors only.
+- Use `--legacy-format` when downstream tooling cannot ingest the enriched prompt layout; document the exception in your agent report.
 
-### Copilot CLI Setup
-
-> **Windows Users**: `cda init` sets `copilot-stdin` as the default agent so prompts stream over stdin without hitting command-line length limits. Switch to the arg-mode `copilot` agent only if you specifically need inline argument delivery and confirm prompts remain under the limit.
-
-1. **Install the standalone `copilot` binary** using GitHub's official instructions (see the [Copilot CLI docs](https://docs.github.com/en/copilot/github-copilot-chat/copilot-cli)) or a package manager:
+### External Agent Prerequisites
+1. **Install the standalone `copilot` binary** via the [Copilot CLI docs](https://docs.github.com/en/copilot/github-copilot-chat/copilot-cli) or a package manager:
    - macOS/Linux (Homebrew): `brew install github-copilot-cli`
    - Windows (winget): `winget install GitHub.CopilotCLI`
    - Universal fallback: `npm install -g @githubnext/github-copilot-cli`
 2. **Verify the executable is on `PATH`:**
    - Windows: `where copilot`
    - macOS/Linux: `which copilot`
-   If these commands fail, set `agents.copilot.command` in `cda.agents.json` to the absolute path (for example, `C:\\Users\\me\\AppData\\Local\\Programs\\copilot\\copilot.exe`).
+   If discovery fails, point `agents.<name>.command` to an absolute path such as `C:\Users\me\AppData\Local\Programs\copilot\copilot.exe`.
 3. **Fallback strategies when execution fails:**
-   - Switch to the bundled `echo` agent (`--agent echo`) to inspect prompts safely while diagnosing installation or security constraints (see bead CDATool-z76).
-   - If your Copilot build lacks `--prompt-file`, set the agent `mode` to `"stdin"` so CDA streams the prompt via stdin.
-   - For prompts that must stay inline but exceed command-line limits, lower the constraint scope or temporarily use a stdin-capable agent until your Copilot CLI supports file-based prompts (design context: bead CDATool-2wc).
-4. **Re-run `copilot auth login`** whenever GitHub tokens expire; CDA surfaces spawn errors but does not manage authentication on your behalf.
-5. **CDA automatically retries `copilot.cmd` on Windows** when the shimmed `copilot` command is missing; if it still fails, the CLI prints guidance to run `where`/`which`, set an absolute path, or fall back to `--agent echo` while you repair the installation.
+   - Switch to the bundled `echo` agent (`--agent echo`) so `cda run --plan`/`--exec` can surface prompts without touching Copilot (see bead CDATool-z76).
+   - If the installed Copilot version lacks `--prompt-file`, set the agent `mode` to `"stdin"` so CDA streams prompts via stdin.
+   - For inline prompts that exceed command-line limits, run `cda run --plan --agent copilot-stdin` or temporarily reduce the constraint scope until Copilot supports file-based prompts (design context: bead CDATool-2wc).
+4. **Re-run `copilot auth login`** whenever GitHub tokens expire. CDA surfaces spawn errors but does not manage authentication.
+5. **CDA automatically retries `copilot.cmd` on Windows** when the shimmed `copilot` command is missing. If it still fails, the CLI prints guidance for `where`/`which`, absolute paths, and the `--agent echo` fallback.
 
 # Constraint-Driven Architecture (CDA) CLI
 
-CDA CLI emits deterministic instruction packages that guide AI agents through layered architecture enforcement. The tool never scans your codebase directly--instead it loads bundled constraint markdown files and exposes them through `cda` commands.
+CDA CLI emits deterministic instruction packages that direct AI agents through the layered architecture protocol. The CLI never scans your repository—it loads bundled constraint markdown and outputs authoritative instructions.
 
-> NOTE: `cda validate` emits **instructions only**. Exit code `0` means the instruction package was generated successfully—it does **not** indicate architectural compliance.
+> NOTE: `cda run` (default mode) emits **instructions only**. Exit code `0` indicates the package rendered successfully. It does **not** prove architectural compliance.
 
 ## Requirements
 
 - Node.js 18 or newer
-- npm (for installing dependencies)
+- npm (for dependency management)
 
 ## Installation
 
 ### Windows PowerShell One-Liner
-
-For a fresh clone, install dependencies, build, and link globally:
 
 ```powershell
 git clone https://github.com/JohanBellander/CdaCLI.git; cd CdaCLI; npm install; npm run build; npm link
@@ -124,16 +131,15 @@ npm run build
 npm link   # optional, exposes `cda` globally during development
 ```
 
-`npm run build` compiles TypeScript and copies bundled constraint markdown into `dist/constraints`.
+`npm run build` compiles TypeScript sources and copies constraint markdown into `dist/constraints`.
 
 ## Quick Start
 
-Initialize CDA in the current repository (creates `cda.config.json` + `CDA.md`):
+Bootstrap CDA in the current repository:
 
 ```bash
 cda init
 ```
-`cda init --no-agents` skips creation of `cda.agents.json` (useful for repositories that manage agent configs elsewhere). Re-running `cda init` in an existing directory still aborts to protect `cda.config.json`.
 
 List bundled constraints in enforcement order:
 
@@ -152,10 +158,10 @@ Describe a constraint (verbatim markdown sections):
 cda describe domain-no-imports-from-app-or-infra
 ```
 
-Emit a full batch instruction package (consumed by the AI agent):
+Emit the default batch instruction package (consumed by agents):
 
 ```bash
-cda validate
+cda run
 ```
 
 Example output (truncated):
@@ -176,42 +182,42 @@ run_id: 2025-11-07T12:05:31Z-abc123
 mode: batch
 CONSTRAINT (INSTRUCTION ONLY - NO DETECTION YET): domain-no-imports-from-app-or-infra
 ...
-===== END CDA INSTRUCTIONS =====
-===== BEGIN EXPECTED AGENT REPORT FORMAT (FILL AFTER EXECUTION) =====
-report_kind: cda_validation_result
-analysis_performed: false
-constraint_blocks_received: 11
-success_conditions:
-  all_constraints_evaluated: false
-  no_remaining_violations: false
-self_audit:
-  all_constraints_present: false
-  ...
-===== END EXPECTED AGENT REPORT FORMAT =====
 ```
 
-Run a single constraint in recommended sequence:
+Generate a single-constraint package:
 
 ```bash
-cda validate --constraint file-naming
-# or:
-cda validate --sequential   # alias for the first constraint
+cda run --constraint file-naming
+# or
+cda run --sequential   # alias for the first constraint in enforcement order
 ```
 
-All commands exit with `CONFIG_ERROR` if preconditions are not met (for example, missing `cda.config.json` when running validate/list/describe, or rerunning `init` in a directory that already contains configuration).
+Plan mode (prompt preview + optional file output):
+
+```bash
+cda run --plan --agent copilot-stdin --output prompt.txt
+```
+
+Execute via the configured agent:
+
+```bash
+cda run --exec --agent copilot
+```
+
+All commands exit with `CONFIG_ERROR` if preconditions fail (missing `cda.config.json`, unknown constraint ID, etc.).
 
 ## Agent Workflow
 
-1. Run `cda init` once per repository to generate `CDA.md` (authoritative enforcement protocols) and `cda.config.json`.
-2. Before writing code, run `cda validate` and ensure zero violations.
-3. Implement changes while respecting every constraint simultaneously (layering, purity, file size, exports, naming, nesting).
-4. After changes, rerun `cda validate` (batch or per-constraint sequential mode) and remediate until the agent reports zero violations.
-5. Regenerate `CDA.md` whenever bundled constraints change (rerun `cda init`).
+1. Run `cda init` once per repository to generate `CDA.md` and `cda.config.json`.
+2. Before writing code, run `cda run --plan` and archive the run_id/prompt as evidence of the directives in force.
+3. Implement changes while satisfying all constraints simultaneously (layering, purity, file size, exports, naming, nesting).
+4. After changes, run `cda run --exec` (batch or `--constraint`/`--sequential`) and remediate until the report shows zero violations.
+5. Rerun `cda init` whenever bundled constraints change so the generated `CDA.md` stays authoritative.
 
 ## Error Codes
 
-| Code          | Meaning                                                                           |
-|---------------|-----------------------------------------------------------------------------------|
+| Code           | Meaning                                                                           |
+|----------------|-----------------------------------------------------------------------------------|
 | `CONFIG_ERROR` | Invalid CLI usage (e.g., rerunning `cda init`, unknown constraint id).            |
 | `BUNDLE_ERROR` | Constraint markdown is malformed (missing sections, duplicate headers, etc.).    |
 | `IO_ERROR`     | Filesystem failures (write/read issues).                                          |
@@ -221,16 +227,16 @@ All error codes exit with status `1` and a descriptive message.
 
 ## Troubleshooting
 
-- **`CONFIG_ERROR: cda.config.json already exists`** -- Run `cda init` only once per repo (delete config only if you intentionally rebootstrap).
-- **`BUNDLE_ERROR [...] Missing section 'PURPOSE'`** -- Inspect the referenced markdown file; all 16 authoritative sections must be present and ordered.
-- **CLI not found after build** -- Run `npm link` (development) or invoke via `node dist/cli/index.js <command>`.
-- **Snapshots/tests failing** -- Regenerate via `npm run test` after intentional structural changes, then review `tests/__snapshots__`.
-- **`cda agent` warns about missing config** -- Create `cda.agents.json` (rerun `cda init` or supply your own). Dry-run still emits prompts; execution remains disabled until the file exists.
-- **`Unable to spawn 'copilot'`** -- Install the standalone Copilot CLI or switch to the Echo agent (`--agent echo`) to verify prompts without remote execution.
+- **`CONFIG_ERROR: cda.config.json already exists`** – Run `cda init` only once per repo (delete config only if you intend to rebootstrap).
+- **`BUNDLE_ERROR [...] Missing section 'PURPOSE'`** – Repair the referenced markdown file; all 16 sections must exist and be ordered.
+- **CLI not found after build** – Run `npm link` (development) or `node dist/cli/index.js <command>`.
+- **Snapshots/tests failing** – Regenerate via `npm run test` after intentional structural changes, then inspect `tests/__snapshots__`.
+- **`cda run --exec` warns about missing config** – Create `cda.agents.json` (rerun `cda init` or supply your own). Plan mode still emits prompts; execution remains disabled until the file exists.
+- **`Unable to spawn 'copilot'`** – Install the standalone Copilot CLI or switch to the Echo agent (`--agent echo`) to verify prompts while you repair the installation.
 
 ## Constraint Configuration
 
-- `cda init` scaffolds a `constraint_overrides` object inside `cda.config.json`. Use this to disable or enable any constraint without deleting their markdown:
+- `cda init` scaffolds a `constraint_overrides` object inside `cda.config.json`:
 
 ```json
 {
@@ -240,18 +246,18 @@ All error codes exit with status `1` and a descriptive message.
 }
 ```
 
-- Any constraint can be disabled (set `enabled: false`) or enabled (set `true`) via configuration overrides.
-- Disabled constraints automatically drop out of `cda list`, `cda validate`, and `cda agent` outputs. Prompts include a `disabled_constraints` metadata line for auditing, and describe/single-constraint flows raise `CONFIG_ERROR` if you target a disabled id.
-- See `SPECIFICATION_ALL_OPTIONAL.md` for the full workflow and configuration details.
+- Any constraint can be disabled (`enabled: false`) or re-enabled (`true`) without touching markdown.
+- Disabled constraints automatically drop out of `cda list` and every `cda run` mode. Prompts include a `disabled_constraints` metadata line, and single-constraint requests raise `CONFIG_ERROR` if you target a disabled id.
+- See `SPECIFICATION_ALL_OPTIONAL.md` for full details.
 
 ## Development Scripts
 
-- `npm run build` -- Compile TypeScript and copy constraints to `dist/constraints`.
-- `npm run test` -- Execute Vitest suite (loader integrity, error taxonomy, emitter snapshots).
-- `npm run typecheck` -- TypeScript compilation with `--noEmit`.
-- `npm run dev` -- `tsc --watch` for local iteration.
+- `npm run build` – Compile TypeScript and copy constraints to `dist/constraints`.
+- `npm run test` – Execute the Vitest suite (loader integrity, error taxonomy, emitter snapshots).
+- `npm run typecheck` – Run TypeScript with `--noEmit`.
+- `npm run dev` – `tsc --watch` for local iteration.
 
 ## Spec Changes
 
 - Instruction format version `2` (Spec Update 1) introduced the banner, execution-state flags, sentinel markers, AGENT ACTION REQUIRED / DO NOT blocks, and the expanded report skeleton.
-- Spec Update 2 added the `cda agent` command, prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. See `CHANGELOG.md` for release-level details.
+- Spec Update 2 added the prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. Release `0.5.1` now consolidates the workflow under `cda run` while keeping legacy wrappers through `0.6.0`.

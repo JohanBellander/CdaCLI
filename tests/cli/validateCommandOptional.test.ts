@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
-import { runValidateCommand } from "../../src/cli/commands/validate.js";
+import { runRunCommand } from "../../src/cli/commands/run.js";
 
 const OPTIONAL_CONSTRAINTS = path.resolve("tests/fixtures/optional-constraints");
 const OPTIONAL_ONLY = path.resolve("tests/fixtures/optional-constraints-only");
@@ -26,9 +26,9 @@ afterEach(() => {
   errorSpy.mockRestore();
 });
 
-describe("runValidateCommand optional constraint handling", () => {
+describe("cda run default mode optional constraint handling", () => {
   it("logs skipped optional constraints and filters output", async () => {
-    await runValidateCommand([], {
+    await runRunCommand([], {
       cwd: SOME_DISABLED_PROJECT,
       constraintsDir: OPTIONAL_CONSTRAINTS,
     });
@@ -45,7 +45,7 @@ describe("runValidateCommand optional constraint handling", () => {
 
   it("throws when configuration disables every active constraint", async () => {
     await expect(
-      runValidateCommand([], {
+      runRunCommand([], {
         cwd: ALL_DISABLED_PROJECT,
         constraintsDir: OPTIONAL_ONLY,
       }),
@@ -54,7 +54,7 @@ describe("runValidateCommand optional constraint handling", () => {
 
   it("rejects explicit requests for disabled constraints", async () => {
     await expect(
-      runValidateCommand(["--constraint", "optional-enabled"], {
+      runRunCommand(["--constraint", "optional-enabled"], {
         cwd: SOME_DISABLED_PROJECT,
         constraintsDir: OPTIONAL_CONSTRAINTS,
       }),

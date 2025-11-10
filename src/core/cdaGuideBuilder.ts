@@ -18,16 +18,16 @@ const CORE_PRINCIPLES = [
 ];
 
 const SAFETY_SWITCHES = [
-  "You MUST run `cda agent --dry-run` (batch mode) before writing code to capture the authoritative verification prompt.",
-  "You SHOULD run `cda agent --dry-run` before executing an external agent to confirm the prompt contents.",
-  "You MAY use `cda agent --no-exec` when you only need the prompt text (for off-line review).",
-  "You MUST only run `cda agent` without `--dry-run` when you trust the configured external CLI.",
+  "You MUST run `cda run --plan` (batch mode) before writing code to capture the authoritative verification prompt.",
+  "You SHOULD run `cda run --plan` before each `--exec` invocation to confirm the prompt contents.",
+  "You MAY use `cda run --plan --output <file>` when you only need the prompt text for offline review.",
+  "You MUST only run `cda run --exec` when you trust the configured external CLI.",
 ];
 
 const CHECKLIST_ITEMS = [
   "You MUST read the High-Level Purpose block before modifying any files.",
   "You MUST list every planned edit alongside the constraint(s) it satisfies.",
-  "You MUST run `cda agent --dry-run` (batch) to obtain the latest verification prompt and archive it with the run_id.",
+  "You MUST run `cda run --plan` (batch) to obtain the latest verification prompt and archive it with the run_id.",
   "You MUST execute each detection step exactly as written for every constraint block.",
   "You MUST record initial violations before attempting any remediation.",
   "You MUST apply remediation steps in the given FIX SEQUENCE order.",
@@ -86,7 +86,7 @@ function addHighLevelPurpose(lines: string[]): void {
     "You MUST treat this document as your authoritative playbook. It tells you how to plan implementation, how to execute verification, and how to report results. You MUST read each section before declaring any architectural compliance.",
   );
   lines.push(
-    "You MUST use `cda agent --dry-run` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda agent --constraint <id>` when you need a focused prompt, and fall back to `cda agent --dry-run --legacy-format` only when a downstream model cannot ingest the enriched structure.",
+    "You MUST use `cda run --plan` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda run --plan --constraint <id>` when you need a focused prompt, fall back to `cda run --plan --legacy-format` only when a downstream model cannot ingest the enriched structure, and reserve `cda run --exec` for the final agent invocation.",
   );
   lines.push("");
 }
@@ -181,18 +181,18 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push("");
   lines.push("### Implementation Phase");
   lines.push(
-    "1. You MUST run `cda agent --dry-run` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.",
+    "1. You MUST run `cda run --plan` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.",
   );
   lines.push(
     "2. You MUST map every planned file change to at least one active constraint.",
   );
   lines.push(
-    "3. You SHOULD re-run `cda agent --dry-run` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.",
+    "3. You SHOULD re-run `cda run --plan` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.",
   );
   lines.push("");
   lines.push("### Validation Phase");
   lines.push(
-    "1. You MUST use `cda agent` to assemble the verification prompt and send it to the configured agent.",
+    "1. You MUST use `cda run --exec` to assemble the verification prompt and send it to the configured agent.",
   );
   lines.push(
     "2. You MUST use `--constraint <id>` (or `--sequential` to walk the recommended order) whenever you need a single-constraint prompt; otherwise default to batch mode.",
@@ -202,6 +202,10 @@ function addCommandUsageSection(lines: string[]): void {
   );
   lines.push(
     "4. You MAY supply `--legacy-format` only when the downstream tool cannot handle the agent metadata additions, and you MUST document that exception in your report.",
+  );
+  lines.push("");
+  lines.push(
+    "Legacy `cda validate`/`cda agent` wrappers already call `cda run` and will be removed in v0.6.0; update scripts now.",
   );
   lines.push("");
   lines.push("### Batch Workflow");
@@ -340,7 +344,7 @@ function addVersionLinkageSection(lines: string[]): void {
   lines.push("## 13. Version Linkage");
   lines.push("");
   lines.push(
-    "You MUST re-run `cda agent --dry-run` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.",
+    "You MUST re-run `cda run --plan` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.",
   );
   lines.push("");
 }
