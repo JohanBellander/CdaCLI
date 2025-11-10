@@ -3,6 +3,11 @@
 ## Unreleased
 - _No changes yet._
 
+## 0.5.2 — 2025-11-10
+- Enhanced the generated `CDA.md` playbook with an immediate command checklist and an explicit requirement to capture `cda run --exec` results before closing out a session.
+- Updated README spec notes to highlight the new guidance for agents following `cda run` workflows.
+- Bumped the package to v0.5.2 and prepared release metadata.
+
 ## 0.5.1 — 2025-11-10
 - Introduced the consolidated `cda run` command with validation/plan/exec modes, flag compatibility checks, and audit placeholder handling (CDATool-jg6, CDATool-x3j).
 - Added legacy wrappers for `cda validate`/`cda agent` that reroute through `cda run`, emit v0.6.0 deprecation warnings, and preserve CLI help output (CDATool-b8w).

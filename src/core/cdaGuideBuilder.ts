@@ -22,6 +22,7 @@ const SAFETY_SWITCHES = [
   "You SHOULD run `cda run --plan` before each `--exec` invocation to confirm the prompt contents.",
   "You MAY use `cda run --plan --output <file>` when you only need the prompt text for offline review.",
   "You MUST only run `cda run --exec` when you trust the configured external CLI.",
+  "You MUST capture the exit status and textual output from `cda run --exec` before closing out a work session.",
 ];
 
 const CHECKLIST_ITEMS = [
@@ -35,6 +36,14 @@ const CHECKLIST_ITEMS = [
   "You MUST assemble the EXPECTED AGENT REPORT FORMAT with exact keys and ordering.",
   "You MUST set `execution_state` to `validated` only when all success_conditions become true; otherwise set `failed`.",
   "You MUST persist the final report and beads references before declaring the run complete.",
+  "You MUST run `cda run --exec` and include its exit status/output in your final summary before declaring success.",
+];
+
+const QUICK_START_SEQUENCE = [
+  "Run `npm install` to make sure dependencies are available (repeat whenever package.json changes).",
+  "Run `npm run build` to confirm the TypeScript workspace compiles cleanly before invoking agents.",
+  "Run `cda run --plan` and archive the prompt plus run_id before editing or validating code.",
+  "Run `cda run --exec` and capture the exit status/output; do not summarize the session until this succeeds.",
 ];
 
 const SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter(
@@ -59,6 +68,7 @@ export function buildCdaGuide(constraints: ConstraintDocument[]): string {
   lines.push("");
 
   addHighLevelPurpose(lines);
+  addQuickStartSequence(lines);
   addCorePrinciples(lines);
   addConstraintSummaryTable(lines, ordered);
   addConstraintConfigurationGuidance(lines);
@@ -87,6 +97,18 @@ function addHighLevelPurpose(lines: string[]): void {
   );
   lines.push(
     "You MUST use `cda run --plan` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda run --plan --constraint <id>` when you need a focused prompt, fall back to `cda run --plan --legacy-format` only when a downstream model cannot ingest the enriched structure, and reserve `cda run --exec` for the final agent invocation.",
+  );
+  lines.push("");
+}
+
+function addQuickStartSequence(lines: string[]): void {
+  lines.push("### Immediate Command Checklist");
+  lines.push("");
+  lines.push(
+    "Execute the following steps in order whenever you begin or resume a work session:",
+  );
+  QUICK_START_SEQUENCE.forEach((entry, index) =>
+    lines.push(`${index + 1}. ${entry}`),
   );
   lines.push("");
 }
@@ -372,6 +394,10 @@ function addFinalReminder(lines: string[]): void {
   lines.push("");
   lines.push(
     "All instructions herein are mandatory for you unless explicitly marked Informative. Failure to follow any MUST invalidates your validation report.",
+  );
+  lines.push("");
+  lines.push(
+    "**Do NOT draft a final summary or claim success until `cda run --exec` has completed successfully and you have recorded its exit status and textual output.**",
   );
   lines.push("");
 }

@@ -276,4 +276,4 @@ All error codes exit with status `1` and a descriptive message.
 ## Spec Changes
 
 - Instruction format version `2` (Spec Update 1) introduced the banner, execution-state flags, sentinel markers, AGENT ACTION REQUIRED / DO NOT blocks, and the expanded report skeleton.
-- Spec Update 2 added the prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. Release `0.5.1` now consolidates the workflow under `cda run` while keeping legacy wrappers through `0.6.0`.
+- Spec Update 2 added the prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. Release `0.5.1` consolidated the workflow under `cda run` while keeping legacy wrappers through `0.6.0`; release `0.5.2` layers on a quick-start checklist and a hard stop that requires running `cda run --exec` before summarizing.
