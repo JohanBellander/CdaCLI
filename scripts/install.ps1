@@ -16,13 +16,10 @@ Write-Host "Installing CDA CLI..." -ForegroundColor Cyan
 
 function Test-Command {
     param([string]$Name)
-    try {
-        $null = Get-Command $Name -ErrorAction Stop
-        return $true
-    }
-    catch {
-        return $false
-    }
+
+    & where.exe $Name > $null 2>&1
+
+    return $LASTEXITCODE -eq 0
 }
 
 if (-not (Test-Command 'git')) {
@@ -31,9 +28,15 @@ if (-not (Test-Command 'git')) {
     exit 1
 }
 
+if (-not (Test-Command 'node')) {
+    Write-Host "Error: node command not found in PATH." -ForegroundColor Red
+    Write-Host "Install Node.js >= 18.0.0 from https://nodejs.org/ or expose it to this shell." -ForegroundColor Yellow
+    exit 1
+}
+
 # Check for Node.js >= 18
 try {
-    $nodeVersion = node --version
+    $nodeVersion = & node --version
     $majorVersion = [int]($nodeVersion -replace 'v(\d+)\..*', '$1')
 
     if ($majorVersion -lt 18) {
@@ -45,18 +48,21 @@ try {
     Write-Host "Found Node.js $nodeVersion ✓" -ForegroundColor Green
 }
 catch {
-    Write-Host "Error: Node.js is required but not installed." -ForegroundColor Red
-    Write-Host "Install Node.js >= 18.0.0 from https://nodejs.org/" -ForegroundColor Yellow
+    Write-Host "Error executing 'node --version': $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
-# Check for npm
+if (-not (Test-Command 'npm')) {
+    Write-Host "Error: npm is required but not found in PATH." -ForegroundColor Red
+    exit 1
+}
+
 try {
-    $npmVersion = npm --version
+    $npmVersion = & npm --version
     Write-Host "Found npm $npmVersion ✓" -ForegroundColor Green
 }
 catch {
-    Write-Host "Error: npm is required but not found." -ForegroundColor Red
+    Write-Host "Error executing 'npm --version': $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
