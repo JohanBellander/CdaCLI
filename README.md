@@ -115,13 +115,23 @@ CDA CLI emits deterministic instruction packages that direct AI agents through t
 
 ## Installation
 
-### Windows PowerShell One-Liner
+### Windows PowerShell (Auto Install or Upgrade)
 
 ```powershell
-git clone https://github.com/JohanBellander/CdaCLI.git; cd CdaCLI; npm install; npm run build; npm link
+irm https://raw.githubusercontent.com/JohanBellander/CdaCLI/master/scripts/install.ps1 | iex
 ```
 
-### Standard Steps
+> Need a specific branch? ` $env:CDACLI_BRANCH = 'develop'; irm https://raw.githubusercontent.com/JohanBellander/CdaCLI/master/scripts/install.ps1 | iex `
+
+### macOS / Linux (Auto Install or Upgrade)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/JohanBellander/CdaCLI/master/scripts/install.sh | bash
+```
+
+> Use `CDACLI_BRANCH=develop` to target an alternate branch.
+
+### Manual / Development Workflow
 
 ```bash
 git clone <repo-url>
@@ -132,6 +142,12 @@ npm link   # optional, exposes `cda` globally during development
 ```
 
 `npm run build` compiles TypeScript sources and copies constraint markdown into `dist/constraints`.
+
+#### Update an Existing Clone Quickly (PowerShell)
+
+```powershell
+if (Test-Path CdaCLI) { git -C CdaCLI pull } else { git clone https://github.com/JohanBellander/CdaCLI.git }; cd CdaCLI; npm install; npm run build; npm link --force
+```
 
 ## Quick Start
 
