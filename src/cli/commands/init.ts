@@ -74,7 +74,9 @@ export async function runInitCommand(
   }
 
   const constraints = await loadConstraints();
-  const configPayload = buildDefaultConfigPayload();
+  const configPayload = buildDefaultConfigPayload(
+    constraints.map((doc) => doc.meta.id),
+  );
 
   await mkdir(cwd, { recursive: true });
   await writeFile(configPath, `${configPayload}\n`, "utf8");
@@ -102,9 +104,17 @@ export async function runInitCommand(
   console.log("Created cda.config.json, CDA.md, and cda.agents.json");
 }
 
-export function buildDefaultConfigPayload(): string {
+export function buildDefaultConfigPayload(constraintIds: string[]): string {
+  const overrides = Object.fromEntries(
+    [...constraintIds].sort().map((id) => [id, { enabled: true }]),
+  );
+
   return JSON.stringify(
-    { version: 1, constraints: "builtin", constraint_overrides: {} },
+    {
+      version: 1,
+      constraints: "builtin",
+      constraint_overrides: overrides,
+    },
     null,
     2,
   );

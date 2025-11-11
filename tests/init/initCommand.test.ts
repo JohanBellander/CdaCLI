@@ -6,6 +6,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 
 import { runInitCommand } from "../../src/cli/commands/init.js";
+import { loadConstraints } from "../../src/core/constraintLoader.js";
 
 const TMP_PREFIX = path.join(tmpdir(), "cda-init-");
 
@@ -33,7 +34,11 @@ describe("cda init command", () => {
 
     const configRaw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
     const config = JSON.parse(configRaw);
-    expect(config.constraint_overrides).toEqual({});
+    const constraints = await loadConstraints();
+    const expectedOverrides = Object.fromEntries(
+      constraints.map((doc) => [doc.meta.id, { enabled: true }]),
+    );
+    expect(config.constraint_overrides).toEqual(expectedOverrides);
 
     const guide = await readFile(path.join(cwd, "CDA.md"), "utf8");
     expect(guide).toMatch(/You MUST/);

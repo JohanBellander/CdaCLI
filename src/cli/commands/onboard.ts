@@ -9,6 +9,7 @@ import {
   DEFAULT_AGENT_CONFIG,
   buildDefaultConfigPayload,
 } from "./init.js";
+import { loadConstraints } from "../../core/constraintLoader.js";
 
 interface OnboardCommandOptions {
   cwd?: string;
@@ -51,7 +52,10 @@ export async function runOnboardCommand(
 
   const configPath = path.join(cwd, "cda.config.json");
   if (!(await fileExists(configPath))) {
-    const configPayload = buildDefaultConfigPayload();
+    const constraints = await loadConstraints();
+    const configPayload = buildDefaultConfigPayload(
+      constraints.map((doc) => doc.meta.id),
+    );
     await writeFile(configPath, `${configPayload}\n`, "utf8");
     createdArtifacts.push("cda.config.json");
   }

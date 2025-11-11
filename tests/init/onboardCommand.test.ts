@@ -4,6 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 
 import { runOnboardCommand } from "../../src/cli/commands/onboard.js";
+import { loadConstraints } from "../../src/core/constraintLoader.js";
 
 const TMP_PREFIX = path.join(tmpdir(), "cda-onboard-");
 
@@ -36,8 +37,13 @@ describe("cda onboard command", () => {
     expect(guide).toMatch(/cda run --exec/);
     expect(guide).toMatch(/Evidence Checklist/);
 
-    const config = await readFile(path.join(cwd, "cda.config.json"), "utf8");
-    expect(config).toContain("\"constraint_overrides\": {}");
+    const configRaw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
+    const config = JSON.parse(configRaw);
+    const constraints = await loadConstraints();
+    const expectedOverrides = Object.fromEntries(
+      constraints.map((doc) => [doc.meta.id, { enabled: true }]),
+    );
+    expect(config.constraint_overrides).toEqual(expectedOverrides);
 
     const agentConfig = await readFile(
       path.join(cwd, "cda.agents.json"),
