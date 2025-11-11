@@ -1,6 +1,6 @@
 const COMMAND_SEQUENCE = [
-  "Run `npm install` to fetch dependencies (repeat whenever package.json changes). If the command fails because `package.json` is missing, create the file and immediately rerun `npm install` before touching any source files.",
-  "Run `npm run build` to ensure the workspace compiles before inspection. **Do not create or modify project files until this build succeeds.**",
+  "Run `npm install` to fetch dependencies (repeat whenever package.json changes). If the command fails because `package.json` is missing, create the file and immediately rerun `npm install` before touching any source files. You may create only the minimal scaffolding required for TypeScript to compile (e.g., an empty `src/index.ts`) before the initial build—no production code yet.",
+  "Run `npm run build` to ensure the workspace compiles before inspection. **Aside from minimal scaffolding needed for compilation, do not create or modify project files until this build succeeds.**",
   "Run `cda run --plan --output cda-plan.txt` and archive the resulting prompt + run_id. **Do not edit code until this completes. Paste the run_id/output into your transcript before proceeding.**",
   "Implement planned changes while consulting the prompt emitted by `cda run --plan`.",
   "Run `npm run build` again after editing files to confirm a clean TypeScript build. Paste the command outcome into your transcript.",
