@@ -1,10 +1,10 @@
 const COMMAND_SEQUENCE = [
-  "Run `npm install` to fetch dependencies (repeat whenever package.json changes).",
-  "Run `npm run build` to ensure the workspace compiles before inspection.",
-  "Run `cda run --plan --output cda-plan.txt` and archive the resulting prompt + run_id.",
+  "Run `npm install` to fetch dependencies (repeat whenever package.json changes). If the command fails because `package.json` is missing, create the file and immediately rerun `npm install` before touching any source files.",
+  "Run `npm run build` to ensure the workspace compiles before inspection. **Do not create or modify project files until this build succeeds.**",
+  "Run `cda run --plan --output cda-plan.txt` and archive the resulting prompt + run_id. **Do not edit code until this completes. Paste the run_id/output into your transcript before proceeding.**",
   "Implement planned changes while consulting the prompt emitted by `cda run --plan`.",
-  "Run `npm run build` again after editing files to confirm a clean TypeScript build.",
-  "Run `cda run --exec` to execute the verification agent, then capture evidence (see below).",
+  "Run `npm run build` again after editing files to confirm a clean TypeScript build. Paste the command outcome into your transcript.",
+  "Run `cda run --exec` to execute the verification agent, then capture evidence (see below) and paste it into your transcript before summarizing.",
 ];
 
 export function buildOnboardingGuide(): string {
@@ -18,7 +18,7 @@ export function buildOnboardingGuide(): string {
     lines.push(`> ${index + 1}. ${entry}`),
   );
   lines.push(">");
-  lines.push("> Record confirmation after each command before moving on.");
+  lines.push("> After each command, paste the command + outcome into your transcript before moving on.");
   lines.push("");
   lines.push("## Evidence Checklist");
   lines.push("");
