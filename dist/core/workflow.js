@@ -1,9 +1,9 @@
 export const WORKFLOW_CHECKLIST = [
-    "Run `cda agent` BEFORE writing any code; baseline must show 0 violations.",
+    "Run `cda run --plan` BEFORE writing any code; archive the baseline prompt/run_id.",
     "PLAN every intended file change explicitly against ALL active constraints (layer, purity, size, naming, exports, nesting).",
     "IMPLEMENT only changes that satisfy ALL constraints simultaneously--do not defer violations.",
     "IF a violation appears during implementation, STOP and refactor immediately (no partial compliance).",
-    "RUN `cda agent` after implementation; output must show 0 violations.",
-    "REMEDIATE every reported violation; re-run `cda agent` until clean.",
+    "RUN `cda run --exec` after implementation; the report must show 0 violations.",
+    "REMEDIATE every reported violation; re-run `cda run --exec` until clean.",
     "ONLY AFTER zero violations: proceed to tests, review, or commit.",
 ];

@@ -1,19 +1,22 @@
 #!/usr/bin/env node
 import { createRequire } from "node:module";
 import { runInitCommand } from "./commands/init.js";
-import { runValidateCommand } from "./commands/validate.js";
 import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
-import { runAgentCommand } from "./commands/agent.js";
+import { runRunCommand } from "./commands/run.js";
+import { runOnboardCommand } from "./commands/onboard.js";
+import { runLegacyAgentCommand, runLegacyValidateCommand, } from "./legacyWrappers.js";
 import { createError, getExitCode, isCdaError } from "../core/errors.js";
 const require = createRequire(import.meta.url);
 const { version } = require("../../package.json");
 const COMMANDS = {
     init: async (args) => runInitCommand(args),
+    onboard: async (args) => runOnboardCommand(args),
     list: async () => runListCommand(),
     describe: async (args) => runDescribeCommand(args),
-    validate: async (args) => runValidateCommand(args),
-    agent: async (args) => runAgentCommand(args),
+    run: async (args) => runRunCommand(args),
+    validate: async (args) => runLegacyValidateCommand(args),
+    agent: async (args) => runLegacyAgentCommand(args),
 };
 export async function run(argv = process.argv.slice(2)) {
     const [commandName, ...commandArgs] = argv;
@@ -45,8 +48,10 @@ function printHelp() {
     console.log("");
     console.log("Available commands:");
     console.log("  init       Initialize CDA config and generate CDA.md");
+    console.log("  onboard    Generate minimal CDA.md onboarding checklist");
     console.log("  list       List bundled constraints");
     console.log("  describe   Show full enforcement protocol for a constraint");
+    console.log("  run        Consolidated validation/plan/exec workflow");
     console.log("  validate   Emit instruction packages");
     console.log("  agent      Assemble agent prompt and optionally invoke external CLI");
     console.log("");
