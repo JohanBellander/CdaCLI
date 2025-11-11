@@ -1,9 +1,4 @@
-export const DEFAULT_IGNORED_PATHS = [
-    "node_modules",
-    "dist",
-    "build",
-    ".git",
-];
+export const DEFAULT_IGNORED_PATHS = ["node_modules", "dist", "build", ".git"];
 export function buildBatchInstructionPackage(options) {
     const { runId, constraints, ignoredPaths } = options;
     const sortedConstraints = [...constraints].sort((a, b) => {

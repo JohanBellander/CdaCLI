@@ -1,5 +1,5 @@
 // Beads: CDATool-m8x
-import { CONSTRAINT_SECTION_ORDER, } from "./constraintLoader.js";
+import { CONSTRAINT_SECTION_ORDER } from "./constraintLoader.js";
 import { WORKFLOW_CHECKLIST } from "./workflow.js";
 const CORE_PRINCIPLES = [
     "You MUST maintain deterministic execution: identical inputs MUST yield identical instruction packages and reports.",
@@ -12,15 +12,16 @@ const CORE_PRINCIPLES = [
     "You MUST pursue minimal, surgical changes before expansive refactors.",
 ];
 const SAFETY_SWITCHES = [
-    "You MUST run `cda agent --dry-run` (batch mode) before writing code to capture the authoritative verification prompt.",
-    "You SHOULD run `cda agent --dry-run` before executing an external agent to confirm the prompt contents.",
-    "You MAY use `cda agent --no-exec` when you only need the prompt text (for off-line review).",
-    "You MUST only run `cda agent` without `--dry-run` when you trust the configured external CLI.",
+    "You MUST run `cda run --plan` (batch mode) before writing code to capture the authoritative verification prompt.",
+    "You SHOULD run `cda run --plan` before each `--exec` invocation to confirm the prompt contents.",
+    "You MAY use `cda run --plan --output <file>` when you only need the prompt text for offline review.",
+    "You MUST only run `cda run --exec` when you trust the configured external CLI.",
+    "You MUST capture the exit status and textual output from `cda run --exec` before closing out a work session.",
 ];
 const CHECKLIST_ITEMS = [
     "You MUST read the High-Level Purpose block before modifying any files.",
     "You MUST list every planned edit alongside the constraint(s) it satisfies.",
-    "You MUST run `cda agent --dry-run` (batch) to obtain the latest verification prompt and archive it with the run_id.",
+    "You MUST run `cda run --plan` (batch) to obtain the latest verification prompt and archive it with the run_id.",
     "You MUST execute each detection step exactly as written for every constraint block.",
     "You MUST record initial violations before attempting any remediation.",
     "You MUST apply remediation steps in the given FIX SEQUENCE order.",
@@ -28,8 +29,16 @@ const CHECKLIST_ITEMS = [
     "You MUST assemble the EXPECTED AGENT REPORT FORMAT with exact keys and ordering.",
     "You MUST set `execution_state` to `validated` only when all success_conditions become true; otherwise set `failed`.",
     "You MUST persist the final report and beads references before declaring the run complete.",
+    "You MUST run `cda run --exec` and include its exit status/output in your final summary before declaring success.",
 ];
-const SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter((section) => section !== "HEADER");
+const QUICK_START_SEQUENCE = [
+    "Run `npm install` to make sure dependencies are available (repeat whenever package.json changes).",
+    "Run `npm run build` to confirm the TypeScript workspace compiles cleanly before invoking agents.",
+    "Run `cda run --plan` and archive the prompt plus run_id before editing or validating code.",
+    "Run `cda run --exec` and capture the exit status/output; do not summarize the session until this succeeds.",
+];
+// Filtered list of sections excluding HEADER (kept for potential future use)
+const _SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter((section) => section !== "HEADER");
 export function buildCdaGuide(constraints) {
     const active = constraints.filter((doc) => doc.meta.isActive);
     const ordered = [...active].sort((a, b) => {
@@ -44,6 +53,7 @@ export function buildCdaGuide(constraints) {
     lines.push("You are required to implement and validate code according to CDA architectural constraints. You MUST NOT assume current compliance; all example statuses are placeholders until you complete the full validation loop.");
     lines.push("");
     addHighLevelPurpose(lines);
+    addQuickStartSequence(lines);
     addCorePrinciples(lines);
     addConstraintSummaryTable(lines, ordered);
     addConstraintConfigurationGuidance(lines);
@@ -66,7 +76,16 @@ function addHighLevelPurpose(lines) {
     lines.push("## 1. High-Level Purpose");
     lines.push("");
     lines.push("You MUST treat this document as your authoritative playbook. It tells you how to plan implementation, how to execute verification, and how to report results. You MUST read each section before declaring any architectural compliance.");
-    lines.push("You MUST use `cda agent --dry-run` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda agent --constraint <id>` when you need a focused prompt, and fall back to `cda agent --dry-run --legacy-format` only when a downstream model cannot ingest the enriched structure.");
+    lines.push("You MUST use `cda run --plan` to generate the verification prompt because it appends the metadata banner, directive block, and token metrics required by Spec Update 2. Use `cda run --plan --constraint <id>` when you need a focused prompt, fall back to `cda run --plan --legacy-format` only when a downstream model cannot ingest the enriched structure, and reserve `cda run --exec` for the final agent invocation.");
+    lines.push("");
+}
+function addQuickStartSequence(lines) {
+    lines.push("> **STOP - Mandatory Command Sequence**");
+    lines.push(">");
+    lines.push("> Do not proceed with the remainder of this playbook until every command below has completed successfully in this exact order:");
+    QUICK_START_SEQUENCE.forEach((entry, index) => lines.push(`> ${index + 1}. ${entry}`));
+    lines.push(">");
+    lines.push("> Confirm success after each command before continuing.");
     lines.push("");
 }
 function addCorePrinciples(lines) {
@@ -122,22 +141,42 @@ function addConstraintConfigurationGuidance(lines) {
     lines.push("## Constraint Configuration");
     lines.push("");
     lines.push("Any constraint may be disabled by editing the `constraint_overrides` object in `cda.config.json`.");
-    lines.push("Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.");
+    lines.push('Example: set `"<constraint_id>": { "enabled": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.');
     lines.push("");
 }
 function addCommandUsageSection(lines) {
     lines.push("## 5. Command Usage Sequencing");
     lines.push("");
     lines.push("### Implementation Phase");
-    lines.push("1. You MUST run `cda agent --dry-run` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.");
+    lines.push("1. You MUST run `cda run --plan` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.");
     lines.push("2. You MUST map every planned file change to at least one active constraint.");
-    lines.push("3. You SHOULD re-run `cda agent --dry-run` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.");
+    lines.push("3. You SHOULD re-run `cda run --plan` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.");
+    lines.push("**Reminder:** After any plan run that results in file edits, you MUST run `npm run build` again before invoking `cda run --exec`.");
     lines.push("");
     lines.push("### Validation Phase");
-    lines.push("1. You MUST use `cda agent` to assemble the verification prompt and send it to the configured agent.");
+    lines.push("1. You MUST use `cda run --exec` to assemble the verification prompt and send it to the configured agent.");
     lines.push("2. You MUST use `--constraint <id>` (or `--sequential` to walk the recommended order) whenever you need a single-constraint prompt; otherwise default to batch mode.");
     lines.push("3. You MUST store the generated agent report alongside the run_id for traceability.");
     lines.push("4. You MAY supply `--legacy-format` only when the downstream tool cannot handle the agent metadata additions, and you MUST document that exception in your report.");
+    lines.push("");
+    lines.push("#### Required Evidence");
+    lines.push("");
+    lines.push("You MUST record the following immediately after `cda run --exec` completes:");
+    lines.push("- The process exit status (0 indicates success).");
+    lines.push("- The `run_id` printed in the verification banner.");
+    lines.push("- A snippet of the agent output (at least the first few lines or a saved attachment).");
+    lines.push("");
+    lines.push("Example transcript excerpt:");
+    lines.push("```bash");
+    lines.push("$ cda run --exec");
+    lines.push("run_id: cda-2025-11-11-001");
+    lines.push("analysis_performed: true");
+    lines.push("total_violations: 0");
+    lines.push("exit status: 0");
+    lines.push("```");
+    lines.push("");
+    lines.push("");
+    lines.push("Legacy `cda validate`/`cda agent` wrappers already call `cda run` and will be removed in v0.6.0; update scripts now.");
     lines.push("");
     lines.push("### Batch Workflow");
     WORKFLOW_CHECKLIST.forEach((item) => lines.push(`- ${item}`));
@@ -242,7 +281,7 @@ function addForbiddenShortcuts(lines) {
 function addVersionLinkageSection(lines) {
     lines.push("## 13. Version Linkage");
     lines.push("");
-    lines.push("You MUST re-run `cda agent --dry-run` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.");
+    lines.push("You MUST re-run `cda run --plan` whenever the `instruction_format_version` printed in the prompt differs from the version recorded in your previous report.");
     lines.push("");
 }
 function addChecklist(lines) {
@@ -261,6 +300,8 @@ function addFinalReminder(lines) {
     lines.push("## 16. Final Mandatory Reminder");
     lines.push("");
     lines.push("All instructions herein are mandatory for you unless explicitly marked Informative. Failure to follow any MUST invalidates your validation report.");
+    lines.push("");
+    lines.push("**Do NOT draft a final summary or claim success until `cda run --exec` has completed successfully and you have recorded its exit status and textual output.**");
     lines.push("");
 }
 function sanitize(value) {

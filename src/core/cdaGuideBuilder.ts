@@ -1,9 +1,6 @@
 // Beads: CDATool-m8x
 
-import {
-  CONSTRAINT_SECTION_ORDER,
-  ConstraintDocument,
-} from "./constraintLoader.js";
+import { CONSTRAINT_SECTION_ORDER, ConstraintDocument } from "./constraintLoader.js";
 import { WORKFLOW_CHECKLIST } from "./workflow.js";
 
 const CORE_PRINCIPLES = [
@@ -46,9 +43,8 @@ const QUICK_START_SEQUENCE = [
   "Run `cda run --exec` and capture the exit status/output; do not summarize the session until this succeeds.",
 ];
 
-const SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter(
-  (section) => section !== "HEADER",
-);
+// Filtered list of sections excluding HEADER (kept for potential future use)
+const _SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter((section) => section !== "HEADER");
 
 export function buildCdaGuide(constraints: ConstraintDocument[]): string {
   const active = constraints.filter((doc) => doc.meta.isActive);
@@ -104,10 +100,10 @@ function addHighLevelPurpose(lines: string[]): void {
 function addQuickStartSequence(lines: string[]): void {
   lines.push("> **STOP - Mandatory Command Sequence**");
   lines.push(">");
-  lines.push("> Do not proceed with the remainder of this playbook until every command below has completed successfully in this exact order:");
-  QUICK_START_SEQUENCE.forEach((entry, index) =>
-    lines.push(`> ${index + 1}. ${entry}`),
+  lines.push(
+    "> Do not proceed with the remainder of this playbook until every command below has completed successfully in this exact order:",
   );
+  QUICK_START_SEQUENCE.forEach((entry, index) => lines.push(`> ${index + 1}. ${entry}`));
   lines.push(">");
   lines.push("> Confirm success after each command before continuing.");
   lines.push("");
@@ -120,10 +116,7 @@ function addCorePrinciples(lines: string[]): void {
   lines.push("");
 }
 
-function addConstraintSummaryTable(
-  lines: string[],
-  ordered: ConstraintDocument[],
-): void {
+function addConstraintSummaryTable(lines: string[], ordered: ConstraintDocument[]): void {
   lines.push("## 3. Constraint Summary Table");
   lines.push("");
   lines.push("| Order | Constraint ID | Name | Intent |");
@@ -141,10 +134,7 @@ function addConstraintSummaryTable(
   lines.push("");
 }
 
-function addPerConstraintGuidance(
-  lines: string[],
-  ordered: ConstraintDocument[],
-): void {
+function addPerConstraintGuidance(lines: string[], ordered: ConstraintDocument[]): void {
   lines.push("## 4. Per-Constraint Implementation Guidance");
   lines.push("");
 
@@ -156,11 +146,7 @@ function addPerConstraintGuidance(
       `### ${headingName} (\`${constraint.meta.id}\`, order ${constraint.meta.enforcementOrder})`,
     );
     lines.push("");
-    lines.push(
-      `You MUST enforce the following intent: ${sanitize(
-        constraint.sections.PURPOSE,
-      )}`,
-    );
+    lines.push(`You MUST enforce the following intent: ${sanitize(constraint.sections.PURPOSE)}`);
     lines.push("");
     lines.push("You MUST perform the documented detection steps:");
     lines.push("```");
@@ -173,14 +159,10 @@ function addPerConstraintGuidance(
     lines.push("You MUST NOT introduce the following anti-patterns:");
     lines.push(constraint.sections.FORBIDDEN);
     lines.push("");
-    lines.push(
-      "You MUST follow this remediation sequence without reordering steps:",
-    );
+    lines.push("You MUST follow this remediation sequence without reordering steps:");
     lines.push(constraint.sections["FIX SEQUENCE (STRICT)"]);
     lines.push("");
-    lines.push(
-      "You MUST confirm these assertions before declaring success for this constraint:",
-    );
+    lines.push("You MUST confirm these assertions before declaring success for this constraint:");
     lines.push(constraint.sections["POST-FIX ASSERTIONS"]);
     lines.push("");
   }
@@ -193,7 +175,7 @@ function addConstraintConfigurationGuidance(lines: string[]): void {
     "Any constraint may be disabled by editing the `constraint_overrides` object in `cda.config.json`.",
   );
   lines.push(
-    "Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.",
+    'Example: set `"<constraint_id>": { "enabled": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.',
   );
   lines.push("");
 }
@@ -205,9 +187,7 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push(
     "1. You MUST run `cda run --plan` (batch) before editing code to capture the current verification prompt; archive the output so you can prove which directives were in force.",
   );
-  lines.push(
-    "2. You MUST map every planned file change to at least one active constraint.",
-  );
+  lines.push("2. You MUST map every planned file change to at least one active constraint.");
   lines.push(
     "3. You SHOULD re-run `cda run --plan` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.",
   );
@@ -222,9 +202,7 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push(
     "2. You MUST use `--constraint <id>` (or `--sequential` to walk the recommended order) whenever you need a single-constraint prompt; otherwise default to batch mode.",
   );
-  lines.push(
-    "3. You MUST store the generated agent report alongside the run_id for traceability.",
-  );
+  lines.push("3. You MUST store the generated agent report alongside the run_id for traceability.");
   lines.push(
     "4. You MAY supply `--legacy-format` only when the downstream tool cannot handle the agent metadata additions, and you MUST document that exception in your report.",
   );
@@ -234,7 +212,9 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push("You MUST record the following immediately after `cda run --exec` completes:");
   lines.push("- The process exit status (0 indicates success).");
   lines.push("- The `run_id` printed in the verification banner.");
-  lines.push("- A snippet of the agent output (at least the first few lines or a saved attachment).");
+  lines.push(
+    "- A snippet of the agent output (at least the first few lines or a saved attachment).",
+  );
   lines.push("");
   lines.push("Example transcript excerpt:");
   lines.push("```bash");
@@ -270,9 +250,7 @@ function addDetectionRemediationSection(lines: string[]): void {
   lines.push("");
   lines.push("Remediation Attempts:");
   lines.push("- You MUST limit remediation to two attempts per violation.");
-  lines.push(
-    "- You MUST rerun the complete detection algorithm after each attempt.",
-  );
+  lines.push("- You MUST rerun the complete detection algorithm after each attempt.");
   lines.push("- You MUST preserve evidence of every attempt (fixes_applied).");
   lines.push("");
 }
@@ -280,9 +258,7 @@ function addDetectionRemediationSection(lines: string[]): void {
 function addReportingTemplateSnapshot(lines: string[]): void {
   lines.push("## 7. Reporting Template Snapshot");
   lines.push("");
-  lines.push(
-    "You MUST produce the following structure after executing the verification loop:",
-  );
+  lines.push("You MUST produce the following structure after executing the verification loop:");
   lines.push("```");
   lines.push("report_kind: cda_validation_result");
   lines.push("run_id: <value>");
@@ -374,9 +350,7 @@ function addForbiddenShortcuts(lines: string[]): void {
   lines.push("## 12. Forbidden Shortcuts");
   lines.push("");
   lines.push("- You MUST NOT skip detection steps, even when code seems trivial.");
-  lines.push(
-    "- You MUST NOT declare success after a partial remediation cycle.",
-  );
+  lines.push("- You MUST NOT declare success after a partial remediation cycle.");
   lines.push("- You MUST NOT fabricate fixes_applied entries.");
   lines.push("- You MUST NOT delete violations without changing code.");
   lines.push("");
@@ -394,9 +368,7 @@ function addVersionLinkageSection(lines: string[]): void {
 function addChecklist(lines: string[]): void {
   lines.push("## 14. Validation Checklist");
   lines.push("");
-  CHECKLIST_ITEMS.forEach((item, index) =>
-    lines.push(`${index + 1}. ${item}`),
-  );
+  CHECKLIST_ITEMS.forEach((item, index) => lines.push(`${index + 1}. ${item}`));
   lines.push("");
 }
 

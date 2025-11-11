@@ -69,10 +69,7 @@ function buildValidateArgs(parsed: ParsedRunArgs): string[] {
   return args;
 }
 
-function buildAgentArgs(
-  parsed: ParsedRunArgs,
-  options: { includeExec: boolean },
-): string[] {
+function buildAgentArgs(parsed: ParsedRunArgs, options: { includeExec: boolean }): string[] {
   const args: string[] = [];
   if (parsed.constraintId) {
     args.push("--constraint", parsed.constraintId);
@@ -133,10 +130,7 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
       case "-c": {
         const next = argv[i + 1];
         if (!next) {
-          throw createError(
-            "CONFIG_ERROR",
-            "Expected constraint id after --constraint.",
-          );
+          throw createError("CONFIG_ERROR", "Expected constraint id after --constraint.");
         }
         parsed.constraintId = next;
         i += 1;
@@ -158,10 +152,7 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
       case "--audit-agent": {
         const next = argv[i + 1];
         if (!next) {
-          throw createError(
-            "CONFIG_ERROR",
-            "Expected agent name after --audit-agent.",
-          );
+          throw createError("CONFIG_ERROR", "Expected agent name after --audit-agent.");
         }
         parsed.auditAgentName = next;
         i += 1;
@@ -188,10 +179,7 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
 
   const requestedModes = Number(planRequested) + Number(execRequested) + Number(auditRequested);
   if (requestedModes > 1) {
-    throw createError(
-      "CONFIG_ERROR",
-      "Use only one of --plan, --exec, or --audit at a time.",
-    );
+    throw createError("CONFIG_ERROR", "Use only one of --plan, --exec, or --audit at a time.");
   }
 
   if (planRequested) {
@@ -203,31 +191,19 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
   }
 
   if (parsed.constraintId && parsed.sequential) {
-    throw createError(
-      "CONFIG_ERROR",
-      "Use either --constraint or --sequential, not both.",
-    );
+    throw createError("CONFIG_ERROR", "Use either --constraint or --sequential, not both.");
   }
 
   if (parsed.outputPath && parsed.mode === "validate") {
-    throw createError(
-      "CONFIG_ERROR",
-      "--output can only be used with --plan or --exec.",
-    );
+    throw createError("CONFIG_ERROR", "--output can only be used with --plan or --exec.");
   }
 
   if (parsed.agentName && parsed.mode === "validate") {
-    throw createError(
-      "CONFIG_ERROR",
-      "--agent can only be used with --plan, --exec, or --audit.",
-    );
+    throw createError("CONFIG_ERROR", "--agent can only be used with --plan, --exec, or --audit.");
   }
 
   if (parsed.auditAgentName && parsed.mode !== "audit") {
-    throw createError(
-      "CONFIG_ERROR",
-      "--audit-agent requires --audit.",
-    );
+    throw createError("CONFIG_ERROR", "--audit-agent requires --audit.");
   }
 
   return parsed;

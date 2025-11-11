@@ -16,8 +16,13 @@
     "build": "tsc -p tsconfig.json && node scripts/copy-constraints.mjs",
     "build:exe": "npm run build && pkg . --targets node18-win-x64 --output dist-exe/cda.exe",
     "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "tsc -w -p tsconfig.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "pkg": {
     "assets": [
@@ -28,12 +33,37 @@
   "engines": {
     "node": ">=18.0.0"
   },
+  "keywords": [
+    "architecture",
+    "constraints",
+    "validation",
+    "cli",
+    "cda",
+    "code-quality"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JohanBellander/CdaCLI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JohanBellander/CdaCLI/issues"
+  },
+  "homepage": "https://github.com/JohanBellander/CdaCLI#readme",
+  "author": "Johan Bellander",
   "license": "UNLICENSED",
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@types/node": "22.9.4",
+    "@typescript-eslint/eslint-plugin": "^8.46.4",
+    "@typescript-eslint/parser": "^8.46.4",
     "@yao-pkg/pkg": "^6.10.1",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
     "patch-package": "^8.0.1",
+    "prettier": "^3.6.2",
     "typescript": "5.6.3",
+    "typescript-eslint": "^8.46.4",
     "vitest": "^4.0.8"
   }
 }

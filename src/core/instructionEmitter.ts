@@ -5,12 +5,7 @@ import {
 } from "./types.js";
 import { ConstraintDocument } from "./constraintLoader.js";
 
-export const DEFAULT_IGNORED_PATHS = [
-  "node_modules",
-  "dist",
-  "build",
-  ".git",
-] as const;
+export const DEFAULT_IGNORED_PATHS = ["node_modules", "dist", "build", ".git"] as const;
 
 export interface BatchPackageOptions {
   runId: string;
@@ -125,24 +120,13 @@ export function buildSingleInstructionPackage(
   };
 }
 
-function toInstructionBlock(
-  doc: ConstraintDocument,
-): InstructionConstraintBlock {
+function toInstructionBlock(doc: ConstraintDocument): InstructionConstraintBlock {
   const sections = doc.sections;
-  const detectionSteps = extractDetectionSteps(
-    sections["VALIDATION ALGORITHM (PSEUDOCODE)"],
-  );
-  const reportFields = extractReportFields(
-    sections["REPORTING CONTRACT"],
-    doc.meta.id,
-  );
-  const successCriteria = extractBulletList(
-    sections["SUCCESS CRITERIA (MUST)"],
-  );
+  const detectionSteps = extractDetectionSteps(sections["VALIDATION ALGORITHM (PSEUDOCODE)"]);
+  const reportFields = extractReportFields(sections["REPORTING CONTRACT"], doc.meta.id);
+  const successCriteria = extractBulletList(sections["SUCCESS CRITERIA (MUST)"]);
   const fixSteps = extractBulletList(sections["FIX SEQUENCE (STRICT)"]);
-  const selfVerificationChecklist = extractBulletList(
-    sections["POST-FIX ASSERTIONS"],
-  );
+  const selfVerificationChecklist = extractBulletList(sections["POST-FIX ASSERTIONS"]);
 
   return {
     constraintId: doc.meta.id,
@@ -215,9 +199,7 @@ function extractReportFields(section: string, constraintId: string): string[] {
       return fields;
     }
   }
-  throw new Error(
-    `REPORTING CONTRACT missing required keys definition for ${constraintId}.`,
-  );
+  throw new Error(`REPORTING CONTRACT missing required keys definition for ${constraintId}.`);
 }
 
 function extractBulletList(section: string): string[] {

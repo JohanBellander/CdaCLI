@@ -3,10 +3,10 @@ import { writeFile, unlink } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
-import { loadConstraints, partitionConstraints, } from "../../core/constraintLoader.js";
+import { loadConstraints, partitionConstraints } from "../../core/constraintLoader.js";
 import { buildBatchInstructionPackage, buildSingleInstructionPackage, } from "../../core/instructionEmitter.js";
 import { formatBatchInstructionPackage, formatLegacyBatchInstructionPackage, formatLegacySingleInstructionPackage, formatSingleInstructionPackage, } from "../formatters.js";
-import { loadAgentConfig, resolveAgent, } from "../../core/agentConfig.js";
+import { loadAgentConfig, resolveAgent } from "../../core/agentConfig.js";
 import { assemblePrompt } from "../../core/promptAssembler.js";
 import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
@@ -32,7 +32,7 @@ export async function runAgentCommand(argv = [], options = {}) {
         throw createError("CONFIG_ERROR", "No active constraints available.");
     }
     const runId = generateRunId();
-    const { instructionText, constraintIdUsed } = buildInstructionText({
+    const { instructionText, constraintIdUsed: _constraintIdUsed } = buildInstructionText({
         activeConstraints,
         allConstraints: constraints,
         explicitConstraintId: parsed.constraintId,
@@ -51,7 +51,7 @@ export async function runAgentCommand(argv = [], options = {}) {
     }
     else {
         missingConfigWarning =
-            "WARNING: No cda.agents.json found. Use --dry-run to inspect prompts or run `cda validate`.";
+            "WARNING: No cda.agents.json found. Use `cda run --plan` to inspect prompts or add an agent configuration before executing.";
     }
     const disabledConstraintIds = disabled.map((doc) => doc.meta.id);
     const promptResult = assemblePrompt({
@@ -122,8 +122,7 @@ export async function runAgentCommand(argv = [], options = {}) {
 async function executeAgentCommand(options) {
     const execArgs = options.plan.args;
     let promptFileToCleanup = null;
-    if (options.plan.promptDelivery === "arg-file" &&
-        options.plan.promptFilePath) {
+    if (options.plan.promptDelivery === "arg-file" && options.plan.promptFilePath) {
         await writeFile(options.plan.promptFilePath, options.prompt, "utf8");
         promptFileToCleanup = options.plan.promptFilePath;
     }
@@ -322,7 +321,7 @@ function shouldAppendCmdFallback(command) {
 function buildSpawnGuidance(command, attemptedCommands) {
     const attempts = attemptedCommands.join(", ");
     const verification = "Verify that the Copilot CLI is installed and on PATH (`where copilot` on Windows, `which copilot` on macOS/Linux), or set the absolute path in cda.agents.json.";
-    const fallback = "Until it is installed, you can run `cda agent --agent echo --dry-run` or configure an agent that uses `mode: \"stdin\"` to stream prompts.";
+    const fallback = 'Until it is installed, you can run `cda run --plan --agent echo` or configure an agent that uses `mode: "stdin"` to stream prompts.';
     return `Unable to spawn '${command}'. Tried commands: ${attempts}. ${verification} ${fallback}`;
 }
 function estimateCommandLength(command, args) {

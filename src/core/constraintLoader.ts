@@ -46,9 +46,7 @@ export interface LoadConstraintsOptions {
   constraintOverrides?: ConstraintOverrides;
 }
 
-const DEFAULT_CONSTRAINTS_DIR = fileURLToPath(
-  new URL("../constraints/core", import.meta.url),
-);
+const DEFAULT_CONSTRAINTS_DIR = fileURLToPath(new URL("../constraints/core", import.meta.url));
 
 export async function loadConstraints(
   options: LoadConstraintsOptions = {},
@@ -63,14 +61,9 @@ export async function loadConstraints(
     throw bundleError("global", "No constraint markdown files found.");
   }
 
-  const documents = await Promise.all(
-    files.map((filePath) => parseConstraintFile(filePath)),
-  );
+  const documents = await Promise.all(files.map((filePath) => parseConstraintFile(filePath)));
 
-  const merged = applyConstraintOverrides(
-    documents,
-    options.constraintOverrides,
-  );
+  const merged = applyConstraintOverrides(documents, options.constraintOverrides);
 
   return merged.sort((a, b) => {
     if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
@@ -80,9 +73,7 @@ export async function loadConstraints(
   });
 }
 
-export function partitionConstraints(
-  documents: ConstraintDocument[],
-): {
+export function partitionConstraints(documents: ConstraintDocument[]): {
   active: ConstraintDocument[];
   disabled: ConstraintDocument[];
 } {
@@ -107,20 +98,8 @@ async function parseConstraintFile(filePath: string): Promise<ConstraintDocument
   const name = asString(frontmatter.name, "name", filePath, id);
   const category = asString(frontmatter.category, "category", filePath, id);
   const severity = asString(frontmatter.severity, "severity", filePath, id);
-  const enabled = asBoolean(
-    frontmatter.enabled,
-    "enabled",
-    filePath,
-    id,
-    true,
-  );
-  const optional = asBoolean(
-    frontmatter.optional,
-    "optional",
-    filePath,
-    id,
-    false,
-  );
+  const enabled = asBoolean(frontmatter.enabled, "enabled", filePath, id, true);
+  const optional = asBoolean(frontmatter.optional, "optional", filePath, id, false);
   const version = asNumber(frontmatter.version, "version", filePath, id);
 
   const sections = extractSections(body, id, filePath);
@@ -128,12 +107,7 @@ async function parseConstraintFile(filePath: string): Promise<ConstraintDocument
   const header: ConstraintHeader = {
     constraintId: asString(headerFields.constraint_id, "constraint_id", filePath, id),
     severity: asString(headerFields.severity, "severity", filePath, id),
-    enforcementOrder: asNumber(
-      headerFields.enforcement_order,
-      "enforcement_order",
-      filePath,
-      id,
-    ),
+    enforcementOrder: asNumber(headerFields.enforcement_order, "enforcement_order", filePath, id),
   };
 
   if (header.constraintId !== id) {
@@ -204,11 +178,7 @@ function extractFrontmatter(
   return { frontmatter: data, body };
 }
 
-function extractSections(
-  body: string,
-  constraintId: string,
-  filePath: string,
-): ConstraintSections {
+function extractSections(body: string, constraintId: string, filePath: string): ConstraintSections {
   const sectionBuffers = new Map<SectionName, string[]>();
   let currentSection: SectionName | null = null;
   let expectedIndex = 0;
@@ -252,10 +222,7 @@ function extractSections(
   for (const sectionName of CONSTRAINT_SECTION_ORDER) {
     const buffer = sectionBuffers.get(sectionName);
     if (!buffer || buffer.length === 0) {
-      throw bundleError(
-        constraintId,
-        `Section '${sectionName}' is empty in ${filePath}.`,
-      );
+      throw bundleError(constraintId, `Section '${sectionName}' is empty in ${filePath}.`);
     }
     sections[sectionName] = buffer.join("\n").trim();
   }
@@ -297,12 +264,7 @@ function coerceScalar(value: string): unknown {
   return value;
 }
 
-function asString(
-  value: unknown,
-  key: string,
-  filePath: string,
-  constraintId = "global",
-): string {
+function asString(value: unknown, key: string, filePath: string, constraintId = "global"): string {
   if (typeof value === "string" && value.length > 0) {
     return value;
   }
@@ -356,12 +318,7 @@ function asBoolean(
   throw bundleError(constraintId, `Expected boolean '${key}' in ${filePath}.`);
 }
 
-function asNumber(
-  value: unknown,
-  key: string,
-  filePath: string,
-  constraintId = "global",
-): number {
+function asNumber(value: unknown, key: string, filePath: string, constraintId = "global"): number {
   if (typeof value === "number" && Number.isFinite(value)) {
     return value;
   }
@@ -369,8 +326,5 @@ function asNumber(
 }
 
 function bundleError(constraintId: string, message: string): Error {
-  return createError(
-    "BUNDLE_ERROR",
-    `BUNDLE_ERROR [${constraintId}]: ${message}`,
-  );
+  return createError("BUNDLE_ERROR", `BUNDLE_ERROR [${constraintId}]: ${message}`);
 }

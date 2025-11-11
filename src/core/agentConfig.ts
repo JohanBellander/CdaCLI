@@ -47,27 +47,18 @@ export async function loadAgentConfig(
     const nodeErr = error as NodeJS.ErrnoException;
     if (nodeErr.code === "ENOENT") {
       if (required) {
-        throw createError(
-          "CONFIG_ERROR",
-          `Agent config not found at ${configPath}.`,
-        );
+        throw createError("CONFIG_ERROR", `Agent config not found at ${configPath}.`);
       }
       return null;
     }
-    throw createError(
-      "CONFIG_ERROR",
-      `Unable to read ${configPath}: ${nodeErr.message}`,
-    );
+    throw createError("CONFIG_ERROR", `Unable to read ${configPath}: ${nodeErr.message}`);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(fileContents);
   } catch (error) {
-    throw createError(
-      "CONFIG_ERROR",
-      `Invalid JSON in ${configPath}: ${(error as Error).message}`,
-    );
+    throw createError("CONFIG_ERROR", `Invalid JSON in ${configPath}: ${(error as Error).message}`);
   }
 
   const normalized = normalizeAgentConfig(parsed, configPath);
@@ -123,45 +114,29 @@ function normalizeAgentConfig(
   configPath: string,
 ): { defaultAgent?: string; agents: Record<string, AgentDefinition> } {
   if (!isRecord(value)) {
-    throw createError(
-      "CONFIG_ERROR",
-      `${configPath} must contain a JSON object.`,
-    );
+    throw createError("CONFIG_ERROR", `${configPath} must contain a JSON object.`);
   }
 
   const agentsRaw = value.agents;
   if (!isRecord(agentsRaw)) {
-    throw createError(
-      "CONFIG_ERROR",
-      `${configPath} must include an 'agents' object.`,
-    );
+    throw createError("CONFIG_ERROR", `${configPath} must include an 'agents' object.`);
   }
 
   const agentEntries = Object.entries(agentsRaw);
   if (agentEntries.length === 0) {
-    throw createError(
-      "CONFIG_ERROR",
-      `${configPath} must define at least one agent.`,
-    );
+    throw createError("CONFIG_ERROR", `${configPath} must define at least one agent.`);
   }
 
   const agents: Record<string, AgentDefinition> = {};
   for (const [agentName, rawDefinition] of agentEntries) {
-    agents[agentName] = normalizeAgentDefinition(
-      agentName,
-      rawDefinition,
-      configPath,
-    );
+    agents[agentName] = normalizeAgentDefinition(agentName, rawDefinition, configPath);
   }
 
   const defaultRaw = value.default;
   let defaultAgent: string | undefined;
   if (defaultRaw !== undefined) {
     if (typeof defaultRaw !== "string" || defaultRaw.length === 0) {
-      throw createError(
-        "CONFIG_ERROR",
-        `${configPath} default must be a non-empty string.`,
-      );
+      throw createError("CONFIG_ERROR", `${configPath} default must be a non-empty string.`);
     }
     if (!agents[defaultRaw]) {
       throw createError(
@@ -181,17 +156,10 @@ function normalizeAgentDefinition(
   configPath: string,
 ): AgentDefinition {
   if (!isRecord(value)) {
-    throw createError(
-      "CONFIG_ERROR",
-      `Agent '${name}' in ${configPath} must be an object.`,
-    );
+    throw createError("CONFIG_ERROR", `Agent '${name}' in ${configPath} must be an object.`);
   }
 
-  const command = asNonEmptyString(
-    value.command,
-    `agents.${name}.command`,
-    configPath,
-  );
+  const command = asNonEmptyString(value.command, `agents.${name}.command`, configPath);
   const args = parseArgs(value.args, name, configPath);
   const mode = parseMode(value.mode, name, configPath);
   const promptPreamble = asOptionalString(
@@ -199,21 +167,13 @@ function normalizeAgentDefinition(
     `agents.${name}.prompt_preamble`,
     configPath,
   );
-  const postscript = asOptionalString(
-    value.postscript,
-    `agents.${name}.postscript`,
-    configPath,
-  );
+  const postscript = asOptionalString(value.postscript, `agents.${name}.postscript`, configPath);
   const maxLength = asOptionalPositiveInteger(
     value.max_length,
     `agents.${name}.max_length`,
     configPath,
   );
-  const agentModel = asOptionalString(
-    value.agent_model,
-    `agents.${name}.agent_model`,
-    configPath,
-  );
+  const agentModel = asOptionalString(value.agent_model, `agents.${name}.agent_model`, configPath);
   const promptArgFlag = asOptionalString(
     value.prompt_arg_flag,
     `agents.${name}.prompt_arg_flag`,
@@ -239,11 +199,7 @@ function normalizeAgentDefinition(
   };
 }
 
-function parseArgs(
-  value: unknown,
-  agentName: string,
-  configPath: string,
-): string[] {
+function parseArgs(value: unknown, agentName: string, configPath: string): string[] {
   if (value === undefined) {
     return [];
   }
@@ -266,11 +222,7 @@ function parseArgs(
   return parsed;
 }
 
-function parseMode(
-  value: unknown,
-  agentName: string,
-  configPath: string,
-): AgentExecutionMode {
+function parseMode(value: unknown, agentName: string, configPath: string): AgentExecutionMode {
   if (typeof value !== "string" || value.length === 0) {
     throw createError(
       "CONFIG_ERROR",
@@ -286,35 +238,21 @@ function parseMode(
   return value;
 }
 
-function asNonEmptyString(
-  value: unknown,
-  context: string,
-  configPath: string,
-): string {
+function asNonEmptyString(value: unknown, context: string, configPath: string): string {
   if (typeof value === "string" && value.trim().length > 0) {
     return value;
   }
-  throw createError(
-    "CONFIG_ERROR",
-    `${context} in ${configPath} must be a non-empty string.`,
-  );
+  throw createError("CONFIG_ERROR", `${context} in ${configPath} must be a non-empty string.`);
 }
 
-function asOptionalString(
-  value: unknown,
-  context: string,
-  configPath: string,
-): string | null {
+function asOptionalString(value: unknown, context: string, configPath: string): string | null {
   if (value === undefined || value === null) {
     return null;
   }
   if (typeof value === "string") {
     return value;
   }
-  throw createError(
-    "CONFIG_ERROR",
-    `${context} in ${configPath} must be a string if provided.`,
-  );
+  throw createError("CONFIG_ERROR", `${context} in ${configPath} must be a string if provided.`);
 }
 
 function asOptionalPositiveInteger(
@@ -325,12 +263,7 @@ function asOptionalPositiveInteger(
   if (value === undefined || value === null) {
     return null;
   }
-  if (
-    typeof value === "number" &&
-    Number.isFinite(value) &&
-    value > 0 &&
-    Number.isInteger(value)
-  ) {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0 && Number.isInteger(value)) {
     return value;
   }
   throw createError(

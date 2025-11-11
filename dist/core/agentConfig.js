@@ -50,10 +50,16 @@ export function resolveAgent(config, requestedAgent) {
         }
         return { agentName: config.defaultAgent, definition: defaultAgent };
     }
+    if (config.agents["copilot-stdin"]) {
+        return {
+            agentName: "copilot-stdin",
+            definition: config.agents["copilot-stdin"],
+        };
+    }
     if (config.agents.copilot) {
         return { agentName: "copilot", definition: config.agents.copilot };
     }
-    throw createError("CONFIG_ERROR", "No default agent configured and 'copilot' agent not available. Specify --agent <name>.");
+    throw createError("CONFIG_ERROR", "No default agent configured and neither 'copilot-stdin' nor 'copilot' agents are available. Specify --agent <name>.");
 }
 function normalizeAgentConfig(value, configPath) {
     if (!isRecord(value)) {
@@ -154,10 +160,7 @@ function asOptionalPositiveInteger(value, context, configPath) {
     if (value === undefined || value === null) {
         return null;
     }
-    if (typeof value === "number" &&
-        Number.isFinite(value) &&
-        value > 0 &&
-        Number.isInteger(value)) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0 && Number.isInteger(value)) {
         return value;
     }
     throw createError("CONFIG_ERROR", `${context} in ${configPath} must be a positive integer if provided.`);

@@ -1,15 +1,39 @@
 # Node / TypeScript
 node_modules/
+dist/
+dist-exe/
+*.tgz
+
 # Logs
 npm-debug.log*
-.yarn-debug.log*
-.yarn-error.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
 # IDE
 .vscode/
+.idea/
 .DS_Store
+*.swp
+*.swo
+*~
+
 # Coverage
 coverage/
+.nyc_output
+
 # Env
 .env
+.env.local
+.env.*.local
+
+# Testing
+test-reports/
+
+# Temporary files
+*.tmp
+tmp/
+.cache/
+
 # Beads issue state should be committed
 !.beads/issues.jsonl

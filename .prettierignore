@@ -1,0 +1,7 @@
+node_modules
+dist
+dist-exe
+coverage
+*.md
+package-lock.json
+.beads
