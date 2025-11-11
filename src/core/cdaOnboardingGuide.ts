@@ -22,7 +22,7 @@ export function buildOnboardingGuide(): string {
   lines.push("");
   lines.push("## Evidence Checklist");
   lines.push("");
-  lines.push("- After `cda run --plan`: save `cda-plan.txt`, record the printed `run_id`, and note all directives it lists.");
+  lines.push("- After `cda run --plan`: record the printed `run_id`, summarize the directives in your transcript, and optionally save the prompt to a file if you need offline reference.");
   lines.push("- After `cda run --exec`: capture the process exit status, the emitted `run_id`, and at least the opening lines of the agent's report.");
   lines.push("- If any command fails, stop immediately and report the failure instead of summarizing success.");
   lines.push("");
