@@ -102,14 +102,14 @@ function addHighLevelPurpose(lines: string[]): void {
 }
 
 function addQuickStartSequence(lines: string[]): void {
-  lines.push("### Immediate Command Checklist");
-  lines.push("");
-  lines.push(
-    "Execute the following steps in order whenever you begin or resume a work session:",
-  );
+  lines.push("> **STOP - Mandatory Command Sequence**");
+  lines.push(">");
+  lines.push("> Do not proceed with the remainder of this playbook until every command below has completed successfully in this exact order:");
   QUICK_START_SEQUENCE.forEach((entry, index) =>
-    lines.push(`${index + 1}. ${entry}`),
+    lines.push(`> ${index + 1}. ${entry}`),
   );
+  lines.push(">");
+  lines.push("> Confirm success after each command before continuing.");
   lines.push("");
 }
 
@@ -211,6 +211,9 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push(
     "3. You SHOULD re-run `cda run --plan` (optionally with `--output <file>`) after editing files to confirm the prompt reflects the updated codebase before executing the external agent.",
   );
+  lines.push(
+    "**Reminder:** After any plan run that results in file edits, you MUST run `npm run build` again before invoking `cda run --exec`.",
+  );
   lines.push("");
   lines.push("### Validation Phase");
   lines.push(
@@ -225,6 +228,23 @@ function addCommandUsageSection(lines: string[]): void {
   lines.push(
     "4. You MAY supply `--legacy-format` only when the downstream tool cannot handle the agent metadata additions, and you MUST document that exception in your report.",
   );
+  lines.push("");
+  lines.push("#### Required Evidence");
+  lines.push("");
+  lines.push("You MUST record the following immediately after `cda run --exec` completes:");
+  lines.push("- The process exit status (0 indicates success).");
+  lines.push("- The `run_id` printed in the verification banner.");
+  lines.push("- A snippet of the agent output (at least the first few lines or a saved attachment).");
+  lines.push("");
+  lines.push("Example transcript excerpt:");
+  lines.push("```bash");
+  lines.push("$ cda run --exec");
+  lines.push("run_id: cda-2025-11-11-001");
+  lines.push("analysis_performed: true");
+  lines.push("total_violations: 0");
+  lines.push("exit status: 0");
+  lines.push("```");
+  lines.push("");
   lines.push("");
   lines.push(
     "Legacy `cda validate`/`cda agent` wrappers already call `cda run` and will be removed in v0.6.0; update scripts now.",

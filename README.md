@@ -157,6 +157,12 @@ Bootstrap CDA in the current repository:
 cda init
 ```
 
+Generate the minimal onboarding checklist (command sequence + evidence requirements) without touching existing config:
+
+```bash
+cda onboard --output CDA-onboarding.md
+```
+
 List bundled constraints in enforcement order:
 
 ```bash
@@ -224,7 +230,7 @@ All commands exit with `CONFIG_ERROR` if preconditions fail (missing `cda.config
 
 ## Agent Workflow
 
-1. Run `cda init` once per repository to generate `CDA.md` and `cda.config.json`.
+1. Run `cda init` once per repository to generate `cda.config.json` (and the full `CDA.md`). Use `cda onboard` when you prefer the minimal checklist version.
 2. Before writing code, run `cda run --plan` and archive the run_id/prompt as evidence of the directives in force.
 3. Implement changes while satisfying all constraints simultaneously (layering, purity, file size, exports, naming, nesting).
 4. After changes, run `cda run --exec` (batch or `--constraint`/`--sequential`) and remediate until the report shows zero violations.
@@ -276,4 +282,4 @@ All error codes exit with status `1` and a descriptive message.
 ## Spec Changes
 
 - Instruction format version `2` (Spec Update 1) introduced the banner, execution-state flags, sentinel markers, AGENT ACTION REQUIRED / DO NOT blocks, and the expanded report skeleton.
-- Spec Update 2 added the prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. Release `0.5.1` consolidated the workflow under `cda run` while keeping legacy wrappers through `0.6.0`; release `0.5.2` layers on a quick-start checklist and a hard stop that requires running `cda run --exec` before summarizing.
+- Spec Update 2 added the prompt assembler, agent config scaffolding, and the second-person `CDA.md` playbook. Release `0.5.1` consolidated the workflow under `cda run` while keeping legacy wrappers through `0.6.0`; release `0.5.2` layered on the quick-start checklist and mandatory `cda run --exec` evidence; release `0.5.3` introduces `cda onboard` for generating the minimal command/evidence checklist.

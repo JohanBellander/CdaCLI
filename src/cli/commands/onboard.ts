@@ -1,0 +1,98 @@
+// Beads: CDATool-m8x
+
+import { access, mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+import { buildOnboardingGuide } from "../../core/cdaOnboardingGuide.js";
+import { createError } from "../../core/errors.js";
+
+interface OnboardCommandOptions {
+  cwd?: string;
+}
+
+interface ParsedOnboardArgs {
+  helpRequested: boolean;
+  overwrite: boolean;
+  outputPath?: string;
+}
+
+export async function runOnboardCommand(
+  args: string[] = [],
+  options: OnboardCommandOptions = {},
+): Promise<void> {
+  const parsed = parseArgs(args);
+  if (parsed.helpRequested) {
+    printOnboardHelp();
+    return;
+  }
+
+  const cwd = options.cwd ?? process.cwd();
+  const targetPath = path.resolve(cwd, parsed.outputPath ?? "CDA.md");
+
+  if (!parsed.overwrite && (await fileExists(targetPath))) {
+    throw createError(
+      "CONFIG_ERROR",
+      `${path.basename(targetPath)} already exists. Remove it or re-run with --overwrite.`,
+    );
+  }
+
+  await mkdir(path.dirname(targetPath), { recursive: true });
+  const guide = buildOnboardingGuide();
+  await writeFile(targetPath, `${guide}\n`, "utf8");
+
+  console.log(
+    `Created minimal onboarding guide at ${path.relative(cwd, targetPath) || "CDA.md"}.`,
+  );
+}
+
+function parseArgs(args: string[]): ParsedOnboardArgs {
+  const parsed: ParsedOnboardArgs = {
+    helpRequested: false,
+    overwrite: false,
+  };
+
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === "--help" || arg === "-h") {
+      parsed.helpRequested = true;
+      return parsed;
+    }
+    if (arg === "--overwrite") {
+      parsed.overwrite = true;
+      continue;
+    }
+    if (arg === "--output") {
+      const next = args[i + 1];
+      if (!next) {
+        throw createError(
+          "CONFIG_ERROR",
+          "Missing value for --output option in cda onboard.",
+        );
+      }
+      parsed.outputPath = next;
+      i += 1;
+      continue;
+    }
+    throw createError("CONFIG_ERROR", `Unknown option '${arg}' for cda onboard.`);
+  }
+
+  return parsed;
+}
+
+function printOnboardHelp(): void {
+  console.log("Usage: cda onboard [--overwrite] [--output <path>]");
+  console.log("");
+  console.log("Options:");
+  console.log("  --overwrite   Overwrite the output file if it already exists.");
+  console.log("  --output      Write the guide to a custom path instead of CDA.md.");
+  console.log("  --help        Show this message.");
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}

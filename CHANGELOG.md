@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- _No changes yet._
+- Added `cda onboard` command for generating a minimal CDA onboarding checklist without overwriting existing configuration files.
 
 ## 0.5.2 — 2025-11-10
 - Enhanced the generated `CDA.md` playbook with an immediate command checklist and an explicit requirement to capture `cda run --exec` results before closing out a session.

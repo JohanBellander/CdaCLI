@@ -8,6 +8,7 @@ import { runInitCommand } from "./commands/init.js";
 import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
 import { runRunCommand } from "./commands/run.js";
+import { runOnboardCommand } from "./commands/onboard.js";
 import {
   runLegacyAgentCommand,
   runLegacyValidateCommand,
@@ -21,6 +22,7 @@ type CommandHandler = (args: string[]) => Promise<void>;
 
 const COMMANDS: Record<string, CommandHandler> = {
   init: async (args) => runInitCommand(args),
+  onboard: async (args) => runOnboardCommand(args),
   list: async () => runListCommand(),
   describe: async (args) => runDescribeCommand(args),
   run: async (args) => runRunCommand(args),
@@ -62,6 +64,7 @@ function printHelp(): void {
   console.log("");
   console.log("Available commands:");
   console.log("  init       Initialize CDA config and generate CDA.md");
+  console.log("  onboard    Generate minimal CDA.md onboarding checklist");
   console.log("  list       List bundled constraints");
   console.log("  describe   Show full enforcement protocol for a constraint");
   console.log("  run        Consolidated validation/plan/exec workflow");
