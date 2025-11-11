@@ -16,7 +16,7 @@ interface ParsedInitArgs {
   skipAgents: boolean;
 }
 
-const DEFAULT_AGENT_CONFIG = {
+export const DEFAULT_AGENT_CONFIG = {
   default: "copilot-stdin",
   agents: {
     copilot: {
@@ -74,11 +74,7 @@ export async function runInitCommand(
   }
 
   const constraints = await loadConstraints();
-  const configPayload = JSON.stringify(
-    { version: 1, constraints: "builtin", constraint_overrides: {} },
-    null,
-    2,
-  );
+  const configPayload = buildDefaultConfigPayload();
 
   await mkdir(cwd, { recursive: true });
   await writeFile(configPath, `${configPayload}\n`, "utf8");
@@ -104,6 +100,14 @@ export async function runInitCommand(
     "utf8",
   );
   console.log("Created cda.config.json, CDA.md, and cda.agents.json");
+}
+
+export function buildDefaultConfigPayload(): string {
+  return JSON.stringify(
+    { version: 1, constraints: "builtin", constraint_overrides: {} },
+    null,
+    2,
+  );
 }
 
 function parseArgs(args: string[]): ParsedInitArgs {

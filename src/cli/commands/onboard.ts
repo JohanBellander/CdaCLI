@@ -5,6 +5,10 @@ import path from "node:path";
 
 import { buildOnboardingGuide } from "../../core/cdaOnboardingGuide.js";
 import { createError } from "../../core/errors.js";
+import {
+  DEFAULT_AGENT_CONFIG,
+  buildDefaultConfigPayload,
+} from "./init.js";
 
 interface OnboardCommandOptions {
   cwd?: string;
@@ -40,8 +44,30 @@ export async function runOnboardCommand(
   const guide = buildOnboardingGuide();
   await writeFile(targetPath, `${guide}\n`, "utf8");
 
+  const createdArtifacts: string[] = [];
+  createdArtifacts.push(
+    `${path.relative(cwd, targetPath) || "CDA.md"}`,
+  );
+
+  const configPath = path.join(cwd, "cda.config.json");
+  if (!(await fileExists(configPath))) {
+    const configPayload = buildDefaultConfigPayload();
+    await writeFile(configPath, `${configPayload}\n`, "utf8");
+    createdArtifacts.push("cda.config.json");
+  }
+
+  const agentsPath = path.join(cwd, "cda.agents.json");
+  if (!(await fileExists(agentsPath))) {
+    await writeFile(
+      agentsPath,
+      `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`,
+      "utf8",
+    );
+    createdArtifacts.push("cda.agents.json");
+  }
+
   console.log(
-    `Created minimal onboarding guide at ${path.relative(cwd, targetPath) || "CDA.md"}.`,
+    `Created ${createdArtifacts.join(", ")}.`,
   );
 }
 

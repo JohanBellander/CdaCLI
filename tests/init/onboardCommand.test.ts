@@ -35,6 +35,15 @@ describe("cda onboard command", () => {
     expect(guide).toMatch(/cda run --plan/);
     expect(guide).toMatch(/cda run --exec/);
     expect(guide).toMatch(/Evidence Checklist/);
+
+    const config = await readFile(path.join(cwd, "cda.config.json"), "utf8");
+    expect(config).toContain("\"constraint_overrides\": {}");
+
+    const agentConfig = await readFile(
+      path.join(cwd, "cda.agents.json"),
+      "utf8",
+    );
+    expect(agentConfig).toContain("\"default\": \"copilot-stdin\"");
   });
 
   it("refuses to overwrite an existing guide without --overwrite", async () => {
@@ -53,5 +62,25 @@ describe("cda onboard command", () => {
 
     const guide = await readFile(path.join(cwd, "docs", "onboarding.md"), "utf8");
     expect(guide).toMatch(/STOP - Mandatory Command Sequence/);
+
+    // Config artifacts should still be created in the repo root
+    await expect(readFile(path.join(cwd, "cda.config.json"), "utf8")).resolves.toBeTruthy();
+    await expect(readFile(path.join(cwd, "cda.agents.json"), "utf8")).resolves.toBeTruthy();
+  });
+
+  it("preserves existing config and agent files", async () => {
+    const cwd = await createTempDir();
+    const configPath = path.join(cwd, "cda.config.json");
+    const agentsPath = path.join(cwd, "cda.agents.json");
+    await writeFile(configPath, "{\n  \"custom\": true\n}\n", "utf8");
+    await writeFile(agentsPath, "{\n  \"agents\": {}\n}\n", "utf8");
+
+    await runOnboardCommand([], { cwd });
+
+    const config = await readFile(configPath, "utf8");
+    expect(config).toContain("\"custom\": true");
+
+    const agents = await readFile(agentsPath, "utf8");
+    expect(agents).toContain("\"agents\": {}");
   });
 });
