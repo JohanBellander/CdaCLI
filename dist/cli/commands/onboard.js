@@ -3,7 +3,7 @@ import { access, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildOnboardingGuide } from "../../core/cdaOnboardingGuide.js";
 import { createError } from "../../core/errors.js";
-import { DEFAULT_AGENT_CONFIG, buildDefaultConfigPayload, } from "./init.js";
+import { DEFAULT_AGENT_CONFIG, buildDefaultConfigPayload } from "./init.js";
 import { loadConstraints } from "../../core/constraintLoader.js";
 export async function runOnboardCommand(args = [], options = {}) {
     const parsed = parseArgs(args);

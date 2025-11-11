@@ -7,9 +7,7 @@ interface ListCommandOptions {
   constraintsDir?: string;
 }
 
-export async function runListCommand(
-  options: ListCommandOptions = {},
-): Promise<void> {
+export async function runListCommand(options: ListCommandOptions = {}): Promise<void> {
   const cwd = options.cwd ?? process.cwd();
   const projectConfig = await loadProjectConfig({ cwd, required: false });
   const constraints = await loadConstraints({
@@ -35,17 +33,18 @@ export async function runListCommand(
 
   const lines: string[] = [];
   lines.push(formatRow(header, widths, true));
-  lines.push(formatRow(widths.map((width) => "-".repeat(width)), widths));
+  lines.push(
+    formatRow(
+      widths.map((width) => "-".repeat(width)),
+      widths,
+    ),
+  );
   rows.forEach((row) => lines.push(formatRow(row, widths)));
 
   console.log(lines.join("\n"));
 }
 
-function formatRow(
-  cells: string[],
-  widths: number[],
-  uppercase = false,
-): string {
+function formatRow(cells: string[], widths: number[], uppercase = false): string {
   const padded = cells.map((cell, index) => {
     const value = uppercase ? cell.toUpperCase() : cell;
     return value.padEnd(widths[index]);

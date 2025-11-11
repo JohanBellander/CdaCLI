@@ -34,22 +34,14 @@ export async function runDescribeCommand(
   });
   const constraint = constraints.find((doc) => doc.meta.id === constraintId);
   if (!constraint) {
-    throw createError(
-      "CONFIG_ERROR",
-      `Unknown constraint '${constraintId}'.`,
-    );
+    throw createError("CONFIG_ERROR", `Unknown constraint '${constraintId}'.`);
   }
   if (!constraint.meta.isActive) {
-    throw createError(
-      "CONFIG_ERROR",
-      `Constraint '${constraintId}' is disabled.`,
-    );
+    throw createError("CONFIG_ERROR", `Constraint '${constraintId}' is disabled.`);
   }
 
   const lines: string[] = [];
-  lines.push(
-    `CONSTRAINT: ${constraint.meta.name} (${constraint.meta.id})`,
-  );
+  lines.push(`CONSTRAINT: ${constraint.meta.name} (${constraint.meta.id})`);
   lines.push(`enforcement_order: ${constraint.meta.enforcementOrder}`);
   lines.push("");
 

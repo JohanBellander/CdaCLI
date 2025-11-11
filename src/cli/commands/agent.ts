@@ -5,10 +5,7 @@ import path from "node:path";
 import os from "node:os";
 import { spawn, type ChildProcess } from "node:child_process";
 
-import {
-  loadConstraints,
-  partitionConstraints,
-} from "../../core/constraintLoader.js";
+import { loadConstraints, partitionConstraints } from "../../core/constraintLoader.js";
 import {
   buildBatchInstructionPackage,
   buildSingleInstructionPackage,
@@ -19,11 +16,7 @@ import {
   formatLegacySingleInstructionPackage,
   formatSingleInstructionPackage,
 } from "../formatters.js";
-import {
-  loadAgentConfig,
-  resolveAgent,
-  AgentDefinition,
-} from "../../core/agentConfig.js";
+import { loadAgentConfig, resolveAgent, AgentDefinition } from "../../core/agentConfig.js";
 import { assemblePrompt } from "../../core/promptAssembler.js";
 import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
@@ -77,15 +70,13 @@ export async function runAgentCommand(
   if (constraints.length === 0) {
     throw createError("BUNDLE_ERROR", "No constraints available to validate.");
   }
-  const { active: activeConstraints, disabled } = partitionConstraints(
-    constraints,
-  );
+  const { active: activeConstraints, disabled } = partitionConstraints(constraints);
   if (activeConstraints.length === 0) {
     throw createError("CONFIG_ERROR", "No active constraints available.");
   }
 
   const runId = generateRunId();
-  const { instructionText, constraintIdUsed } = buildInstructionText({
+  const { instructionText, constraintIdUsed: _constraintIdUsed } = buildInstructionText({
     activeConstraints,
     allConstraints: constraints,
     explicitConstraintId: parsed.constraintId,
@@ -199,10 +190,7 @@ async function executeAgentCommand(options: {
 }): Promise<void> {
   const execArgs = options.plan.args;
   let promptFileToCleanup: string | null = null;
-  if (
-    options.plan.promptDelivery === "arg-file" &&
-    options.plan.promptFilePath
-  ) {
+  if (options.plan.promptDelivery === "arg-file" && options.plan.promptFilePath) {
     await writeFile(options.plan.promptFilePath, options.prompt, "utf8");
     promptFileToCleanup = options.plan.promptFilePath;
   }
@@ -285,15 +273,9 @@ function buildInstructionText({
         (constraint) => constraint.meta.id === explicitConstraintId,
       );
       if (disabledMatch) {
-        throw createError(
-          "CONFIG_ERROR",
-          `Constraint '${explicitConstraintId}' is disabled.`,
-        );
+        throw createError("CONFIG_ERROR", `Constraint '${explicitConstraintId}' is disabled.`);
       }
-      throw createError(
-        "CONFIG_ERROR",
-        `Unknown constraint '${explicitConstraintId}'.`,
-      );
+      throw createError("CONFIG_ERROR", `Unknown constraint '${explicitConstraintId}'.`);
     }
     const pkg = buildSingleInstructionPackage({
       runId,
@@ -361,10 +343,7 @@ function buildAgentCommandPlan({
 
   if (platform === "win32") {
     const limit = getWindowsArgLimit();
-    const estimatedLength = estimateCommandLength(
-      definition.command,
-      inlineArgs,
-    );
+    const estimatedLength = estimateCommandLength(definition.command, inlineArgs);
     if (estimatedLength >= limit) {
       const promptFileArg = definition.promptFileArg ?? "--prompt-file";
       const promptFilePath = path.join(
@@ -428,15 +407,15 @@ function attemptSpawn(
     // On Windows, .cmd files must be spawned through cmd.exe
     const isWindows = resolvePlatform() === "win32";
     const isCmdFile = command.toLowerCase().endsWith(".cmd");
-    
+
     let spawnCommand = command;
     let spawnArgs = args;
-    
+
     if (isWindows && isCmdFile) {
       spawnCommand = "cmd.exe";
       spawnArgs = ["/c", command, ...args];
     }
-    
+
     const child = spawn(spawnCommand, spawnArgs, { stdio });
     const cleanup = () => {
       child.removeListener("error", handleError);
@@ -468,15 +447,12 @@ function shouldAppendCmdFallback(command: string): boolean {
   return !/\.[^\\/]+$/u.test(base);
 }
 
-function buildSpawnGuidance(
-  command: string,
-  attemptedCommands: string[],
-): string {
+function buildSpawnGuidance(command: string, attemptedCommands: string[]): string {
   const attempts = attemptedCommands.join(", ");
   const verification =
     "Verify that the Copilot CLI is installed and on PATH (`where copilot` on Windows, `which copilot` on macOS/Linux), or set the absolute path in cda.agents.json.";
   const fallback =
-    "Until it is installed, you can run `cda run --plan --agent echo` or configure an agent that uses `mode: \"stdin\"` to stream prompts.";
+    'Until it is installed, you can run `cda run --plan --agent echo` or configure an agent that uses `mode: "stdin"` to stream prompts.';
   return `Unable to spawn '${command}'. Tried commands: ${attempts}. ${verification} ${fallback}`;
 }
 
@@ -540,10 +516,7 @@ function parseAgentArgs(args: string[]): ParsedAgentArgs {
       case "-c": {
         const next = args[i + 1];
         if (!next) {
-          throw createError(
-            "CONFIG_ERROR",
-            "Expected constraint id after --constraint.",
-          );
+          throw createError("CONFIG_ERROR", "Expected constraint id after --constraint.");
         }
         parsed.constraintId = next;
         i += 1;
@@ -556,10 +529,7 @@ function parseAgentArgs(args: string[]): ParsedAgentArgs {
       case "--agent": {
         const next = args[i + 1];
         if (!next) {
-          throw createError(
-            "CONFIG_ERROR",
-            "Expected agent name after --agent.",
-          );
+          throw createError("CONFIG_ERROR", "Expected agent name after --agent.");
         }
         parsed.agentName = next;
         i += 1;
@@ -577,10 +547,7 @@ function parseAgentArgs(args: string[]): ParsedAgentArgs {
       case "--output": {
         const next = args[i + 1];
         if (!next) {
-          throw createError(
-            "CONFIG_ERROR",
-            "Expected path after --output.",
-          );
+          throw createError("CONFIG_ERROR", "Expected path after --output.");
         }
         parsed.outputPath = next;
         i += 1;
@@ -597,10 +564,7 @@ function parseAgentArgs(args: string[]): ParsedAgentArgs {
   }
 
   if (parsed.constraintId && parsed.sequential) {
-    throw createError(
-      "CONFIG_ERROR",
-      "Use either --constraint or --sequential, not both.",
-    );
+    throw createError("CONFIG_ERROR", "Use either --constraint or --sequential, not both.");
   }
 
   return parsed;

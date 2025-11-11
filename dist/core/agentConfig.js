@@ -160,10 +160,7 @@ function asOptionalPositiveInteger(value, context, configPath) {
     if (value === undefined || value === null) {
         return null;
     }
-    if (typeof value === "number" &&
-        Number.isFinite(value) &&
-        value > 0 &&
-        Number.isInteger(value)) {
+    if (typeof value === "number" && Number.isFinite(value) && value > 0 && Number.isInteger(value)) {
         return value;
     }
     throw createError("CONFIG_ERROR", `${context} in ${configPath} must be a positive integer if provided.`);

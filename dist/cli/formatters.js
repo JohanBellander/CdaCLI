@@ -229,8 +229,6 @@ function formatList(items, options = {}) {
         return "[]";
     }
     const quoted = options.quoted ?? false;
-    const rendered = items
-        .map((item) => (quoted ? `"${item}"` : item))
-        .join(", ");
+    const rendered = items.map((item) => (quoted ? `"${item}"` : item)).join(", ");
     return `[${rendered}]`;
 }

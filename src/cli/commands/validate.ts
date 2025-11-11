@@ -1,7 +1,4 @@
-import {
-  loadConstraints,
-  partitionConstraints,
-} from "../../core/constraintLoader.js";
+import { loadConstraints, partitionConstraints } from "../../core/constraintLoader.js";
 import {
   buildBatchInstructionPackage,
   buildSingleInstructionPackage,
@@ -41,9 +38,7 @@ export async function runValidateCommand(
   if (constraints.length === 0) {
     throw createError("BUNDLE_ERROR", "No constraints available to validate.");
   }
-  const { active: activeConstraints, disabled } = partitionConstraints(
-    constraints,
-  );
+  const { active: activeConstraints, disabled } = partitionConstraints(constraints);
   if (disabled.length > 0) {
     logDisabledConstraints(disabled, console.error);
   }
@@ -54,28 +49,17 @@ export async function runValidateCommand(
   const runId = generateRunId();
 
   if (parsed.constraintId || parsed.sequential) {
-    const targetId =
-      parsed.constraintId ?? activeConstraints[0]?.meta.id;
+    const targetId = parsed.constraintId ?? activeConstraints[0]?.meta.id;
     if (!targetId) {
       throw createError("CONFIG_ERROR", "No constraints available.");
     }
-    const constraint = activeConstraints.find(
-      (doc) => doc.meta.id === targetId,
-    );
+    const constraint = activeConstraints.find((doc) => doc.meta.id === targetId);
     if (!constraint) {
-      const disabledMatch = constraints.find(
-        (doc) => doc.meta.id === targetId,
-      );
+      const disabledMatch = constraints.find((doc) => doc.meta.id === targetId);
       if (disabledMatch) {
-        throw createError(
-          "CONFIG_ERROR",
-          `Constraint '${targetId}' is disabled.`,
-        );
+        throw createError("CONFIG_ERROR", `Constraint '${targetId}' is disabled.`);
       }
-      throw createError(
-        "CONFIG_ERROR",
-        `Unknown constraint '${targetId}'.`,
-      );
+      throw createError("CONFIG_ERROR", `Unknown constraint '${targetId}'.`);
     }
 
     const pkg = buildSingleInstructionPackage({ runId, constraint });
@@ -112,10 +96,7 @@ function parseValidateArgs(args: string[]): {
     if (arg === "--constraint" || arg === "-c") {
       const next = args[i + 1];
       if (!next) {
-        throw createError(
-          "CONFIG_ERROR",
-          "Expected constraint id after --constraint.",
-        );
+        throw createError("CONFIG_ERROR", "Expected constraint id after --constraint.");
       }
       result.constraintId = next;
       i += 1;
@@ -136,10 +117,7 @@ function parseValidateArgs(args: string[]): {
   }
 
   if (result.constraintId && result.sequential) {
-    throw createError(
-      "CONFIG_ERROR",
-      "Use either --constraint or --sequential, not both.",
-    );
+    throw createError("CONFIG_ERROR", "Use either --constraint or --sequential, not both.");
   }
 
   return result;
@@ -150,9 +128,7 @@ function printValidateHelp(): void {
   console.log("");
   console.log("Options:");
   console.log("  --constraint, -c <id>   Emit instructions for a single constraint.");
-  console.log(
-    "  --sequential            Alias for the first constraint in recommended order.",
-  );
+  console.log("  --sequential            Alias for the first constraint in recommended order.");
   console.log(
     "  --legacy-format         Emit the deprecated pre-update output (instruction-only banner omitted).",
   );

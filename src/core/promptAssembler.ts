@@ -38,9 +38,7 @@ const DIRECTIVE_BLOCK = [
   "6. You MUST report all detected violations; do not omit them or attempt to fix them.",
 ];
 
-export function assemblePrompt(
-  options: PromptAssemblerOptions,
-): PromptAssemblyResult {
+export function assemblePrompt(options: PromptAssemblerOptions): PromptAssemblyResult {
   const {
     runId,
     instructionText,
@@ -50,8 +48,7 @@ export function assemblePrompt(
     legacyFormat = false,
     disabledConstraints = [],
   } = options;
-  const instructionFormatVersion =
-    options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
+  const instructionFormatVersion = options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
   const generatedAt = (options.generatedAt ?? new Date()).toISOString();
   const lines: string[] = [];
 

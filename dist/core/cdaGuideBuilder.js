@@ -1,5 +1,5 @@
 // Beads: CDATool-m8x
-import { CONSTRAINT_SECTION_ORDER, } from "./constraintLoader.js";
+import { CONSTRAINT_SECTION_ORDER } from "./constraintLoader.js";
 import { WORKFLOW_CHECKLIST } from "./workflow.js";
 const CORE_PRINCIPLES = [
     "You MUST maintain deterministic execution: identical inputs MUST yield identical instruction packages and reports.",
@@ -37,7 +37,8 @@ const QUICK_START_SEQUENCE = [
     "Run `cda run --plan` and archive the prompt plus run_id before editing or validating code.",
     "Run `cda run --exec` and capture the exit status/output; do not summarize the session until this succeeds.",
 ];
-const SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter((section) => section !== "HEADER");
+// Filtered list of sections excluding HEADER (kept for potential future use)
+const _SECTION_SEQUENCE = CONSTRAINT_SECTION_ORDER.filter((section) => section !== "HEADER");
 export function buildCdaGuide(constraints) {
     const active = constraints.filter((doc) => doc.meta.isActive);
     const ordered = [...active].sort((a, b) => {
@@ -140,7 +141,7 @@ function addConstraintConfigurationGuidance(lines) {
     lines.push("## Constraint Configuration");
     lines.push("");
     lines.push("Any constraint may be disabled by editing the `constraint_overrides` object in `cda.config.json`.");
-    lines.push("Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.");
+    lines.push('Example: set `"<constraint_id>": { "enabled": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.');
     lines.push("");
 }
 function addCommandUsageSection(lines) {

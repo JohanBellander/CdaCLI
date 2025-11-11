@@ -67,16 +67,11 @@ export async function runInitCommand(
   const agentsPath = path.join(cwd, "cda.agents.json");
 
   if (await fileExists(configPath)) {
-    throw createError(
-      "CONFIG_ERROR",
-      "cda.config.json already exists in this directory.",
-    );
+    throw createError("CONFIG_ERROR", "cda.config.json already exists in this directory.");
   }
 
   const constraints = await loadConstraints();
-  const configPayload = buildDefaultConfigPayload(
-    constraints.map((doc) => doc.meta.id),
-  );
+  const configPayload = buildDefaultConfigPayload(constraints.map((doc) => doc.meta.id));
 
   await mkdir(cwd, { recursive: true });
   await writeFile(configPath, `${configPayload}\n`, "utf8");
@@ -96,11 +91,7 @@ export async function runInitCommand(
     return;
   }
 
-  await writeFile(
-    agentsPath,
-    `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`,
-    "utf8",
-  );
+  await writeFile(agentsPath, `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`, "utf8");
   console.log("Created cda.config.json, CDA.md, and cda.agents.json");
 }
 

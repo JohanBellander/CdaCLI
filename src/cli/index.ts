@@ -1,18 +1,13 @@
 #!/usr/bin/env node
 
 import { createRequire } from "node:module";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { runInitCommand } from "./commands/init.js";
 import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
 import { runRunCommand } from "./commands/run.js";
 import { runOnboardCommand } from "./commands/onboard.js";
-import {
-  runLegacyAgentCommand,
-  runLegacyValidateCommand,
-} from "./legacyWrappers.js";
+import { runLegacyAgentCommand, runLegacyValidateCommand } from "./legacyWrappers.js";
 import { createError, getExitCode, isCdaError } from "../core/errors.js";
 
 const require = createRequire(import.meta.url);
@@ -89,4 +84,4 @@ function handleCliError(error: unknown): void {
 // The previous conditional prevented execution when loaded through the npm-generated wrapper
 // script (argv[1] pointed at the shim, not this file), resulting in no output.
 // Calling unconditionally is safe because it only performs CLI dispatch once.
-run();
+void run();

@@ -1,4 +1,4 @@
-import { loadConstraints, partitionConstraints, } from "../../core/constraintLoader.js";
+import { loadConstraints, partitionConstraints } from "../../core/constraintLoader.js";
 import { buildBatchInstructionPackage, buildSingleInstructionPackage, } from "../../core/instructionEmitter.js";
 import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";

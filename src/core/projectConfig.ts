@@ -32,27 +32,18 @@ export async function loadProjectConfig(
     const nodeError = error as NodeJS.ErrnoException;
     if (nodeError.code === "ENOENT") {
       if (required) {
-        throw createError(
-          "CONFIG_ERROR",
-          `Project config not found at ${configPath}.`,
-        );
+        throw createError("CONFIG_ERROR", `Project config not found at ${configPath}.`);
       }
       return null;
     }
-    throw createError(
-      "CONFIG_ERROR",
-      `Unable to read ${configPath}: ${nodeError.message}`,
-    );
+    throw createError("CONFIG_ERROR", `Unable to read ${configPath}: ${nodeError.message}`);
   }
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(fileContents);
   } catch (error) {
-    throw createError(
-      "CONFIG_ERROR",
-      `Invalid JSON in ${configPath}: ${(error as Error).message}`,
-    );
+    throw createError("CONFIG_ERROR", `Invalid JSON in ${configPath}: ${(error as Error).message}`);
   }
 
   const normalized = normalizeProjectConfig(parsed, configPath);
@@ -71,39 +62,23 @@ function normalizeProjectConfig(
   constraintOverrides: ConstraintOverrides;
 } {
   if (!isRecord(value)) {
-    throw createError(
-      "CONFIG_ERROR",
-      `${configPath} must contain a JSON object.`,
-    );
+    throw createError("CONFIG_ERROR", `${configPath} must contain a JSON object.`);
   }
 
   const version = asPositiveInteger(value.version, "version", configPath);
-  const constraints = asNonEmptyString(
-    value.constraints,
-    "constraints",
-    configPath,
-  );
-  const constraintOverrides = normalizeConstraintOverrides(
-    value.constraint_overrides,
-    configPath,
-  );
+  const constraints = asNonEmptyString(value.constraints, "constraints", configPath);
+  const constraintOverrides = normalizeConstraintOverrides(value.constraint_overrides, configPath);
 
   return { version, constraints, constraintOverrides };
 }
 
-function normalizeConstraintOverrides(
-  value: unknown,
-  configPath: string,
-): ConstraintOverrides {
+function normalizeConstraintOverrides(value: unknown, configPath: string): ConstraintOverrides {
   if (value === undefined) {
     return {};
   }
 
   if (!isRecord(value)) {
-    throw createError(
-      "CONFIG_ERROR",
-      `${configPath} constraint_overrides must be an object.`,
-    );
+    throw createError("CONFIG_ERROR", `${configPath} constraint_overrides must be an object.`);
   }
 
   const overrides: ConstraintOverrides = {};
@@ -133,30 +108,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function asPositiveInteger(
-  value: unknown,
-  key: string,
-  configPath: string,
-): number {
+function asPositiveInteger(value: unknown, key: string, configPath: string): number {
   if (typeof value === "number" && Number.isInteger(value) && value > 0) {
     return value;
   }
-  throw createError(
-    "CONFIG_ERROR",
-    `${configPath} '${key}' must be a positive integer.`,
-  );
+  throw createError("CONFIG_ERROR", `${configPath} '${key}' must be a positive integer.`);
 }
 
-function asNonEmptyString(
-  value: unknown,
-  key: string,
-  configPath: string,
-): string {
+function asNonEmptyString(value: unknown, key: string, configPath: string): string {
   if (typeof value === "string" && value.length > 0) {
     return value;
   }
-  throw createError(
-    "CONFIG_ERROR",
-    `${configPath} '${key}' must be a non-empty string.`,
-  );
+  throw createError("CONFIG_ERROR", `${configPath} '${key}' must be a non-empty string.`);
 }

@@ -5,10 +5,7 @@ import path from "node:path";
 
 import { buildOnboardingGuide } from "../../core/cdaOnboardingGuide.js";
 import { createError } from "../../core/errors.js";
-import {
-  DEFAULT_AGENT_CONFIG,
-  buildDefaultConfigPayload,
-} from "./init.js";
+import { DEFAULT_AGENT_CONFIG, buildDefaultConfigPayload } from "./init.js";
 import { loadConstraints } from "../../core/constraintLoader.js";
 
 interface OnboardCommandOptions {
@@ -46,33 +43,23 @@ export async function runOnboardCommand(
   await writeFile(targetPath, `${guide}\n`, "utf8");
 
   const createdArtifacts: string[] = [];
-  createdArtifacts.push(
-    `${path.relative(cwd, targetPath) || "CDA.md"}`,
-  );
+  createdArtifacts.push(`${path.relative(cwd, targetPath) || "CDA.md"}`);
 
   const configPath = path.join(cwd, "cda.config.json");
   if (!(await fileExists(configPath))) {
     const constraints = await loadConstraints();
-    const configPayload = buildDefaultConfigPayload(
-      constraints.map((doc) => doc.meta.id),
-    );
+    const configPayload = buildDefaultConfigPayload(constraints.map((doc) => doc.meta.id));
     await writeFile(configPath, `${configPayload}\n`, "utf8");
     createdArtifacts.push("cda.config.json");
   }
 
   const agentsPath = path.join(cwd, "cda.agents.json");
   if (!(await fileExists(agentsPath))) {
-    await writeFile(
-      agentsPath,
-      `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`,
-      "utf8",
-    );
+    await writeFile(agentsPath, `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`, "utf8");
     createdArtifacts.push("cda.agents.json");
   }
 
-  console.log(
-    `Created ${createdArtifacts.join(", ")}.`,
-  );
+  console.log(`Created ${createdArtifacts.join(", ")}.`);
 }
 
 function parseArgs(args: string[]): ParsedOnboardArgs {
@@ -94,10 +81,7 @@ function parseArgs(args: string[]): ParsedOnboardArgs {
     if (arg === "--output") {
       const next = args[i + 1];
       if (!next) {
-        throw createError(
-          "CONFIG_ERROR",
-          "Missing value for --output option in cda onboard.",
-        );
+        throw createError("CONFIG_ERROR", "Missing value for --output option in cda onboard.");
       }
       parsed.outputPath = next;
       i += 1;
