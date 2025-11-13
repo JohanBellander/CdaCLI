@@ -18,9 +18,10 @@ Guarantee that dependencies always flow from UI ➜ App ➜ Domain ➜ Infra and
 
 SCOPE
 include_paths: ["src/ui","src/app","src/domain","src/infra","src/shared"]
-exclude_paths: ["node_modules","dist","build",".git","tests"]
+exclude_paths: ["node_modules","dist","build",".git","tests","src/composition","src/main.ts","src/index.ts","src/bootstrap.ts"]
 
 DEFINITIONS
+composition-root: file path matches 'src/index.ts', 'src/main.ts', 'src/bootstrap.ts', or starts with 'src/composition/'
 layer(ui): file path starts with 'src/ui/'
 layer(app): file path starts with 'src/app/'
 layer(domain): file path starts with 'src/domain/'
@@ -37,6 +38,7 @@ FORBIDDEN
 - cyclic dependencies between any two layers
 
 ALLOWED
+- composition roots (src/index.ts, src/main.ts, src/bootstrap.ts, src/composition/**) importing from ALL layers for dependency injection wiring
 - ui importing presenters/view-models located under src/app/presenters or src/app/view-models
 - app importing domain services, value objects, and ports
 - domain importing shared immutable utilities (types, constants) with no side effects

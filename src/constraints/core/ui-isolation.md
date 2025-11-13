@@ -19,12 +19,13 @@ Ensure UI components interact only with presenters, view-models, or state stores
 SCOPE
 include_paths: ["src/ui"]
 additional_presenter_paths: ["src/app/presenters","src/app/view-models","src/ui/state"]
-exclude_paths: ["node_modules","dist","build",".git","tests"]
+exclude_paths: ["node_modules","dist","build",".git","tests","src/ui/adapters","src/infra/adapters"]
 
 DEFINITIONS
 ui-component: any React/Vue/Svelte component, template, or view under `src/ui`
 presenter-module: file located in additional_presenter_paths
-direct-service-call: invocation of fetch/axios/graphql client or imports from domain/infra
+adapter-implementation: file under 'src/ui/adapters/**' or 'src/infra/adapters/**' implementing a port interface
+direct-service-call: invocation of fetch/axios/graphql client or imports from domain/infra (except in adapter-implementations)
 
 FORBIDDEN
 - UI components importing modules from `src/domain` or `src/infra`
@@ -33,6 +34,7 @@ FORBIDDEN
 - Accessing global singletons (event buses, stores) without going through presenters
 
 ALLOWED
+- Adapter implementations (src/ui/adapters/**, src/infra/adapters/**) using fetch/axios/HTTP libraries to implement port interfaces
 - UI components importing presenters/view-models/hooks that encapsulate business logic
 - Invoking local state containers under `src/ui/state/**` that wrap presenters
 - Using lightweight formatting helpers or constants from shared utilities
