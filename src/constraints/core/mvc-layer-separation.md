@@ -3,7 +3,8 @@ id: mvc-layer-separation
 name: MVC Layer Separation
 category: architecture-pattern
 severity: error
-enabled: true
+enabled: false
+optional: true
 version: 1
 ---
 

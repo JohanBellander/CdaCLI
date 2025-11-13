@@ -3,7 +3,8 @@ id: mvp-presenter-boundaries
 name: MVP Presenter Boundaries
 category: architecture-pattern
 severity: error
-enabled: true
+enabled: false
+optional: true
 version: 1
 ---
 
