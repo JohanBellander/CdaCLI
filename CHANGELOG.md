@@ -1,8 +1,21 @@
 # Changelog
 
 ## Unreleased
-- Added `cda onboard` command for generating a minimal CDA onboarding checklist while also scaffolding `cda.config.json` and `cda.agents.json` when missing.
+
+## 0.5.5 — 2025-11-13
+- Documentation and test suite maintenance release.
+
+## 0.5.4 — 2025-11-13
+- **FIXED**: Changed MVC and MVP architectural pattern constraints to be disabled by default (`enabled: false, optional: true`). These constraints are now opt-in patterns that must be explicitly enabled via `constraint_overrides` configuration.
+- **BEHAVIOR CHANGE**: Users implementing MVVM (or other patterns) no longer see false-positive violations from MVC/MVP constraints when those patterns are not configured.
+- Added comprehensive integration tests verifying config override behavior works correctly across all constraint states.
+- Enhanced README with architectural pattern selection guide, configuration examples, and 5-step troubleshooting checklist for config overrides.
+- Updated test expectations to reflect MVC/MVP appearing in `disabled_constraints` metadata by default.
+- **Upgrade guidance**: If your project uses MVC or MVP patterns, add explicit `constraint_overrides` entries to enable them: `"mvc-layer-separation": { "enabled": true }` or `"mvp-presenter-boundaries": { "enabled": true }`. MVVM remains enabled by default.
+
+## 0.5.3 — 2025-11-13
 - Registered ten full-stack architecture constraints (clean-layer-direction, domain-purity, ports-and-adapters-integrity, central-config-entrypoint, structural-naming-consistency, module-complexity-guardrails, ui-isolation, api-boundary-hygiene, observability-discipline, test-coverage-contracts) and bundled them with the existing core guardrails.
+- Added `cda onboard` command for generating a minimal CDA onboarding checklist while also scaffolding `cda.config.json` and `cda.agents.json` when missing.
 - Documented rollout guidance in `README.md`, including enablement steps, configuration overrides, and references to `FULL_STACK_CONSTRAINT_SPEC.md` / `IMPLEMENTATION_PLAN_FULL_STACK_CONSTRAINTS.md`.
 - Increased the default Copilot arg-mode `max_length` budget (fixtures + docs) so the expanded prompt that includes all 21 constraints stays under the configured ceiling.
 
