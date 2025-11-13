@@ -295,4 +295,37 @@ describe("constraintLoader", () => {
     );
     expect(disabled?.meta.isActive).toBe(false);
   });
+
+  it("disables MVC and MVP by default, respects overrides", async () => {
+    // Load default constraints
+    const defaults = await loadConstraints();
+    
+    const mvc = defaults.find((doc) => doc.meta.id === "mvc-layer-separation");
+    const mvp = defaults.find((doc) => doc.meta.id === "mvp-presenter-boundaries");
+    const mvvm = defaults.find((doc) => doc.meta.id === "mvvm-binding-integrity");
+    
+    // MVC and MVP should be disabled by default
+    expect(mvc?.meta.isActive).toBe(false);
+    expect(mvp?.meta.isActive).toBe(false);
+    // MVVM should be enabled by default
+    expect(mvvm?.meta.isActive).toBe(true);
+    
+    // Can be enabled via overrides
+    const withMvcEnabled = await loadConstraints({
+      constraintOverrides: {
+        "mvc-layer-separation": { enabled: true },
+      },
+    });
+    const mvcEnabled = withMvcEnabled.find((doc) => doc.meta.id === "mvc-layer-separation");
+    expect(mvcEnabled?.meta.isActive).toBe(true);
+    
+    // MVVM can be disabled via overrides
+    const withMvvmDisabled = await loadConstraints({
+      constraintOverrides: {
+        "mvvm-binding-integrity": { enabled: false },
+      },
+    });
+    const mvvmDisabled = withMvvmDisabled.find((doc) => doc.meta.id === "mvvm-binding-integrity");
+    expect(mvvmDisabled?.meta.isActive).toBe(false);
+  });
 });

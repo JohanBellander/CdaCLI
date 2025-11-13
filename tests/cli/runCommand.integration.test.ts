@@ -67,7 +67,7 @@ describe("cda run integration modes", () => {
       .join("\n");
     expect(output).toMatch(/AGENT COMMAND:/);
     expect(output).toMatch(/AGENT VERIFICATION MODE: PROMPT INTENDED/);
-    expect(output).toMatch(/disabled_constraints: \[\]/);
+    expect(output).toMatch(/disabled_constraints: \[mvc-layer-separation, mvp-presenter-boundaries\]/);
   });
 
   it("exec mode logs disabled constraints before invoking the agent", async () => {

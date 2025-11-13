@@ -260,19 +260,59 @@ All error codes exit with status `1` and a descriptive message.
 
 ## Constraint Configuration
 
-- `cda init` scaffolds a `constraint_overrides` object inside `cda.config.json`:
+`cda init` scaffolds a `constraint_overrides` object inside `cda.config.json`:
 
 ```json
 {
+  "version": 1,
+  "constraints": "21 architectural constraints",
   "constraint_overrides": {
     "constraint-id": { "enabled": false }
   }
 }
 ```
 
-- Any constraint can be disabled (`enabled: false`) or re-enabled (`true`) without touching markdown.
-- Disabled constraints automatically drop out of `cda list` and every `cda run` mode. Prompts include a `disabled_constraints` metadata line, and single-constraint requests raise `CONFIG_ERROR` if you target a disabled id.
-- See `SPECIFICATION_ALL_OPTIONAL.md` for full details.
+Any constraint can be disabled (`enabled: false`) or re-enabled (`true`) without touching markdown. Disabled constraints automatically drop out of `cda list` and every `cda run` mode. When you run `cda run --exec`, you'll see log messages for each disabled constraint:
+
+```
+Constraint 'mvc-layer-separation' disabled via configuration.
+Constraint 'mvp-presenter-boundaries' disabled via configuration.
+```
+
+### Architectural Pattern Selection (MVC/MVP/MVVM)
+
+The constraint bundle includes three architectural pattern options:
+
+| Constraint ID | Default State | Pattern | Use Case |
+|---------------|---------------|---------|----------|
+| `mvc-layer-separation` | **Disabled** | Model-View-Controller | Classic web MVC frameworks |
+| `mvp-presenter-boundaries` | **Disabled** | Model-View-Presenter | Desktop/mobile apps with passive views |
+| `mvvm-binding-integrity` | **Enabled** | Model-View-ViewModel | Modern reactive UIs (React, Vue, Angular) |
+
+**By default**, only MVVM is enabled. If your project uses MVC or MVP instead, enable the appropriate pattern and disable MVVM:
+
+```json
+{
+  "constraint_overrides": {
+    "mvc-layer-separation": { "enabled": true },
+    "mvvm-binding-integrity": { "enabled": false }
+  }
+}
+```
+
+**Important**: These patterns are mutually exclusive in most architectures. Enabling multiple patterns simultaneously may cause false-positive violations.
+
+### Troubleshooting Config Overrides
+
+If you see violations for disabled constraints:
+
+1. **Verify config file location**: `cda.config.json` must be in the project root where you run `cda run`
+2. **Check constraint ID spelling**: IDs are kebab-case (e.g., `mvc-layer-separation`, not `mvc_layer_separation`)
+3. **Confirm config is valid JSON**: Run `cat cda.config.json | jq` to validate syntax
+4. **Look for log messages**: `cda run --exec` will log which constraints are disabled
+5. **Test with verbose mode**: Run `cda list` to see which constraints are active
+
+See `SPECIFICATION_ALL_OPTIONAL.md` for full details on the optional constraint system.
 
 ## Full-Stack Constraint Bundle
 

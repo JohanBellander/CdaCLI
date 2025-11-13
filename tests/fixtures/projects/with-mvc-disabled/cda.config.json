@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "constraints": "21 architectural constraints",
+  "constraint_overrides": {
+    "mvc-layer-separation": { "enabled": false },
+    "mvp-presenter-boundaries": { "enabled": false }
+  }
+}

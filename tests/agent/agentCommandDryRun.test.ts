@@ -75,7 +75,7 @@ describe("cda agent --dry-run", () => {
     );
     expect(outputs).toMatch(/agent_name: copilot-stdin/);
     expect(outputs).toMatch(/token_estimate_method: heuristic_chars_div_4/);
-    expect(outputs).toMatch(/disabled_constraints: \[\]/);
+    expect(outputs).toMatch(/disabled_constraints: \[mvc-layer-separation, mvp-presenter-boundaries\]/);
     expect(outputs).toMatch(/AGENT DIRECTIVE:/);
     expect(outputs).toMatch(/original_char_count:/);
     expect(outputs).toMatch(/approx_token_length:/);
