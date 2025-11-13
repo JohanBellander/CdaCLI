@@ -38,7 +38,7 @@ describe("agentConfig loader", () => {
     expect(copilot.promptFileArg).toBe("--prompt-file");
     expect(copilot.promptPreamble).toMatch(/verification agent/i);
     expect(copilot.postscript).toMatch(/Return ONLY/i);
-    expect(copilot.maxLength).toBe(20000);
+    expect(copilot.maxLength).toBe(40000);
     expect(copilot.agentModel).toBe("gpt-5");
 
     const copilotStdin = config!.agents["copilot-stdin"];

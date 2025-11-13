@@ -2,6 +2,9 @@
 
 ## Unreleased
 - Added `cda onboard` command for generating a minimal CDA onboarding checklist while also scaffolding `cda.config.json` and `cda.agents.json` when missing.
+- Registered ten full-stack architecture constraints (clean-layer-direction, domain-purity, ports-and-adapters-integrity, central-config-entrypoint, structural-naming-consistency, module-complexity-guardrails, ui-isolation, api-boundary-hygiene, observability-discipline, test-coverage-contracts) and bundled them with the existing core guardrails.
+- Documented rollout guidance in `README.md`, including enablement steps, configuration overrides, and references to `FULL_STACK_CONSTRAINT_SPEC.md` / `IMPLEMENTATION_PLAN_FULL_STACK_CONSTRAINTS.md`.
+- Increased the default Copilot arg-mode `max_length` budget (fixtures + docs) so the expanded prompt that includes all 21 constraints stays under the configured ceiling.
 
 ## 0.5.2 — 2025-11-10
 - Enhanced the generated `CDA.md` playbook with an immediate command checklist and an explicit requirement to capture `cda run --exec` results before closing out a session.

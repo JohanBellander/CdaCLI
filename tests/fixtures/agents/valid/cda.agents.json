@@ -9,7 +9,7 @@
       "prompt_file_arg": "--prompt-file",
       "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
-      "max_length": 20000,
+      "max_length": 40000,
       "agent_model": "gpt-5"
     },
     "copilot-stdin": {

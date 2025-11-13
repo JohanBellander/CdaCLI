@@ -12,11 +12,9 @@ const MALFORMED_DIR = path.resolve(
 const OPTIONAL_DIR = path.resolve("tests/fixtures/optional-constraints");
 
 describe("constraintLoader", () => {
-  it("loads constraints sorted by enforcement order", async () => {
-    const constraints = await loadConstraints({
-      constraintsDir: SOURCE_CONSTRAINTS,
-    });
-    expect(constraints).toHaveLength(11);
+  it("loads the combined default bundle", async () => {
+    const constraints = await loadConstraints();
+    expect(constraints).toHaveLength(21);
     expect(constraints.map((c) => c.meta.id)).toEqual([
       "domain-no-imports-from-app-or-infra",
       "app-no-imports-from-infra",
@@ -29,6 +27,46 @@ describe("constraintLoader", () => {
       "mvc-layer-separation",
       "mvp-presenter-boundaries",
       "mvvm-binding-integrity",
+      "clean-layer-direction",
+      "domain-purity",
+      "ports-and-adapters-integrity",
+      "central-config-entrypoint",
+      "structural-naming-consistency",
+      "module-complexity-guardrails",
+      "ui-isolation",
+      "api-boundary-hygiene",
+      "observability-discipline",
+      "test-coverage-contracts",
+    ]);
+  });
+
+  it("loads constraints sorted by enforcement order", async () => {
+    const constraints = await loadConstraints({
+      constraintsDir: SOURCE_CONSTRAINTS,
+    });
+    expect(constraints).toHaveLength(21);
+    expect(constraints.map((c) => c.meta.id)).toEqual([
+      "domain-no-imports-from-app-or-infra",
+      "app-no-imports-from-infra",
+      "domain-no-side-effects",
+      "max-file-lines",
+      "single-responsibility",
+      "excessive-nesting",
+      "file-naming",
+      "folder-naming",
+      "mvc-layer-separation",
+      "mvp-presenter-boundaries",
+      "mvvm-binding-integrity",
+      "clean-layer-direction",
+      "domain-purity",
+      "ports-and-adapters-integrity",
+      "central-config-entrypoint",
+      "structural-naming-consistency",
+      "module-complexity-guardrails",
+      "ui-isolation",
+      "api-boundary-hygiene",
+      "observability-discipline",
+      "test-coverage-contracts",
     ]);
   });
 
@@ -127,6 +165,80 @@ describe("constraintLoader", () => {
         "line",
         "details",
       ],
+      "clean-layer-direction": [
+        "constraint_id",
+        "violation_type",
+        "source_layer",
+        "target_layer",
+        "file_path",
+        "line",
+        "specifier",
+      ],
+      "domain-purity": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "ports-and-adapters-integrity": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "central-config-entrypoint": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "structural-naming-consistency": [
+        "constraint_id",
+        "violation_type",
+        "layer",
+        "folder_path",
+        "details",
+      ],
+      "module-complexity-guardrails": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line_start",
+        "line_end",
+        "observed_value",
+        "threshold",
+        "details",
+      ],
+      "ui-isolation": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "api-boundary-hygiene": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "observability-discipline": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "test-coverage-contracts": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "details",
+      ],
     };
 
     pkg.constraints.forEach((block) => {
@@ -134,6 +246,10 @@ describe("constraintLoader", () => {
         reportFieldExpectations[block.constraintId],
       );
     });
+
+    expect(Object.keys(reportFieldExpectations)).toEqual(
+      constraints.map((c) => c.meta.id),
+    );
   });
 
   it("defaults optional flag to false when frontmatter omits it", async () => {

@@ -55,7 +55,7 @@ Legacy wrappers (`cda validate` and `cda agent`) now forward arguments to `cda r
       "prompt_file_arg": "--prompt-file",
       "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
-      "max_length": 20000,
+      "max_length": 40000,
       "agent_model": "gpt-5"
     },
     "copilot-stdin": {
@@ -273,6 +273,52 @@ All error codes exit with status `1` and a descriptive message.
 - Any constraint can be disabled (`enabled: false`) or re-enabled (`true`) without touching markdown.
 - Disabled constraints automatically drop out of `cda list` and every `cda run` mode. Prompts include a `disabled_constraints` metadata line, and single-constraint requests raise `CONFIG_ERROR` if you target a disabled id.
 - See `SPECIFICATION_ALL_OPTIONAL.md` for full details.
+
+## Full-Stack Constraint Bundle
+
+Beginning with the 0.5.3 line, all 21 bundled constraints live under `src/constraints/core` (the original directory now also hosts the cross-layer guardrails from `FULL_STACK_CONSTRAINT_SPEC.md`). Use `cda list` to confirm availability after upgrading.
+
+### New guardrails
+
+| Constraint ID                     | Intent summary                                                                 |
+|----------------------------------|--------------------------------------------------------------------------------|
+| `clean-layer-direction`          | Maintain strict UI -> App -> Domain -> Infra dependency flow and break cycles.  |
+| `domain-purity`                  | Keep `src/domain/**` free from IO, globals, randomness, and framework imports. |
+| `ports-and-adapters-integrity`   | Require interface-only ports plus adapters that explicitly implement them.     |
+| `central-config-entrypoint`      | Funnel every `process.env`/secret read through `src/infra/config/index.ts`.     |
+| `structural-naming-consistency`  | Align feature folder slugs/entry files across UI/App/Domain/Infra layers.      |
+| `module-complexity-guardrails`   | Enforce tight bounds on module lines, exports, and cyclomatic complexity.      |
+| `ui-isolation`                   | Block UI components from calling services/infra directly; require presenters.  |
+| `api-boundary-hygiene`           | Keep controllers transport-only with DTO↔domain mappers and service indirection.|
+| `observability-discipline`       | Route logging/metrics through shared telemetry adapters with context.          |
+| `test-coverage-contracts`        | Mirror every production module with the correct test type (unit/integration/UI).|
+
+Each markdown file contains the formal PURPOSE/SCOPE/VALIDATION sections described in `FULL_STACK_CONSTRAINT_SPEC.md` and the implementation plan in `IMPLEMENTATION_PLAN_FULL_STACK_CONSTRAINTS.md`.
+
+### Enablement steps
+
+1. Upgrade to the latest CDA CLI (`npm install && npm run build` inside the repo consuming CDA).
+2. Run `cda run --plan` (or `cda run --plan --constraint <id>`) to review the new instructions. `cda list` now shows all 21 bundled ids.
+3. Re-run `cda init` (or `cda onboard`) in repositories that rely on the generated `CDA.md` so the playbook includes the new guardrails. If `cda init` is blocked because config files already exist, delete only `CDA.md` before regenerating.
+4. Update automation or teams by sharing the roll-out notes (`CHANGELOG.md`) and linking directly to `FULL_STACK_CONSTRAINT_SPEC.md` for remediation detail.
+
+### Configuration guidance
+
+- All ten constraints are enabled by default but marked optional so they can be scoped per-repo:
+
+```json
+{
+  "constraint_overrides": {
+    "ui-isolation": { "enabled": false },
+    "observability-discipline": { "enabled": true }
+  }
+}
+```
+
+- Use `cda describe <id>` to pull the rendered markdown for individual constraints.
+- The new bundle increases prompt size; ensure your agent definitions (see `cda.agents.json`) have a `max_length` budget >= 35k characters (the default Copilot arg-mode entry is now 40k).
+- Refer to `FULL_STACK_CONSTRAINT_SPEC.md` for the exhaustive detection heuristics, remediation steps, and report fields that enforcement agents must follow.
+- Use `history/FULL_STACK_FEEDBACK_PLAN.md` to capture adopter feedback, log beads, and schedule refinement work for noisy heuristics.
 
 ## Development Scripts
 

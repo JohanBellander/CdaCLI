@@ -46,18 +46,21 @@ export interface LoadConstraintsOptions {
   constraintOverrides?: ConstraintOverrides;
 }
 
-const DEFAULT_CONSTRAINTS_DIR = fileURLToPath(
-  new URL("../constraints/core", import.meta.url),
-);
+const DEFAULT_CONSTRAINT_DIRS = [
+  fileURLToPath(new URL("../constraints/core", import.meta.url)),
+];
 
 export async function loadConstraints(
   options: LoadConstraintsOptions = {},
 ): Promise<ConstraintDocument[]> {
-  const constraintsDir = options.constraintsDir ?? DEFAULT_CONSTRAINTS_DIR;
-  const entries = await readdir(constraintsDir, { withFileTypes: true });
-  const files = entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
-    .map((entry) => path.join(constraintsDir, entry.name));
+  const directories = options.constraintsDir
+    ? [options.constraintsDir]
+    : DEFAULT_CONSTRAINT_DIRS;
+
+  const filesByDir = await Promise.all(
+    directories.map((dir) => readConstraintFiles(dir)),
+  );
+  const files = filesByDir.flat();
 
   if (files.length === 0) {
     throw bundleError("global", "No constraint markdown files found.");
@@ -78,6 +81,21 @@ export async function loadConstraints(
     }
     return a.meta.enforcementOrder - b.meta.enforcementOrder;
   });
+}
+
+async function readConstraintFiles(dirPath: string): Promise<string[]> {
+  try {
+    const entries = await readdir(dirPath, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => path.join(dirPath, entry.name));
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      return [];
+    }
+    throw error;
+  }
 }
 
 export function partitionConstraints(
