@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.5.6 — 2025-11-14
+- Improved constraint semantics to reduce false positives in real-world projects:
+	- `clean-layer-direction`: Recognizes composition roots (`src/index.ts`, `src/main.ts`, `src/bootstrap.ts`, `src/composition/**`) and allows them to import across layers for dependency wiring.
+	- `ui-isolation`: Recognizes adapter implementations (`src/ui/adapters/**`, `src/infra/adapters/**`) and allows HTTP client usage (fetch/axios) when implementing port interfaces.
+- All tests passing (82). Documentation follow-up planned to highlight these allowances in README.
+
 ## 0.5.5 — 2025-11-13
 - Documentation and test suite maintenance release.
 

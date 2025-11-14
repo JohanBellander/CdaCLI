@@ -314,6 +314,15 @@ If you see violations for disabled constraints:
 
 See `SPECIFICATION_ALL_OPTIONAL.md` for full details on the optional constraint system.
 
+### Composition Roots and Adapter Implementations
+
+To avoid false positives in common clean-architecture patterns:
+
+- **Composition roots** (dependency wiring) under `src/index.ts`, `src/main.ts`, `src/bootstrap.ts`, or `src/composition/**` are allowed to import across layers. They are excluded from `clean-layer-direction` checks.
+- **Adapter implementations** under `src/ui/adapters/**` or `src/infra/adapters/**` may use HTTP libraries (fetch/axios) when implementing port interfaces. These are excluded from `ui-isolation` direct-service-call checks.
+
+These allowances make it easier to adopt ports & adapters plus DI composition without spurious violations while keeping production code within layers disciplined.
+
 ## Full-Stack Constraint Bundle
 
 Beginning with the 0.5.3 line, all 21 bundled constraints live under `src/constraints/core` (the original directory now also hosts the cross-layer guardrails from `FULL_STACK_CONSTRAINT_SPEC.md`). Use `cda list` to confirm availability after upgrading.
