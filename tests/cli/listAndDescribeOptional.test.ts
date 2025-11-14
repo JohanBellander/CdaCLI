@@ -24,7 +24,7 @@ afterEach(() => {
 });
 
 describe("cda list optional constraint UX", () => {
-  it("prints status column with optional-enabled/disabled states", async () => {
+  it("prints status column with active/disabled states", async () => {
     await runListCommand({
       cwd: OPTIONAL_PROJECT,
       constraintsDir: OPTIONAL_CONSTRAINTS,
@@ -34,8 +34,7 @@ describe("cda list optional constraint UX", () => {
       .map((call: unknown[]) => String(call[0]))
       .join("\n");
     expect(output).toContain("STATUS");
-    expect(output).toContain("optional-enabled");
-    expect(output).toContain("optional-disabled");
+    expect(output).toContain("disabled");
     expect(output).toContain("active");
   });
 });

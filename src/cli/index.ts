@@ -9,6 +9,7 @@ import { runListCommand } from "./commands/list.js";
 import { runDescribeCommand } from "./commands/describe.js";
 import { runRunCommand } from "./commands/run.js";
 import { runOnboardCommand } from "./commands/onboard.js";
+import { runConfigCommand } from "./commands/config.js";
 import {
   runLegacyAgentCommand,
   runLegacyValidateCommand,
@@ -18,7 +19,7 @@ import { createError, getExitCode, isCdaError } from "../core/errors.js";
 const require = createRequire(import.meta.url);
 const { version } = require("../../package.json") as { version: string };
 
-type CommandHandler = (args: string[]) => Promise<void>;
+type CommandHandler = (args: string[]) => Promise<unknown>;
 
 const COMMANDS: Record<string, CommandHandler> = {
   init: async (args) => runInitCommand(args),
@@ -28,6 +29,7 @@ const COMMANDS: Record<string, CommandHandler> = {
   run: async (args) => runRunCommand(args),
   validate: async (args) => runLegacyValidateCommand(args),
   agent: async (args) => runLegacyAgentCommand(args),
+  config: async (args) => runConfigCommand(args),
 };
 
 export async function run(argv: string[] = process.argv.slice(2)): Promise<void> {
@@ -70,6 +72,7 @@ function printHelp(): void {
   console.log("  run        Consolidated validation/plan/exec workflow");
   console.log("  validate   Emit instruction packages");
   console.log("  agent      Assemble agent prompt and optionally invoke external CLI");
+  console.log("  config     Configure which constraints are active (interactive, TTY-only)");
   console.log("");
   console.log("Use `cda <command> --help` for command-specific options.");
 }

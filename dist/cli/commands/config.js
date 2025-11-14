@@ -1,0 +1,90 @@
+import { rename, writeFile } from "node:fs/promises";
+import { loadConstraints } from "../../core/constraintLoader.js";
+import { buildConfigConstraintState, computeConstraintOverridesFromState, } from "../../core/configConstraintState.js";
+import { loadProjectConfig } from "../../core/projectConfig.js";
+import { PROJECT_CONFIG_FILENAME } from "../../core/projectConfig.js";
+import { createError } from "../../core/errors.js";
+import { runConfigInteractiveUi, } from "../ui/configTui.js";
+const CONFIG_HELP_TEXT = [
+    "cda config (experimental)",
+    "",
+    "Usage:",
+    "  cda config [options]",
+    "",
+    "Options:",
+    "  --help, -h   Show this help message and exit.",
+    "",
+    "The interactive UI lets you toggle optional constraints using arrow keys,",
+    "space to toggle, Enter/Ctrl+S to save, and Esc/q to cancel.",
+    "You must run this command inside an interactive terminal (TTY).",
+].join("\n");
+export async function runConfigCommand(args, options = {}) {
+    if (hasHelpFlag(args)) {
+        printConfigHelp();
+        return;
+    }
+    const cwd = options.cwd ?? process.cwd();
+    const stdin = options.stdin ?? process.stdin;
+    const stdout = options.stdout ?? process.stdout;
+    if (!(stdin.isTTY && stdout.isTTY)) {
+        throw createError("CONFIG_ERROR", "cda config requires an interactive TTY. Run from a terminal session or pass --help for usage.");
+    }
+    const projectConfig = await loadProjectConfig({ cwd, required: true });
+    if (!projectConfig) {
+        throw createError("CONFIG_ERROR", "Project config not found. Run `cda init` first.");
+    }
+    const constraints = await loadConstraints({
+        constraintsDir: options.constraintsDir,
+        constraintOverrides: projectConfig.constraintOverrides,
+    });
+    if (constraints.length === 0) {
+        throw createError("CONFIG_ERROR", "No constraints found for this project. Run `cda init` to scaffold configuration.");
+    }
+    const state = buildConfigConstraintState(constraints, projectConfig.constraintOverrides);
+    const runner = options.runInteractive ?? runConfigInteractiveUi;
+    const result = await runner(state, {
+        stdin,
+        stdout,
+        projectRoot: cwd,
+    });
+    if (result.status !== "saved") {
+        console.log("Exited without saving changes.");
+        return result;
+    }
+    ensureActiveConstraints(result.state);
+    const overrides = computeConstraintOverridesFromState(constraints, result.state);
+    const payload = buildConfigPayload(projectConfig.version, projectConfig.constraints, overrides);
+    await writeProjectConfig(projectConfig.path, payload);
+    const overrideCount = Object.keys(overrides).length;
+    if (overrideCount > 0) {
+        console.log(`Updated ${PROJECT_CONFIG_FILENAME} with ${overrideCount} override${overrideCount === 1 ? "" : "s"}.`);
+    }
+    else {
+        console.log(`Updated ${PROJECT_CONFIG_FILENAME}; all constraints match bundle defaults.`);
+    }
+    return result;
+}
+function hasHelpFlag(args) {
+    return args.some((arg) => arg === "--help" || arg === "-h");
+}
+function printConfigHelp() {
+    console.log(CONFIG_HELP_TEXT);
+}
+function ensureActiveConstraints(state) {
+    if (!state.some((entry) => entry.effectiveEnabled)) {
+        throw createError("CONFIG_ERROR", "At least one constraint must remain active. Enable a constraint before saving.");
+    }
+}
+function buildConfigPayload(version, constraints, overrides) {
+    return {
+        version,
+        constraints,
+        constraint_overrides: overrides,
+    };
+}
+async function writeProjectConfig(filePath, payload) {
+    const serialized = `${JSON.stringify(payload, null, 2)}\n`;
+    const tempPath = `${filePath}.tmp`;
+    await writeFile(tempPath, serialized, "utf8");
+    await rename(tempPath, filePath);
+}

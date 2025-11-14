@@ -208,6 +208,16 @@ CONSTRAINT (INSTRUCTION ONLY - NO DETECTION YET): domain-no-imports-from-app-or-
 ...
 ```
 
+### Toggle constraints without editing JSON
+
+Use `cda config` to launch an interactive TUI for enabling or disabling constraints. Arrow keys move through the constraint list, `Space` toggles entries, `Enter`/`Ctrl+S` saves, and `Esc`/`q` cancels without mutating `cda.config.json`. The command refuses to run unless stdout is a TTY, so invoke it from a real terminal session.
+
+```
+cda config
+```
+
+This is the preferred way to opt into MVC/MVP guardrails or temporarily disable specific rules while triaging. Manual JSON edits remain supported for automation/CI, but everyday toggling should flow through `cda config` so overrides stay minimal and validated.
+
 Generate a single-constraint package:
 
 ```bash
@@ -259,6 +269,8 @@ All error codes exit with status `1` and a descriptive message.
 - **`Unable to spawn 'copilot'`** – Install the standalone Copilot CLI or switch to the Echo agent (`--agent echo`) to verify prompts while you repair the installation.
 
 ## Constraint Configuration
+
+Use `cda config` to toggle constraints without touching JSON. The command launches an interactive checkbox list (TTY only) and writes the minimal set of overrides back to `cda.config.json` after you save. Manual edits remain supported for automation, but day-to-day changes should use the CLI so validation happens inside CDA.
 
 `cda init` scaffolds a `constraint_overrides` object inside `cda.config.json`:
 

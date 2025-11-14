@@ -190,10 +190,10 @@ function addConstraintConfigurationGuidance(lines: string[]): void {
   lines.push("## Constraint Configuration");
   lines.push("");
   lines.push(
-    "Any constraint may be disabled by editing the `constraint_overrides` object in `cda.config.json`.",
+    "Run `cda config` to interactively toggle constraints; the TUI (TTY required) ensures overrides stay minimal while validating your selections.",
   );
   lines.push(
-    "Example: set `\"<constraint_id>\": { \"enabled\": false }` to disable a constraint, or `true` to enable bundles that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for details.",
+    "Manual editing remains available: set `\"<constraint_id>\": { \"enabled\": false }` under `constraint_overrides` to disable a rule, or `true` to enable ones that ship disabled. See SPECIFICATION_ALL_OPTIONAL.md for the complete schema.",
   );
   lines.push("");
 }

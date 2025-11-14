@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
+- Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
 ## 0.5.6 — 2025-11-14
 - Improved constraint semantics to reduce false positives in real-world projects:
