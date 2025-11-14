@@ -39,11 +39,7 @@ describe("cda onboard command", () => {
 
     const configRaw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
     const config = JSON.parse(configRaw);
-    const constraints = await loadConstraints();
-    const expectedOverrides = Object.fromEntries(
-      constraints.map((doc) => [doc.meta.id, { enabled: true }]),
-    );
-    expect(config.constraint_overrides).toEqual(expectedOverrides);
+    expect(config.constraint_overrides).toEqual({});
 
     const agentConfig = await readFile(
       path.join(cwd, "cda.agents.json"),

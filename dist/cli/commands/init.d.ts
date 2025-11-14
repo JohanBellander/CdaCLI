@@ -32,5 +32,5 @@ export declare const DEFAULT_AGENT_CONFIG: {
     };
 };
 export declare function runInitCommand(args?: string[], options?: InitCommandOptions): Promise<void>;
-export declare function buildDefaultConfigPayload(constraintIds: string[]): string;
+export declare function buildDefaultConfigPayload(): string;
 export {};

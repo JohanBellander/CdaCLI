@@ -48,7 +48,7 @@ export async function runInitCommand(args = [], options = {}) {
         throw createError("CONFIG_ERROR", "cda.config.json already exists in this directory.");
     }
     const constraints = await loadConstraints();
-    const configPayload = buildDefaultConfigPayload(constraints.map((doc) => doc.meta.id));
+    const configPayload = buildDefaultConfigPayload();
     await mkdir(cwd, { recursive: true });
     await writeFile(configPath, `${configPayload}\n`, "utf8");
     const guideContent = buildCdaGuide(constraints);
@@ -66,12 +66,11 @@ export async function runInitCommand(args = [], options = {}) {
     await writeFile(agentsPath, `${JSON.stringify(DEFAULT_AGENT_CONFIG, null, 2)}\n`, "utf8");
     console.log("Created cda.config.json, CDA.md, and cda.agents.json");
 }
-export function buildDefaultConfigPayload(constraintIds) {
-    const overrides = Object.fromEntries([...constraintIds].sort().map((id) => [id, { enabled: true }]));
+export function buildDefaultConfigPayload() {
     return JSON.stringify({
         version: 1,
         constraints: "builtin",
-        constraint_overrides: overrides,
+        constraint_overrides: {},
     }, null, 2);
 }
 function parseArgs(args) {

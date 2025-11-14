@@ -4,7 +4,6 @@ import path from "node:path";
 import { buildOnboardingGuide } from "../../core/cdaOnboardingGuide.js";
 import { createError } from "../../core/errors.js";
 import { DEFAULT_AGENT_CONFIG, buildDefaultConfigPayload, } from "./init.js";
-import { loadConstraints } from "../../core/constraintLoader.js";
 export async function runOnboardCommand(args = [], options = {}) {
     const parsed = parseArgs(args);
     if (parsed.helpRequested) {
@@ -23,8 +22,7 @@ export async function runOnboardCommand(args = [], options = {}) {
     createdArtifacts.push(`${path.relative(cwd, targetPath) || "CDA.md"}`);
     const configPath = path.join(cwd, "cda.config.json");
     if (!(await fileExists(configPath))) {
-        const constraints = await loadConstraints();
-        const configPayload = buildDefaultConfigPayload(constraints.map((doc) => doc.meta.id));
+        const configPayload = buildDefaultConfigPayload();
         await writeFile(configPath, `${configPayload}\n`, "utf8");
         createdArtifacts.push("cda.config.json");
     }

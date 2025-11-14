@@ -52,10 +52,7 @@ export async function runOnboardCommand(
 
   const configPath = path.join(cwd, "cda.config.json");
   if (!(await fileExists(configPath))) {
-    const constraints = await loadConstraints();
-    const configPayload = buildDefaultConfigPayload(
-      constraints.map((doc) => doc.meta.id),
-    );
+    const configPayload = buildDefaultConfigPayload();
     await writeFile(configPath, `${configPayload}\n`, "utf8");
     createdArtifacts.push("cda.config.json");
   }
