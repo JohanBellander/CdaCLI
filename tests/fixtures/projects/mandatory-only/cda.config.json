@@ -1,5 +1,9 @@
 {
   "version": 1,
   "constraints": "builtin",
-  "constraint_overrides": {}
+  "constraint_overrides": {
+    "mandatory-default": {
+      "enabled": true
+    }
+  }
 }

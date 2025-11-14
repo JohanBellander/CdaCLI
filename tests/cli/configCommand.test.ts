@@ -196,7 +196,10 @@ describe("cda config persistence", () => {
 
     const raw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
     const parsed = JSON.parse(raw);
+    // Now writes full state (all constraints), not minimal overrides
     expect(parsed.constraint_overrides).toEqual({
+      "mandatory-default": { enabled: true },
+      "optional-enabled": { enabled: true },
       "optional-disabled": { enabled: true },
     });
     expect(logSpy).toHaveBeenCalledWith(

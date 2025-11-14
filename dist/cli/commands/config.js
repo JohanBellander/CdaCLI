@@ -1,6 +1,6 @@
 import { rename, writeFile } from "node:fs/promises";
 import { loadConstraints } from "../../core/constraintLoader.js";
-import { buildConfigConstraintState, computeConstraintOverridesFromState, } from "../../core/configConstraintState.js";
+import { buildConfigConstraintState, } from "../../core/configConstraintState.js";
 import { loadProjectConfig } from "../../core/projectConfig.js";
 import { PROJECT_CONFIG_FILENAME } from "../../core/projectConfig.js";
 import { createError } from "../../core/errors.js";
@@ -52,16 +52,12 @@ export async function runConfigCommand(args, options = {}) {
         return result;
     }
     ensureActiveConstraints(result.state);
-    const overrides = computeConstraintOverridesFromState(constraints, result.state);
-    const payload = buildConfigPayload(projectConfig.version, projectConfig.constraints, overrides);
+    // Build full constraint state (all constraints with their enabled status)
+    const fullOverrides = buildFullConstraintOverrides(result.state);
+    const payload = buildConfigPayload(projectConfig.version, projectConfig.constraints, fullOverrides);
     await writeProjectConfig(projectConfig.path, payload);
-    const overrideCount = Object.keys(overrides).length;
-    if (overrideCount > 0) {
-        console.log(`Updated ${PROJECT_CONFIG_FILENAME} with ${overrideCount} override${overrideCount === 1 ? "" : "s"}.`);
-    }
-    else {
-        console.log(`Updated ${PROJECT_CONFIG_FILENAME}; all constraints match bundle defaults.`);
-    }
+    const constraintCount = Object.keys(fullOverrides).length;
+    console.log(`Updated ${PROJECT_CONFIG_FILENAME} with ${constraintCount} constraint${constraintCount === 1 ? "" : "s"}.`);
     return result;
 }
 function hasHelpFlag(args) {
@@ -74,6 +70,13 @@ function ensureActiveConstraints(state) {
     if (!state.some((entry) => entry.effectiveEnabled)) {
         throw createError("CONFIG_ERROR", "At least one constraint must remain active. Enable a constraint before saving.");
     }
+}
+function buildFullConstraintOverrides(state) {
+    const overrides = {};
+    for (const entry of state) {
+        overrides[entry.id] = { enabled: entry.effectiveEnabled };
+    }
+    return overrides;
 }
 function buildConfigPayload(version, constraints, overrides) {
     return {

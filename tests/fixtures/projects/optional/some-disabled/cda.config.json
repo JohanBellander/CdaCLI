@@ -2,6 +2,9 @@
   "version": 1,
   "constraints": "builtin",
   "constraint_overrides": {
+    "mandatory-default": {
+      "enabled": true
+    },
     "optional-enabled": {
       "enabled": false
     },
