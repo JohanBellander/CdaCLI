@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "constraints": "builtin",
+  "constraint_overrides": {
+    "api-boundary-hygiene": {
+      "enabled": true
+    },
+    "app-no-imports-from-infra": {
+      "enabled": true
+    },
+    "central-config-entrypoint": {
+      "enabled": true
+    },
+    "clean-layer-direction": {
+      "enabled": true
+    },
+    "domain-no-imports-from-app-or-infra": {
+      "enabled": true
+    },
+    "domain-no-side-effects": {
+      "enabled": true
+    },
+    "domain-purity": {
+      "enabled": true
+    },
+    "excessive-nesting": {
+      "enabled": true
+    },
+    "file-naming": {
+      "enabled": true
+    },
+    "folder-naming": {
+      "enabled": true
+    },
+    "max-file-lines": {
+      "enabled": true
+    },
+    "module-complexity-guardrails": {
+      "enabled": true
+    },
+    "mvc-layer-separation": {
+      "enabled": true
+    },
+    "mvp-presenter-boundaries": {
+      "enabled": true
+    },
+    "mvvm-binding-integrity": {
+      "enabled": true
+    },
+    "observability-discipline": {
+      "enabled": true
+    },
+    "ports-and-adapters-integrity": {
+      "enabled": true
+    },
+    "single-responsibility": {
+      "enabled": true
+    },
+    "structural-naming-consistency": {
+      "enabled": true
+    },
+    "test-coverage-contracts": {
+      "enabled": true
+    },
+    "ui-isolation": {
+      "enabled": true
+    }
+  }
+}

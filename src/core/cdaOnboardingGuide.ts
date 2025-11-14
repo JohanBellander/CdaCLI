@@ -4,7 +4,7 @@ const COMMAND_SEQUENCE = [
   "Run `cda run --plan` and archive the resulting prompt + run_id. **Do not edit code until this completes. Paste the run_id/output into your transcript before proceeding. You may also save the prompt to a file if helpful.**",
   "Implement planned changes while consulting the prompt emitted by `cda run --plan`.",
   "Run `npm run build` again after editing files to confirm a clean TypeScript build. Paste the command outcome into your transcript.",
-  "Run `cda run --exec` to execute the verification agent, then capture evidence (see below) and paste it into your transcript before summarizing.",
+  "Run `cda run --exec` to execute the verification agent, then capture evidence (see below) and paste it into your transcript before summarizing. **CRITICAL: Re-run `npm run build` followed by `cda run --exec` after EVERY significant code change (new features, bug fixes, refactoring). Do not wait to be prompted—verification must happen automatically after each implementation cycle.**",
 ];
 
 export function buildOnboardingGuide(): string {
@@ -36,6 +36,17 @@ export function buildOnboardingGuide(): string {
   lines.push("- You MUST NOT declare success until `cda run --exec` completes successfully and its evidence is recorded in the transcript.");
   lines.push("- If `cda run --exec` cannot reach an agent, treat the session as failed and document the blocker.");
   lines.push("- Always re-run `npm run build` after any code edits and before invoking `cda run --exec`.");
+  lines.push("");
+  lines.push("## Continuous Validation During Development");
+  lines.push("");
+  lines.push("**IMPORTANT**: The validation cycle (build → verify) must repeat automatically after every substantial change:");
+  lines.push("");
+  lines.push("- ✅ After implementing a new feature → run `npm run build` + `cda run --exec`");
+  lines.push("- ✅ After fixing violations → run `npm run build` + `cda run --exec`");
+  lines.push("- ✅ After refactoring code → run `npm run build` + `cda run --exec`");
+  lines.push("- ✅ After adding new files/modules → run `npm run build` + `cda run --exec`");
+  lines.push("");
+  lines.push("Do NOT wait for the user to prompt validation. Treat `cda run --exec` as your automated test suite—run it proactively to catch architectural drift early.");
   lines.push("");
   lines.push("## Helpful Commands");
   lines.push("");
