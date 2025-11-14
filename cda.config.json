@@ -39,10 +39,10 @@
       "enabled": true
     },
     "mvc-layer-separation": {
-      "enabled": true
+      "enabled": false
     },
     "mvp-presenter-boundaries": {
-      "enabled": true
+      "enabled": false
     },
     "mvvm-binding-integrity": {
       "enabled": true

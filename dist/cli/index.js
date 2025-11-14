@@ -56,7 +56,7 @@ function printHelp() {
     console.log("  run        Consolidated validation/plan/exec workflow");
     console.log("  validate   Emit instruction packages");
     console.log("  agent      Assemble agent prompt and optionally invoke external CLI");
-    console.log("  config     Configure which constraints are active (interactive)");
+    console.log("  config     Configure which constraints are active (interactive, TTY-only)");
     console.log("");
     console.log("Use `cda <command> --help` for command-specific options.");
 }

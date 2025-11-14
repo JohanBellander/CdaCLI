@@ -29,13 +29,9 @@ export async function runConfigInteractiveUi(initialState, options) {
     return { status: "saved", state: updatedState };
 }
 function formatChoiceLabel(entry) {
-    const status = entry.optional ? "Optional" : "Mandatory";
     const defaultFlag = entry.bundleEnabled ? "default:on" : "default:off";
-    return `${entry.id} – ${entry.name} (${status}, ${defaultFlag}, ${entry.category})`;
+    return `${entry.id} – ${entry.name} (${defaultFlag}, ${entry.category})`;
 }
 function createHint(entry) {
-    if (!entry.toggleable) {
-        return entry.effectiveEnabled ? "locked (mandatory)" : "locked (inactive)";
-    }
     return entry.effectiveEnabled ? "active" : "disabled";
 }

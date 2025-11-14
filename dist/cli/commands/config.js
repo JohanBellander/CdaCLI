@@ -14,9 +14,9 @@ const CONFIG_HELP_TEXT = [
     "Options:",
     "  --help, -h   Show this help message and exit.",
     "",
-    "The interactive UI lets you toggle optional constraints using arrow keys,",
-    "space to toggle, Enter/Ctrl+S to save, and Esc/q to cancel.",
-    "You must run this command inside an interactive terminal (TTY).",
+    "Use this command to edit constraint_overrides without touching JSON.",
+    "Arrow keys move, Space toggles constraints, Enter/Ctrl+S saves,",
+    "and Esc/q cancels. You must run it inside an interactive terminal (TTY).",
 ].join("\n");
 export async function runConfigCommand(args, options = {}) {
     if (hasHelpFlag(args)) {

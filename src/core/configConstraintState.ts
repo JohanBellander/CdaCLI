@@ -31,6 +31,8 @@ export function buildConfigConstraintState(
       optional: doc.meta.optional,
       bundleEnabled,
       effectiveEnabled,
+      // In the future we may make some constraints non-toggleable, but for now
+      // all bundled constraints can be switched on/off via config.
       toggleable: true,
     };
   });

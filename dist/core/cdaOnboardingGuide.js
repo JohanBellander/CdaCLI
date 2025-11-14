@@ -49,6 +49,7 @@ export function buildOnboardingGuide() {
     lines.push("");
     lines.push("- `cda list` — review active constraints and their IDs.");
     lines.push("- `cda describe <constraint-id>` — inspect enforcement details for a specific constraint.");
+    lines.push("- `cda config` — interactively toggle constraints (requires a TTY).");
     lines.push("- `cda run --plan --constraint <id>` — generate focused prompts when investigating a single constraint.");
     lines.push("- `cda run --exec --constraint <id>` — execute verification for one constraint when triaging.");
     lines.push("");

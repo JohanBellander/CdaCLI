@@ -13,7 +13,9 @@ export function buildConfigConstraintState(documents, overrides = {}) {
             optional: doc.meta.optional,
             bundleEnabled,
             effectiveEnabled,
-            toggleable: doc.meta.optional,
+            // In the future we may make some constraints non-toggleable, but for now
+            // all bundled constraints can be switched on/off via config.
+            toggleable: true,
         };
     });
 }
@@ -31,10 +33,6 @@ export function computeConstraintOverridesFromState(documents, updatedState) {
             throw createError("CONFIG_ERROR", `Constraint state references unknown constraint '${state.id}'.`);
         }
         const bundleEnabled = doc.meta.enabled;
-        const optional = doc.meta.optional;
-        if (!optional && bundleEnabled && state.effectiveEnabled === false) {
-            throw createError("CONFIG_ERROR", `Constraint '${state.id}' is mandatory and cannot be disabled.`);
-        }
         if (state.effectiveEnabled !== bundleEnabled) {
             overrides[state.id] = { enabled: state.effectiveEnabled };
         }
