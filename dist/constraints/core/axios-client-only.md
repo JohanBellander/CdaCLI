@@ -3,8 +3,8 @@ id: axios-client-only
 name: Shared Axios Client Only
 category: frameworks-http-client
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---

@@ -34,7 +34,8 @@ downstream-layer(source,target): true when source layer ranks lower than target 
 FORBIDDEN
 - ui layer importing domain, infra, or shared implementations directly
 - app layer importing infra unless the file resides in adapters explicitly annotated
-- domain layer importing app or ui code
+- domain layer importing app or ui code (domain must remain dependency-free)
+- infra layer importing app code (infra should only implement domain ports)
 - shared utilities importing infra or app specific modules
 - cyclic dependencies between any two layers
 
@@ -43,7 +44,8 @@ ALLOWED
 - ui importing presenters/view-models located under src/app/presenters or src/app/view-models
 - app importing domain services, value objects, and ports
 - domain importing shared immutable utilities (types, constants) with no side effects
-- infra implementing domain ports and importing shared helpers
+- infra implementing domain ports and importing domain entities, ports, and value objects (EXPECTED: adapters depend on domain interfaces)
+- infra importing shared helpers for utilities like logging, telemetry, or config
 - shared utilities importing only other shared files
 
 REQUIRED DATA COLLECTION
@@ -79,10 +81,17 @@ for each file in union(layers.*):
     targetLayer = resolveLayer(imp.resolvedPath)
     if !targetLayer: continue
     record layer_dependencies entry
+    
+    # infra→domain is ALLOWED (adapters implement domain ports)
+    if sourceLayer == 'infra' and targetLayer == 'domain':
+      continue  # Valid dependency
+    
     if order(sourceLayer) > order(targetLayer):
       record violation 'downstream-layer'
     if sourceLayer == 'domain' and targetLayer in ['app','ui']:
       record violation 'domain-imports-upstream'
+    if sourceLayer == 'infra' and targetLayer == 'app':
+      record violation 'infra-imports-app'
     if sourceLayer == 'ui' and targetLayer in ['domain','infra']:
       record violation 'ui-imports-forbidden'
     if sourceLayer == 'shared' and targetLayer not in ['shared','domain']:

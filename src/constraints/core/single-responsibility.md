@@ -26,13 +26,15 @@ responsibility_category: classifier derived from exported_symbol kind (service, 
 single_responsibility_file: file containing <= 3 exports all within the same responsibility_category
 
 FORBIDDEN
-- More than 3 exported_symbol entries per file
+- More than 3 exported_symbol entries per file (except barrel/entry files, see ALLOWED)
 - Mixing controllers, services, and DTOs in the same file
 - Exporting unrelated helper utilities together with primary logic
 
 ALLOWED
 - Exporting one primary class plus tightly-related helpers (e.g., factory + interface)
 - Exporting multiple types when they are variants of the same domain concept
+- Barrel files (index.ts) or feature entry files (<feature-slug>.ts at feature root) may export up to 5 symbols when aggregating related interfaces/ports/types from the same feature
+- Feature root entry files that re-export submodules to provide a clean public API
 
 REQUIRED DATA COLLECTION
 exports_by_file: Record<string, { name: string; kind: string }[]>
@@ -50,11 +52,18 @@ for file in files:
     exports = parseExports(file)
     categories = groupByKind(exports)
     total_exports = len(exports)
-    if total_exports > 3 or len(categories.keys()) > 1:
+    
+    # Determine if this is a barrel or feature entry file
+    is_barrel = file.endsWith('index.ts')
+    is_feature_entry = isFeatureRootEntry(file)  # e.g., src/domain/contacts/contacts.ts
+    threshold = 5 if (is_barrel or is_feature_entry) else 3
+    
+    if total_exports > threshold or (len(categories.keys()) > 1 and not is_barrel):
         violations_initial.append({
             constraint_id: 'single-responsibility',
             file_path: file,
             export_count: total_exports,
+            threshold: threshold,
             primary_category: dominantCategory(categories),
             extra_exports: extractExtra(exports, primary_category)
         })

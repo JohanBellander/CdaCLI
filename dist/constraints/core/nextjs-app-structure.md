@@ -3,8 +3,8 @@ id: nextjs-app-structure
 name: Next.js App Structure Guardrails
 category: frameworks-nextjs
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---

@@ -3,8 +3,8 @@ id: zod-contracts
 name: Zod Contracts at Every Boundary
 category: frameworks-validation
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---

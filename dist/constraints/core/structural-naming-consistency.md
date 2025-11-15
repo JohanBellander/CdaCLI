@@ -24,19 +24,25 @@ exclude_paths: ["node_modules","dist","build",".git","tests"]
 DEFINITIONS
 feature-slug: kebab-case token derived from folder name (e.g., 'billing-cycle')
 feature-root(layer): highest-level folder directly under the layer directory (`src/ui/<slug>`, `src/app/<slug>`, etc.)
-entry-file: default module exported by the feature root (index.ts, <slug>.service.ts, <slug>.adapter.ts)
+entry-file: default module exported by the feature root, which can be:
+  - index.ts (traditional barrel export), OR
+  - <slug>.ts (explicit feature entry, e.g., contacts.ts in src/domain/contacts/)
+  - Both patterns are acceptable; choose one consistently within a feature
 canonical-slug-map: combined list of feature-slugs detected across all layers
 
 FORBIDDEN
 - Feature roots with camelCase, PascalCase, or snake_case names
 - Mismatched slugs across layers (e.g., `billing` in app but `billing-cycle` in domain)
-- Entry files whose basename does not match the feature slug
+- Entry files whose basename does not match the feature slug (except index.ts which is always allowed)
 - Duplicate feature directories differing only by suffix (`billing` vs `billings`)
+- Missing entry file entirely (must have either index.ts or <slug>.ts)
 
 ALLOWED
 - Additional nested folders within a feature as long as the root slug and entry file follow the convention
 - Feature slugs existing in only one layer when the module is intentionally isolated
-- Appending technology qualifiers after the slug (e.g., `billing-cycle.adapter.ts`) while still starting with the slug
+- Using index.ts as the entry file for any feature (universal barrel pattern)
+- Using <slug>.ts as the entry file (e.g., contacts.ts in src/domain/contacts/)
+- Appending technology qualifiers after the slug for non-entry files (e.g., `billing-cycle.adapter.ts`) while still starting with the slug
 
 REQUIRED DATA COLLECTION
 feature_roots: {
@@ -66,7 +72,8 @@ for layerPath in layers:
     violations = []
     if dir.name != slug:
       violations.append('non-kebab-case')
-    entry = findEntryFile(dir, slug)
+    # Check for either index.ts or <slug>.ts as valid entry files
+    entry = findFile(dir, 'index.ts') or findFile(dir, slug + '.ts')
     if !entry:
       violations.append('missing-entry-file')
     feature_roots.append({

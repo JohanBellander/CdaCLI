@@ -29,6 +29,7 @@ allowed-dependency: other domain files or shared pure utilities under 'src/share
 
 FORBIDDEN
 - Importing infra, app, ui, or framework packages from domain files
+- Importing Zod or validation libraries directly in domain entities (Zod schemas belong in `packages/shared-types`; see `shared-types-zod-source-of-truth` constraint)
 - Reading from process.env, Date.now, Math.random, crypto, or console APIs inside domain functions
 - Relying on ORMs, HTTP clients, or persistence models inside domain logic
 - Writing to mutable singletons or maintaining module-level caches
@@ -36,8 +37,10 @@ FORBIDDEN
 ALLOWED
 - Pure computations, value-object factories, and aggregate methods
 - Dependency inversion via ports where the port interface lives under `src/domain/ports`
+- Plain TypeScript types and interfaces for domain entities (no Zod, no decorators)
 - Immutable configuration objects injected via arguments
 - Usage of shared constants/helpers that themselves avoid side effects
+- Importing TypeScript types inferred from Zod schemas in shared-types (e.g., `import type { Contact } from '@shared-types'`)
 
 REQUIRED DATA COLLECTION
 domain_imports: {

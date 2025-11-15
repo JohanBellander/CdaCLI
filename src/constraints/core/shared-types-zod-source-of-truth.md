@@ -87,6 +87,7 @@ Mark as failed if duplicates persist or if boundary files still omit shared impo
 
 COMMON MISTAKES
 - Copying schemas to unblock UI prototyping and forgetting to backfill shared package.
+- Putting Zod schemas in `src/domain/entities/` instead of `packages/shared-types/` (violates domain-purity).
 - Exporting only TypeScript types but not the Zod schema itself.
 - Forgetting to bump shared-types version in consuming apps.
 

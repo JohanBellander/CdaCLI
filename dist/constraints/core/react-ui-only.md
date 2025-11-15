@@ -3,8 +3,8 @@ id: react-ui-only
 name: React Components Stay UI-Only
 category: frameworks-react
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---
