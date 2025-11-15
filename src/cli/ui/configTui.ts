@@ -33,7 +33,6 @@ export async function runConfigInteractiveUi(
     options: initialState.map((entry) => ({
       value: entry.id,
       label: formatChoiceLabel(entry),
-      hint: createHint(entry),
       disabled: entry.toggleable ? false : "Mandatory constraint",
     })),
     initialValues: initialState
