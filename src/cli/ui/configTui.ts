@@ -59,8 +59,7 @@ export async function runConfigInteractiveUi(
 }
 
 function formatChoiceLabel(entry: ConfigConstraintState): string {
-  const defaultFlag = entry.bundleEnabled ? "default:on" : "default:off";
-  return `[${entry.group}] ${entry.id} - ${entry.name} (${defaultFlag}, ${entry.category})`;
+  return `[${entry.group}] ${entry.id} - ${entry.name}`;
 }
 
 function createHint(entry: ConfigConstraintState): string {
