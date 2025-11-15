@@ -3,8 +3,8 @@ id: shared-types-zod-source-of-truth
 name: Shared Types as Zod Source of Truth
 category: contracts-shared-types
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: contracts
 ---

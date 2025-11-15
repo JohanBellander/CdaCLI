@@ -6,6 +6,7 @@ severity: error
 enabled: true
 optional: true
 version: 1
+group: architecture
 ---
 
 HEADER

@@ -3,8 +3,8 @@ id: fastify-http-server
 name: Fastify HTTP Server Enforcement
 category: frameworks-fastify
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---

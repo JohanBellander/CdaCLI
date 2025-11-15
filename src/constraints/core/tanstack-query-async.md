@@ -3,8 +3,8 @@ id: tanstack-query-async
 name: TanStack Query for Async Data
 category: frameworks-react-query
 severity: error
-enabled: false
-optional: true
+enabled: true
+optional: false
 version: 1
 group: frameworks
 ---
