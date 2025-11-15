@@ -1,11 +1,15 @@
 import { createError } from "./errors.js";
 import type { ConstraintDocument } from "./constraintLoader.js";
-import type { ConstraintOverrides } from "./types.js";
+import type {
+  ConstraintGroup,
+  ConstraintOverrides,
+} from "./types.js";
 
 export interface ConfigConstraintState {
   id: string;
   name: string;
   category: string;
+  group: ConstraintGroup;
   optional: boolean;
   bundleEnabled: boolean;
   effectiveEnabled: boolean;
@@ -16,7 +20,18 @@ export function buildConfigConstraintState(
   documents: ConstraintDocument[],
   overrides: ConstraintOverrides = {},
 ): ConfigConstraintState[] {
-  return documents.map((doc) => {
+  const sortedDocuments = [...documents].sort((a, b) => {
+    const groupComparison = a.meta.group.localeCompare(b.meta.group);
+    if (groupComparison !== 0) {
+      return groupComparison;
+    }
+    if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
+      return a.meta.id.localeCompare(b.meta.id);
+    }
+    return a.meta.enforcementOrder - b.meta.enforcementOrder;
+  });
+
+  return sortedDocuments.map((doc) => {
     const bundleEnabled = doc.meta.enabled;
     const override = overrides[doc.meta.id];
     const effectiveEnabled =
@@ -28,6 +43,7 @@ export function buildConfigConstraintState(
       id: doc.meta.id,
       name: doc.meta.name,
       category: doc.meta.category,
+      group: doc.meta.group,
       optional: doc.meta.optional,
       bundleEnabled,
       effectiveEnabled,

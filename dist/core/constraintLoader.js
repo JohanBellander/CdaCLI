@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { CONSTRAINT_GROUPS, } from "./types.js";
 import { createError } from "./errors.js";
 export const CONSTRAINT_SECTION_ORDER = [
     "HEADER",
@@ -80,6 +81,7 @@ async function parseConstraintFile(filePath) {
     const enabled = asBoolean(frontmatter.enabled, "enabled", filePath, id, true);
     const optional = asBoolean(frontmatter.optional, "optional", filePath, id, false);
     const version = asNumber(frontmatter.version, "version", filePath, id);
+    const group = asConstraintGroup(frontmatter.group, filePath, id);
     const sections = extractSections(body, id, filePath);
     const headerFields = parseKeyValueBlock(sections.HEADER, id, filePath, "HEADER");
     const header = {
@@ -106,6 +108,7 @@ async function parseConstraintFile(filePath) {
         isActive: enabled,
         version,
         enforcementOrder: header.enforcementOrder,
+        group,
     };
     return {
         filePath,
@@ -235,6 +238,13 @@ function asNumber(value, key, filePath, constraintId = "global") {
         return value;
     }
     throw bundleError(constraintId, `Expected numeric '${key}' in ${filePath}.`);
+}
+function asConstraintGroup(value, filePath, constraintId = "global") {
+    const group = asString(value, "group", filePath, constraintId);
+    if (CONSTRAINT_GROUPS.includes(group)) {
+        return group;
+    }
+    throw bundleError(constraintId, `Invalid group '${group}' in ${filePath}; expected one of: ${CONSTRAINT_GROUPS.join(", ")}.`);
 }
 function bundleError(constraintId, message) {
     return createError("BUNDLE_ERROR", `BUNDLE_ERROR [${constraintId}]: ${message}`);

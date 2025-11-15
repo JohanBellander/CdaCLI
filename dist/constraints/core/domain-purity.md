@@ -6,6 +6,7 @@ severity: error
 enabled: true
 optional: true
 version: 1
+group: architecture
 ---
 
 HEADER
@@ -144,4 +145,3 @@ FINAL REPORT SAMPLE
   "completion_timestamp": "2025-11-12T15:12:00Z"
 }
 ```
-

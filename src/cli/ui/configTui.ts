@@ -20,11 +20,16 @@ export async function runConfigInteractiveUi(
     return { status: "cancelled" };
   }
 
-  intro("cda config – constraint activation");
+  intro(
+    [
+      "cda config - constraint activation",
+      "Labels include [group] prefixes so you can scan architecture vs patterns vs frameworks.",
+    ].join("\n"),
+  );
 
   const selection = await multiselect({
     message:
-      "Select which constraints should remain active. Arrow keys move, space toggles, Enter saves.",
+      "Select which constraints should remain active (labels are prefixed with [group]). Arrow keys move, space toggles, Enter saves.",
     options: initialState.map((entry) => ({
       value: entry.id,
       label: formatChoiceLabel(entry),
@@ -55,7 +60,7 @@ export async function runConfigInteractiveUi(
 
 function formatChoiceLabel(entry: ConfigConstraintState): string {
   const defaultFlag = entry.bundleEnabled ? "default:on" : "default:off";
-  return `${entry.id} – ${entry.name} (${defaultFlag}, ${entry.category})`;
+  return `[${entry.group}] ${entry.id} - ${entry.name} (${defaultFlag}, ${entry.category})`;
 }
 
 function createHint(entry: ConfigConstraintState): string {

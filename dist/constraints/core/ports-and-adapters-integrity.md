@@ -6,6 +6,7 @@ severity: error
 enabled: true
 optional: true
 version: 1
+group: patterns
 ---
 
 HEADER
@@ -156,4 +157,3 @@ FINAL REPORT SAMPLE
   "completion_timestamp": "2025-11-12T15:14:00Z"
 }
 ```
-

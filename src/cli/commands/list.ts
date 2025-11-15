@@ -21,11 +21,12 @@ export async function runListCommand(
     return;
   }
 
-  const header = ["order", "constraint_id", "name", "status"];
+  const header = ["order", "constraint_id", "name", "group", "status"];
   const rows = constraints.map((constraint) => [
     String(constraint.meta.enforcementOrder),
     constraint.meta.id,
     constraint.meta.name,
+    constraint.meta.group,
     formatStatus(constraint.meta),
   ]);
 

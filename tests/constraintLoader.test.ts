@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { loadConstraints } from "../src/core/constraintLoader.js";
 import { buildBatchInstructionPackage } from "../src/core/instructionEmitter.js";
+import { CONSTRAINT_GROUPS } from "../src/core/types.js";
 
 const SOURCE_CONSTRAINTS = path.resolve("src/constraints/core");
 const MALFORMED_DIR = path.resolve(
@@ -14,7 +15,7 @@ const OPTIONAL_DIR = path.resolve("tests/fixtures/optional-constraints");
 describe("constraintLoader", () => {
   it("loads the combined default bundle", async () => {
     const constraints = await loadConstraints();
-    expect(constraints).toHaveLength(21);
+    expect(constraints).toHaveLength(29);
     expect(constraints.map((c) => c.meta.id)).toEqual([
       "domain-no-imports-from-app-or-infra",
       "app-no-imports-from-infra",
@@ -37,6 +38,14 @@ describe("constraintLoader", () => {
       "api-boundary-hygiene",
       "observability-discipline",
       "test-coverage-contracts",
+      "fastify-http-server",
+      "zod-contracts",
+      "prisma-data-access",
+      "nextjs-app-structure",
+      "react-ui-only",
+      "tanstack-query-async",
+      "axios-client-only",
+      "shared-types-zod-source-of-truth",
     ]);
   });
 
@@ -44,7 +53,7 @@ describe("constraintLoader", () => {
     const constraints = await loadConstraints({
       constraintsDir: SOURCE_CONSTRAINTS,
     });
-    expect(constraints).toHaveLength(21);
+    expect(constraints).toHaveLength(29);
     expect(constraints.map((c) => c.meta.id)).toEqual([
       "domain-no-imports-from-app-or-infra",
       "app-no-imports-from-infra",
@@ -67,7 +76,31 @@ describe("constraintLoader", () => {
       "api-boundary-hygiene",
       "observability-discipline",
       "test-coverage-contracts",
+      "fastify-http-server",
+      "zod-contracts",
+      "prisma-data-access",
+      "nextjs-app-structure",
+      "react-ui-only",
+      "tanstack-query-async",
+      "axios-client-only",
+      "shared-types-zod-source-of-truth",
     ]);
+  });
+
+  it("requires every constraint to declare a non-empty id, name, and valid group", async () => {
+    const constraints = await loadConstraints({
+      constraintsDir: SOURCE_CONSTRAINTS,
+    });
+    const allowedGroups = new Set(CONSTRAINT_GROUPS);
+    const missingMeta = constraints.filter(
+      (doc) => !doc.meta.id.trim() || !doc.meta.name.trim(),
+    );
+    expect(missingMeta, "constraints missing id or name").toEqual([]);
+
+    const invalidGroups = constraints
+      .filter((doc) => !allowedGroups.has(doc.meta.group))
+      .map((doc) => ({ id: doc.meta.id, group: doc.meta.group }));
+    expect(invalidGroups, "constraints missing valid group").toEqual([]);
   });
 
   it("throws a bundle error when a section is missing", async () => {
@@ -239,6 +272,63 @@ describe("constraintLoader", () => {
         "file_path",
         "details",
       ],
+      "fastify-http-server": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "specifier",
+      ],
+      "zod-contracts": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "specifier",
+        "referenced_schema",
+      ],
+      "prisma-data-access": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "layer",
+      ],
+      "nextjs-app-structure": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "details",
+      ],
+      "react-ui-only": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "specifier",
+      ],
+      "tanstack-query-async": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "specifier",
+      ],
+      "axios-client-only": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "line",
+        "specifier",
+      ],
+      "shared-types-zod-source-of-truth": [
+        "constraint_id",
+        "violation_type",
+        "file_path",
+        "schema",
+        "line",
+      ],
     };
 
     pkg.constraints.forEach((block) => {
@@ -307,8 +397,8 @@ describe("constraintLoader", () => {
     // MVC and MVP should be disabled by default
     expect(mvc?.meta.isActive).toBe(false);
     expect(mvp?.meta.isActive).toBe(false);
-    // MVVM should be enabled by default
-    expect(mvvm?.meta.isActive).toBe(true);
+    // MVVM is also disabled by default in the React/Next profile
+    expect(mvvm?.meta.isActive).toBe(false);
     
     // Can be enabled via overrides
     const withMvcEnabled = await loadConstraints({
@@ -319,7 +409,15 @@ describe("constraintLoader", () => {
     const mvcEnabled = withMvcEnabled.find((doc) => doc.meta.id === "mvc-layer-separation");
     expect(mvcEnabled?.meta.isActive).toBe(true);
     
-    // MVVM can be disabled via overrides
+    // MVVM can be enabled/disabled via overrides
+    const withMvvmEnabled = await loadConstraints({
+      constraintOverrides: {
+        "mvvm-binding-integrity": { enabled: true },
+      },
+    });
+    const mvvmEnabled = withMvvmEnabled.find((doc) => doc.meta.id === "mvvm-binding-integrity");
+    expect(mvvmEnabled?.meta.isActive).toBe(true);
+
     const withMvvmDisabled = await loadConstraints({
       constraintOverrides: {
         "mvvm-binding-integrity": { enabled: false },

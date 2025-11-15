@@ -17,6 +17,7 @@ const CONFIG_HELP_TEXT = [
     "Use this command to edit constraint_overrides without touching JSON.",
     "Arrow keys move, Space toggles constraints, Enter/Ctrl+S saves,",
     "and Esc/q cancels. You must run it inside an interactive terminal (TTY).",
+    "Labels include [group] prefixes (patterns, architecture, best-practices, frameworks, contracts).",
 ].join("\n");
 export async function runConfigCommand(args, options = {}) {
     if (hasHelpFlag(args)) {

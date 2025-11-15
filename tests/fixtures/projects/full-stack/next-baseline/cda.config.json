@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "constraints": "builtin",
+  "constraint_overrides": {
+    "fastify-http-server": { "enabled": true },
+    "zod-contracts": { "enabled": true },
+    "prisma-data-access": { "enabled": true },
+    "nextjs-app-structure": { "enabled": true },
+    "react-ui-only": { "enabled": true },
+    "tanstack-query-async": { "enabled": true },
+    "axios-client-only": { "enabled": true },
+    "shared-types-zod-source-of-truth": { "enabled": true },
+    "ui-isolation": { "enabled": true }
+  }
+}
+

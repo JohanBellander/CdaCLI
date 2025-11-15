@@ -11,11 +11,12 @@ export async function runListCommand(options = {}) {
         console.log("No constraints found.");
         return;
     }
-    const header = ["order", "constraint_id", "name", "status"];
+    const header = ["order", "constraint_id", "name", "group", "status"];
     const rows = constraints.map((constraint) => [
         String(constraint.meta.enforcementOrder),
         constraint.meta.id,
         constraint.meta.name,
+        constraint.meta.group,
         formatStatus(constraint.meta),
     ]);
     const widths = header.map((column, index) => Math.max(column.length, ...rows.map((row) => row[index].length)));

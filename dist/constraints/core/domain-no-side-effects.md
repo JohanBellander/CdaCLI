@@ -5,6 +5,7 @@ category: purity
 severity: error
 enabled: true
 version: 1
+group: architecture
 ---
 
 HEADER

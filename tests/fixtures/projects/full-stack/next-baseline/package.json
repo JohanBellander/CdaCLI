@@ -1,0 +1,9 @@
+{
+  "name": "next-baseline",
+  "private": true,
+  "workspaces": ["apps/web", "apps/api", "packages/shared-types"],
+  "scripts": {
+    "dev": "echo placeholder"
+  }
+}
+

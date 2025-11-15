@@ -6,6 +6,7 @@ severity: error
 enabled: true
 optional: true
 version: 1
+group: best-practices
 ---
 
 HEADER
@@ -135,4 +136,3 @@ FINAL REPORT SAMPLE
   "completion_timestamp": "2025-11-12T15:18:00Z"
 }
 ```
-

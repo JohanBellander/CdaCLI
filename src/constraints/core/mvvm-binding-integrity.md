@@ -3,8 +3,10 @@ id: mvvm-binding-integrity
 name: MVVM Binding Integrity
 category: architecture-pattern
 severity: error
-enabled: true
+enabled: false
+optional: true
 version: 1
+group: patterns
 ---
 
 HEADER
@@ -13,7 +15,7 @@ severity: error
 enforcement_order: 11
 
 PURPOSE
-Guarantee Model-View-ViewModel boundaries by enforcing one-way dependencies, keeping view models free of view references, and ensuring views bind without business logic.
+Guarantee Model-View-ViewModel boundaries by enforcing one-way dependencies, keeping view models free of view references, and ensuring views bind without business logic. The React/TanStack Query stack does not rely on MVVM, so this constraint ships disabled and should only be enabled for teams building MVVM-based clients (e.g., mobile or desktop shells).
 
 SCOPE
 include_paths: any file path containing '/viewmodels/' or '/views/' or '/models/'

@@ -5,6 +5,7 @@ category: layering
 severity: error
 enabled: true
 version: 1
+group: architecture
 ---
 
 HEADER

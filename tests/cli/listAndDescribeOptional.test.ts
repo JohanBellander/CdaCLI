@@ -34,6 +34,7 @@ describe("cda list optional constraint UX", () => {
       .map((call: unknown[]) => String(call[0]))
       .join("\n");
     expect(output).toContain("STATUS");
+    expect(output).toContain("GROUP");
     expect(output).toContain("disabled");
     expect(output).toContain("active");
   });

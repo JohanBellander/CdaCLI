@@ -5,6 +5,7 @@ category: naming
 severity: error
 enabled: true
 version: 1
+group: best-practices
 ---
 
 HEADER

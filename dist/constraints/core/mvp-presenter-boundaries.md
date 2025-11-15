@@ -6,6 +6,7 @@ severity: error
 enabled: false
 optional: true
 version: 1
+group: patterns
 ---
 
 HEADER
@@ -14,7 +15,7 @@ severity: error
 enforcement_order: 10
 
 PURPOSE
-Maintain clear separation between Model-View-Presenter responsibilities so presenters coordinate state, views handle rendering, and models encapsulate data logic without cross-layer leakage.
+Maintain clear separation between Model-View-Presenter responsibilities so presenters coordinate state, views handle rendering, and models encapsulate data logic without cross-layer leakage. React+Next teams generally rely on feature hooks instead of presenters, so leave this constraint disabled unless you are intentionally adopting MVP in another UI framework.
 
 SCOPE
 include_paths: any file path containing '/presenters/' or '/views/' or '/models/'

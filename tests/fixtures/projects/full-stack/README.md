@@ -8,3 +8,4 @@ These fixture projects back the full-stack constraint bundle tests. Each directo
 - `adapter-mismatch` – Infra adapter forgets to implement its port.
 - `config-leak` – Application service reads process.env outside config entrypoint.
 - `api-boundary-blur` – Controller returns domain models without DTO mapping.
+- `next-baseline` – Minimal Next.js + Fastify + TanStack Query sample aligned with the new architecture profile.

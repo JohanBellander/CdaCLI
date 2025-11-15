@@ -1,6 +1,16 @@
 import { createError } from "./errors.js";
 export function buildConfigConstraintState(documents, overrides = {}) {
-    return documents.map((doc) => {
+    const sortedDocuments = [...documents].sort((a, b) => {
+        const groupComparison = a.meta.group.localeCompare(b.meta.group);
+        if (groupComparison !== 0) {
+            return groupComparison;
+        }
+        if (a.meta.enforcementOrder === b.meta.enforcementOrder) {
+            return a.meta.id.localeCompare(b.meta.id);
+        }
+        return a.meta.enforcementOrder - b.meta.enforcementOrder;
+    });
+    return sortedDocuments.map((doc) => {
         const bundleEnabled = doc.meta.enabled;
         const override = overrides[doc.meta.id];
         const effectiveEnabled = override && typeof override.enabled === "boolean"
@@ -10,6 +20,7 @@ export function buildConfigConstraintState(documents, overrides = {}) {
             id: doc.meta.id,
             name: doc.meta.name,
             category: doc.meta.category,
+            group: doc.meta.group,
             optional: doc.meta.optional,
             bundleEnabled,
             effectiveEnabled,

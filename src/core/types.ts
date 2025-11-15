@@ -1,3 +1,13 @@
+export const CONSTRAINT_GROUPS = [
+  "patterns",
+  "architecture",
+  "best-practices",
+  "frameworks",
+  "contracts",
+] as const;
+
+export type ConstraintGroup = (typeof CONSTRAINT_GROUPS)[number];
+
 export interface ConstraintMeta {
   id: string;
   name: string;
@@ -8,6 +18,7 @@ export interface ConstraintMeta {
   isActive: boolean;
   version: number;
   enforcementOrder: number;
+  group: ConstraintGroup;
 }
 
 export interface ConstraintOverrideConfig {

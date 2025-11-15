@@ -36,6 +36,7 @@ describe("buildConfigConstraintState", () => {
         id: "mandatory-a",
         name: "Mandatory A",
         category: "category",
+        group: "architecture",
         optional: false,
         bundleEnabled: true,
         effectiveEnabled: true,
@@ -45,6 +46,7 @@ describe("buildConfigConstraintState", () => {
         id: "optional-b",
         name: "Optional B",
         category: "category",
+        group: "architecture",
         optional: true,
         bundleEnabled: false,
         effectiveEnabled: false,
@@ -156,6 +158,7 @@ describe("computeConstraintOverridesFromState", () => {
         id: "unknown",
         name: "Unknown",
         category: "category",
+        group: "architecture",
         optional: true,
         bundleEnabled: true,
         effectiveEnabled: false,
@@ -225,6 +228,7 @@ function createConstraint(
     isActive: overrides.isActive ?? overrides.enabled ?? true,
     version: overrides.version ?? 1,
     enforcementOrder: overrides.enforcementOrder ?? 1,
+    group: overrides.group ?? "architecture",
   };
 
   return {

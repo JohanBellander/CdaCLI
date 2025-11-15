@@ -6,6 +6,7 @@ severity: error
 enabled: false
 optional: true
 version: 1
+group: patterns
 ---
 
 HEADER
@@ -14,7 +15,7 @@ severity: error
 enforcement_order: 9
 
 PURPOSE
-Ensure Model-View-Controller responsibilities remain isolated so controllers orchestrate requests, models encapsulate domain logic, and views render presentation only.
+Ensure Model-View-Controller responsibilities remain isolated so controllers orchestrate requests, models encapsulate domain logic, and views render presentation only. React/Next projects that follow the hook-based architecture from ARCHITECTURE.md should keep this constraint disabled; enable it only when building a traditional MVC UI stack.
 
 SCOPE
 include_paths: any file path containing '/controllers/' or '/models/' or '/views/'
