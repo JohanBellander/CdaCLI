@@ -12,7 +12,6 @@ export async function runConfigInteractiveUi(initialState, options) {
         options: initialState.map((entry) => ({
             value: entry.id,
             label: formatChoiceLabel(entry),
-            hint: createHint(entry),
             disabled: entry.toggleable ? false : "Mandatory constraint",
         })),
         initialValues: initialState
@@ -32,8 +31,7 @@ export async function runConfigInteractiveUi(initialState, options) {
     return { status: "saved", state: updatedState };
 }
 function formatChoiceLabel(entry) {
-    const defaultFlag = entry.bundleEnabled ? "default:on" : "default:off";
-    return `[${entry.group}] ${entry.id} - ${entry.name} (${defaultFlag}, ${entry.category})`;
+    return `[${entry.group}] ${entry.id} - ${entry.name}`;
 }
 function createHint(entry) {
     return entry.effectiveEnabled ? "active" : "disabled";
