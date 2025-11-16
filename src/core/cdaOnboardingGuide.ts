@@ -1,8 +1,31 @@
+const ARCHITECTURE_QUICK_REF = `
+BEFORE coding, remember these patterns to avoid common first-run violations:
+
+Structure:
+• Monorepo: packages/shared-types (Zod schemas), apps/api (Fastify), apps/web (Next.js)
+• Layers: domain/ (pure logic, no imports from app/infra), app/ (services), infra/ (adapters, config, telemetry)
+• Feature folders: domain/contacts/, app/contacts/, infra/contacts/ (kebab-case, matching slugs across layers)
+
+Critical patterns:
+• Zod schemas → packages/shared-types ONLY (never in domain entities)
+• Domain entities → plain TypeScript types (no Zod, no frameworks)
+• Config → single infra/config/index.ts (exports getConfig()), never inline process.env
+• Logging → infra/telemetry/logger.ts adapter (no direct console.log in features)
+• DTOs/Mappers → infra layer (toDto/fromDto functions to separate domain from HTTP)
+• Tests → mirror production structure (domain/contact/contact.test.ts for domain/contact/contact.ts)
+
+Limits:
+• Max 3 exports per file (5 for barrels/feature entries)
+• Max 200 lines per file
+• Max 3 nesting levels
+• Infra→domain allowed (adapters implement ports), domain→app/infra FORBIDDEN
+`;
+
 const COMMAND_SEQUENCE = [
   "Run `npm install` to fetch dependencies (repeat whenever package.json changes). If the command fails because `package.json` is missing, create the file and immediately rerun `npm install` before touching any source files. You may create only the minimal scaffolding required for TypeScript to compile (e.g., an empty `src/index.ts`) before the initial build—no production code yet.",
   "Run `npm run build` to ensure the workspace compiles before inspection. **Aside from minimal scaffolding needed for compilation, do not create or modify project files until this build succeeds.**",
   "Run `cda run --plan` and archive the resulting prompt + run_id. **Do not edit code until this completes. Paste the run_id/output into your transcript before proceeding. You may also save the prompt to a file if helpful.**",
-  "Implement planned changes while consulting the prompt emitted by `cda run --plan`.",
+  `**READ THIS ARCHITECTURE REFERENCE before implementing:**${ARCHITECTURE_QUICK_REF}Implement planned changes while consulting BOTH the quick reference above AND the full prompt from \`cda run --plan\`.`,
   "Run `npm run build` again after editing files to confirm a clean TypeScript build. Paste the command outcome into your transcript.",
   "Run `cda run --exec` to execute the verification agent, then capture evidence (see below) and paste it into your transcript before summarizing. **CRITICAL: Re-run `npm run build` followed by `cda run --exec` after EVERY significant code change (new features, bug fixes, refactoring). Do not wait to be prompted—verification must happen automatically after each implementation cycle.**",
 ];
