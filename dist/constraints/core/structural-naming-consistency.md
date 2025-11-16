@@ -8,6 +8,29 @@ optional: true
 version: 1
 group: best-practices
 quick_tip: "Feature folders must match across layers: domain/contacts/, app/contacts/, infra/contacts/"
+quick_example: |
+  Feature: "contacts"
+
+  Required structure:
+    domain/contacts/
+      - contact.ts
+      - contact-repository.ts
+      - contact.test.ts
+
+    app/contacts/
+      - contact-service.ts
+      - contact-service.test.ts
+
+    infra/contacts/
+      - contact-repository-impl.ts
+      - contact-dto.ts
+      - contact-repository-impl.test.ts
+
+  Inconsistent:
+    domain/contacts/
+    app/contact-mgmt/      (mismatched slug)
+    infra/contact-infra/   (mismatched slug)
+checklist_item: "Do my feature folders match across layers? (domain/contacts, app/contacts, infra/contacts)"
 ---
 
 HEADER

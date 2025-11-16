@@ -8,6 +8,23 @@ optional: true
 version: 1
 group: best-practices
 quick_tip: "No console.log in features; create infra/telemetry adapter for all logging"
+quick_example: |
+  DON'T:
+    console.log('Creating contact', contact);
+
+  DO:
+    // 1. Create logger adapter (once)
+    // infra/telemetry/logger.ts
+    export const logger = {
+      info: (msg: string, ctx?: any) => console.log(msg, ctx),
+      error: (msg: string, err?: Error) => console.error(msg, err)
+    };
+
+    // 2. Use in features
+    // app/contacts/contact-service.ts
+    import { logger } from '../../infra/telemetry/logger';
+    logger.info('Creating contact', { contactId: contact.id });
+checklist_item: "Will I import logger from infra/telemetry/logger.ts (never console.log directly)?"
 ---
 
 HEADER

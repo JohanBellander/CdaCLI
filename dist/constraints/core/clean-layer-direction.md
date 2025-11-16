@@ -8,6 +8,28 @@ optional: true
 version: 1
 group: architecture
 quick_tip: "Dependencies flow: UI -> App -> Domain -> Infra (infra implements domain ports, domain imports nothing)"
+quick_example: |
+  VALID IMPORTS:
+    // UI Layer
+    import { ContactService } from '../app/contacts/contact-service';
+
+    // App Layer
+    import { Contact } from '../domain/contact/contact';
+    import { ContactRepository } from '../infra/contacts/contact-repository';
+
+    // Infra Layer
+    import { Contact } from '../domain/contact/contact';  // implements ports
+
+    // Domain Layer
+    // NO IMPORTS from app/infra/ui - only standard library
+
+  FORBIDDEN:
+    // domain/contact/contact.ts
+    import { logger } from '../infra/telemetry/logger';  // domain -> infra
+
+    // app/contacts/contact-service.ts
+    import { prisma } from '../infra/db/client';  // app -> infra impl (use a port)
+checklist_item: "Does domain import nothing? (UI -> App -> Domain -> Infra dependency flow)"
 ---
 
 HEADER

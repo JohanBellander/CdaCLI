@@ -90,6 +90,22 @@ async function parseConstraintFile(filePath) {
         }
         quickTip = parsedTip;
     }
+    let quickExample;
+    if (frontmatter.quick_example !== undefined) {
+        const parsedExample = asString(frontmatter.quick_example, "quick_example", filePath, id).trim();
+        if (parsedExample.length === 0) {
+            throw bundleError(id, `quick_example in ${filePath} must be a non-empty string when provided.`);
+        }
+        quickExample = parsedExample;
+    }
+    let checklistItem;
+    if (frontmatter.checklist_item !== undefined) {
+        const parsedChecklist = asString(frontmatter.checklist_item, "checklist_item", filePath, id).trim();
+        if (parsedChecklist.length === 0) {
+            throw bundleError(id, `checklist_item in ${filePath} must be a non-empty string when provided.`);
+        }
+        checklistItem = parsedChecklist;
+    }
     const sections = extractSections(body, id, filePath);
     const headerFields = parseKeyValueBlock(sections.HEADER, id, filePath, "HEADER");
     const header = {
@@ -118,6 +134,8 @@ async function parseConstraintFile(filePath) {
         enforcementOrder: header.enforcementOrder,
         group,
         quick_tip: quickTip,
+        quick_example: quickExample,
+        checklist_item: checklistItem,
     };
     return {
         filePath,
@@ -134,18 +152,66 @@ function extractFrontmatter(content, filePath) {
     const [, frontmatterRaw, body] = match;
     const lines = frontmatterRaw.split(/\r?\n/);
     const data = {};
-    for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line)
+    for (let index = 0; index < lines.length; index += 1) {
+        const rawLine = lines[index];
+        if (!rawLine)
             continue;
-        const [key, ...rest] = line.split(":");
-        if (!key || rest.length === 0) {
-            throw bundleError("global", `Invalid frontmatter line '${line}' in ${filePath}.`);
+        if (!rawLine.trim())
+            continue;
+        const separatorIndex = rawLine.indexOf(":");
+        if (separatorIndex === -1) {
+            throw bundleError("global", `Invalid frontmatter line '${rawLine.trim()}' in ${filePath}.`);
         }
-        const rawValue = rest.join(":").trim();
-        data[key.trim()] = coerceScalar(rawValue);
+        const key = rawLine.slice(0, separatorIndex).trim();
+        if (!key) {
+            throw bundleError("global", `Invalid frontmatter line '${rawLine.trim()}' in ${filePath}.`);
+        }
+        const rawValue = rawLine.slice(separatorIndex + 1).trim();
+        if (rawValue === "|" || rawValue === "|+" || rawValue === "|-") {
+            const blockLines = [];
+            while (index + 1 < lines.length) {
+                const nextLine = lines[index + 1];
+                if (nextLine === undefined) {
+                    break;
+                }
+                if (nextLine.trim() === "") {
+                    blockLines.push("");
+                    index += 1;
+                    continue;
+                }
+                if (!/^\s/.test(nextLine)) {
+                    break;
+                }
+                blockLines.push(nextLine);
+                index += 1;
+            }
+            data[key] = normalizeBlockScalar(blockLines);
+            continue;
+        }
+        data[key] = coerceScalar(rawValue);
     }
     return { frontmatter: data, body };
+}
+function normalizeBlockScalar(lines) {
+    if (lines.length === 0) {
+        return "";
+    }
+    const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+    const indent = nonEmptyLines.length
+        ? Math.min(...nonEmptyLines.map((line) => {
+            const match = line.match(/^(\s+)/);
+            return match ? match[1].length : 0;
+        }))
+        : 0;
+    return lines
+        .map((line) => {
+        if (line.trim().length === 0) {
+            return "";
+        }
+        return line.slice(indent);
+    })
+        .join("\n")
+        .replace(/\r/g, "");
 }
 function extractSections(body, constraintId, filePath) {
     const sectionBuffers = new Map();

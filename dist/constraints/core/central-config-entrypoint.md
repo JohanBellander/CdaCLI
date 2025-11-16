@@ -8,6 +8,28 @@ optional: true
 version: 1
 group: architecture
 quick_tip: "Never use process.env directly; create single infra/config/index.ts exporting getConfig()"
+quick_example: |
+  CREATE CONFIG ENTRYPOINT:
+    // infra/config/index.ts
+    export function getConfig() {
+      return {
+        apiUrl: process.env.API_URL || 'http://localhost:3000',
+        dbUrl: process.env.DATABASE_URL!,
+        logLevel: process.env.LOG_LEVEL || 'info'
+      };
+    }
+
+  USE IN FEATURES:
+    // app/contacts/contact-service.ts
+    import { getConfig } from '../../infra/config';
+
+    const config = getConfig();
+    const apiClient = new ApiClient(config.apiUrl);
+
+  DON'T (inline process.env):
+    // app/contacts/contact-service.ts
+    const apiUrl = process.env.API_URL;  // FORBIDDEN
+checklist_item: "Will I access config via getConfig() from infra/config/index.ts (never process.env directly)?"
 ---
 
 HEADER

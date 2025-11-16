@@ -24,4 +24,16 @@ export interface PromptAssemblyResult {
  * Generate a formatted quick tips section from enabled constraints that define quick_tip copy.
  */
 export declare function buildQuickTipsSection(enabledConstraints: ConstraintDocument[]): string;
+/**
+ * Generate concrete examples section from enabled constraints that define quick_example copy.
+ */
+export declare function buildPatternExamplesSection(enabledConstraints: ConstraintDocument[]): string;
+/**
+ * Generate architecture checklist from constraints that define checklist_item copy.
+ */
+export declare function buildArchitectureChecklist(enabledConstraints: ConstraintDocument[]): string;
+/**
+ * Provide static implementation order guidance to keep work flowing top-down.
+ */
+export declare function buildImplementationOrderSection(): string;
 export declare function assemblePrompt(options: PromptAssemblerOptions): PromptAssemblyResult;

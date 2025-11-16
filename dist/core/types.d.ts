@@ -12,6 +12,8 @@ export interface ConstraintMeta {
     enforcementOrder: number;
     group: ConstraintGroup;
     quick_tip?: string;
+    quick_example?: string;
+    checklist_item?: string;
 }
 export interface ConstraintOverrideConfig {
     enabled: boolean;

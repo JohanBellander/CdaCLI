@@ -1,5 +1,7 @@
 // Beads-Test: CDATool-kmz CDATool-6md CDATool-87t
 
+import { copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { PassThrough } from "node:stream";
 import { EventEmitter } from "node:events";
@@ -48,6 +50,17 @@ function createSpawnEnoent() {
 
 let logSpy: ReturnType<typeof vi.spyOn>;
 let warnSpy: ReturnType<typeof vi.spyOn>;
+
+function extractPromptFromLogs(): string {
+  for (let i = logSpy.mock.calls.length - 1; i >= 0; i -= 1) {
+    const call = logSpy.mock.calls[i];
+    const message = call?.[0];
+    if (typeof message === "string" && message.includes("AGENT VERIFICATION MODE")) {
+      return message;
+    }
+  }
+  return "";
+}
 
 beforeEach(() => {
   spawnMock.mockReset();
@@ -190,5 +203,50 @@ describe("agent command prompt behaviour", () => {
     await expect(
       runAgentCommand([], { cwd: path.join(fixturesDir, "valid") }),
     ).rejects.toThrow(/Unable to spawn 'copilot'.*Tried commands:/);
+  });
+
+  it("includes guidance sections in dry-run prompts", async () => {
+    await runAgentCommand(["--dry-run"], {
+      cwd: path.join(fixturesDir, "valid"),
+    });
+
+    const prompt = extractPromptFromLogs();
+    expect(prompt).toContain("PATTERN EXAMPLES (Concrete Implementation)");
+    expect(prompt).toContain("ARCHITECTURE CHECKLIST");
+    expect(prompt).toContain("RECOMMENDED IMPLEMENTATION ORDER");
+  });
+
+  it("respects disabled constraints for examples and checklist", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "cda-agent-prompt-"));
+    try {
+      await copyFile(
+        path.join(fixturesDir, "valid", "cda.agents.json"),
+        path.join(tempDir, "cda.agents.json"),
+      );
+      await writeFile(
+        path.join(tempDir, "cda.config.json"),
+        JSON.stringify(
+          {
+            version: 1,
+            constraints: "src/constraints/core",
+            constraint_overrides: {
+              "observability-discipline": { enabled: false },
+            },
+          },
+          null,
+          2,
+        ),
+        "utf8",
+      );
+
+      await runAgentCommand(["--dry-run"], { cwd: tempDir });
+
+      const prompt = extractPromptFromLogs();
+      expect(prompt).toContain("[test-coverage-contracts]");
+      expect(prompt).not.toContain("[observability-discipline]");
+      expect(prompt).not.toContain("Will I import logger from infra/telemetry/logger.ts");
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   });
 });

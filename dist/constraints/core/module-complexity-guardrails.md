@@ -7,6 +7,26 @@ enabled: true
 optional: true
 version: 1
 group: best-practices
+quick_tip: "Keep modules focused: max 200 lines, 3 exports, 3 nesting levels per file"
+quick_example: |
+  TOO COMPLEX (mixed concerns):
+    // services/contact-handler.ts (300 lines)
+    export class ContactValidator { ... }
+    export class ContactRepository { ... }
+    export class ContactEmailSender { ... }
+    export class ContactFormatter { ... }
+    export const utils = { ... };
+
+  SPLIT BY CONCERN:
+    // domain/contact/contact-validator.ts (80 lines)
+    export class ContactValidator { ... }
+
+    // infra/contact/contact-repository.ts (120 lines)
+    export class ContactRepository { ... }
+
+    // infra/email/contact-email-sender.ts (90 lines)
+    export class ContactEmailSender { ... }
+checklist_item: "Are my files under 200 lines with focused responsibility?"
 ---
 
 HEADER

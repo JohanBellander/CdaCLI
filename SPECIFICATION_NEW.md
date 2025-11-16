@@ -47,7 +47,11 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - `loadConstraints` enforces frontmatter types, section ordering, non-empty content, severity consistency (`error` only), and alignment between frontmatter `id` and HEADER `constraint_id`.
 - Constraints are sorted by `enforcement_order` (ties resolved by `id`) before being surfaced to the CLI.
 - Default ignored paths for instruction packages: `node_modules`, `dist`, `build`, `.git`.
-- Constraints may define an optional `quick_tip` string in frontmatter to surface <100 character, action-first reminders (where Zod schemas live, how logging adapters work, etc.). Tips should answer concrete "where/how" questions and are used to populate the Common First-Run Pitfalls prompt block.
+- Constraints may define optional prompt metadata in frontmatter:
+  - `quick_tip`: single-line reminder (<100 chars) that feeds the Common First-Run Pitfalls block.
+  - `quick_example`: multi-line concrete snippet (paths, DO/DON'T code) that feeds the Pattern Examples block.
+  - `checklist_item`: short question that feeds the Architecture Checklist block.
+  These fields allow prompts to stay in sync with constraint updates without editing code.
 
 ## 6. Generated Artifacts (`cda init`)
 - Writes `cda.config.json` containing `{ "version": 1, "constraints": "builtin", "constraint_overrides": {} }`. The overrides object maps constraint ids to `{ "enabled": true|false }` and is used to toggle optional rules (see `SPECIFICATION_OPTIONAL.md`).
@@ -58,7 +62,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
   - command usage sequencing, detection/remediation protocol, reporting templates, outcome actions, escalation guidance, token management, forbidden shortcuts, version linkage, validation checklist (10 MUST items), future enhancements (informative), and a mandatory reminder that all instructions are binding.
 - Unless `--no-agents` is passed and no prior config exists, scaffolds `cda.agents.json` with three agents (defaulting to the stdin variant):
   - `copilot-stdin` (default, stdin mode) → command `copilot`, args `--model gpt-5 --allow-all-tools --allow-all-paths`, detection-only preamble/postscript, `agent_model: gpt-5`.
-  - `copilot` (arg mode) → same command/args, `prompt_arg_flag: -p`, detection-only preamble/postscript, `max_length: 8000`, `agent_model: gpt-5` (the CLI falls back to `--prompt-file` automatically when inline prompts exceed Windows limits).
+  - `copilot` (arg mode) → same command/args, `prompt_arg_flag: -p`, detection-only preamble/postscript, `max_length: 60000`, `agent_model: gpt-5` (the CLI falls back to `--prompt-file` automatically when inline prompts exceed Windows limits).
   - `echo` (stdin mode) → diagnostic agent that echoes prompts.
 - `cda init` aborts if `cda.config.json` already exists; it never overwrites existing `cda.agents.json`.
 - Optional constraints are annotated `(Optional)` in the generated `CDA.md`. They are omitted entirely when disabled via `constraint_overrides`.
@@ -92,7 +96,11 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - Prompt assembly (`assemblePrompt`):
   - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, `token_estimate_method`, and `disabled_constraints: []` (list of ids skipped by configuration).
   - Optional `prompt_preamble`/`postscript` from config flank the instruction text.
-  - When enabled constraints provide `quick_tip` metadata, injects a `===== COMMON FIRST-RUN PITFALLS =====` block between the instruction text and the directive block, listing each tip as `- ...` and skipping the section entirely (or under legacy format) when no tips exist.
+  - Inserts post-instruction guidance sections (all skipped for legacy prompts):
+    - `COMMON FIRST-RUN PITFALLS` when enabled constraints define `quick_tip` metadata.
+    - `PATTERN EXAMPLES (Concrete Implementation)` when enabled constraints define `quick_example`.
+    - `ARCHITECTURE CHECKLIST (Review Before Coding)` when enabled constraints define `checklist_item`.
+    - `RECOMMENDED IMPLEMENTATION ORDER` (always rendered on modern prompts) outlining the five build phases plus expected violation counts.
   - Appends a directive block that enforces detection-only execution (no fixes, no shell commands) and prescribes report population rules.
   - Adds `original_char_count` and `approx_token_length` (char count ÷ 4 heuristic).
 - Execution path (active constraints only):
@@ -267,3 +275,4 @@ All constraints are enforced in every instruction package with their canonical e
 - Prompt length heuristic assumes ~4 characters per token; real model limits may vary.
 - Windows command-line fallback writes temporary files but does not currently handle collisions beyond run-specific filenames.
 - Further extensions (multi-agent chaining, schema validation of responses, remote constraint packs) remain outside the current implementation.
+

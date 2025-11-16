@@ -4,6 +4,11 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.5.10 - 2025-11-16
+- Added `quick_example` (multi-line concrete guidance) and `checklist_item` (pre-flight questions) metadata to constraint frontmatter plus multi-line YAML parsing support; populated eight high-violation constraints with curated examples/checklists.
+- Expanded the prompt assembler/CLI/tests to render new **Pattern Examples**, **Architecture Checklist**, and **Recommended Implementation Order** sections (in addition to the existing quick tips) while keeping the entire block disabled for legacy prompts.
+- Raised the default Copilot `max_length` budget in docs/fixtures to `60000` so the richer prompt comfortably clears the configured ceiling, and captured the release in `docs/RELEASE_NOTES_0.5.10.md`.
+
 ## 0.5.9 - 2025-11-16
 - Added dynamic quick tips to `cda run --plan/--exec` prompts: enabled constraints with `quick_tip` frontmatter now render a **Common First-Run Pitfalls** section between the instruction package and directive block, reducing early violation counts.
 - Changed the prompt assembler, CLI agent command, README, and Vitest coverage to document/verify the new section (unit + integration tests, regenerated snapshots, updated prompt structure docs).

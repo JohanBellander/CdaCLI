@@ -37,9 +37,12 @@ Legacy wrappers (`cda validate` and `cda agent`) now forward arguments to `cda r
 3. Optional `prompt_preamble` from `cda.agents.json`.
 4. Raw instruction package emitted by `cda run` (batch or single constraint) with AGENT ACTION REQUIRED / DO NOT blocks and the expanded report skeleton.
 5. Optional **Common First-Run Pitfalls** block generated from enabled constraints that define a `quick_tip` frontmatter field.
-6. Directive block reminding the agent to execute detection/remediation steps verbatim.
-7. Optional `postscript`.
-8. Metrics: `original_char_count` and `approx_token_length` (chars / 4 heuristic). CDA enforces any `max_length` in the agent definition.
+6. Optional **Pattern Examples (Concrete Implementation)** block that stitches together every enabled constraint's `quick_example` frontmatter (multi-line concrete examples).
+7. Optional **Architecture Checklist** block that lists `checklist_item` prompts from enabled constraints.
+8. **Recommended Implementation Order** section outlining the five build phases and expected violation counts (always present on non-legacy prompts).
+9. Directive block reminding the agent to execute detection/remediation steps verbatim.
+10. Optional `postscript`.
+11. Metrics: `original_char_count` and `approx_token_length` (chars / 4 heuristic). CDA enforces any `max_length` in the agent definition.
 
 #### Common First-Run Pitfalls Section
 Each constraint Markdown file can include a one-line `quick_tip: "<100 char reminder>"` entry in its frontmatter. When that constraint is currently enabled, CDA surfaces the tip in a bulleted list between the instruction package and the directive block. The section is skipped automatically when no enabled constraint defines `quick_tip` or when `--legacy-format` is requested.
@@ -56,6 +59,60 @@ Based on your active constraints, avoid these common mistakes:
 ```
 
 This placement keeps the most actionable "where/how" guidance in the agent's working set without re-reading every constraint. Tips live next to their constraints, so updating a single Markdown file updates both enforcement rules and prompt guidance.
+
+#### Pattern Examples Section
+Constraints can define a multi-line `quick_example` frontmatter field. Each enabled constraint that sets this field contributes a labeled snippet under `===== PATTERN EXAMPLES (Concrete Implementation) =====`. Examples should display real file paths plus DO/DON'T snippets the agent can copy. Legacy prompts or bundles without examples skip the section.
+
+```
+[observability-discipline]
+DON'T:
+  console.log('Creating contact', contact);
+
+DO:
+  // infra/telemetry/logger.ts
+  export const logger = { info: (msg, ctx) => console.log(msg, ctx) };
+
+  // app/contacts/contact-service.ts
+  import { logger } from '../../infra/telemetry/logger';
+  logger.info('Creating contact', { contactId: contact.id });
+```
+
+#### Architecture Checklist Section
+`checklist_item` frontmatter strings become a pre-flight checklist that agents can use to confirm understanding before touching code. Each entry shows the question plus `-> Constraint: <id>` so the root rule is easy to visit.
+
+```
+===== ARCHITECTURE CHECKLIST (Review Before Coding) =====
+
+Your active constraints require understanding these patterns.
+Can you answer YES to each question?
+
+? Do I know where test files go? (same directory, add .test suffix)
+  -> Constraint: test-coverage-contracts
+
+? Will I import logger from infra/telemetry/logger.ts (never console.log directly)?
+  -> Constraint: observability-discipline
+
+If you answered NO to any question, review the examples above.
+
+===== END CHECKLIST =====
+```
+
+#### Recommended Implementation Order
+Non-legacy prompts always end with a five-phase implementation ladder that reminds agents to finish infra foundations before writing domain/application code. Each phase lists expected violation ranges (`Expect 0`, `Expect 0-2`, etc.) to encourage early `cda run --exec` checkpoints.
+
+```
+===== RECOMMENDED IMPLEMENTATION ORDER =====
+
+Phase 1: FOUNDATION (Infrastructure Setup)
+  Files to create first:
+    - packages/shared-types/schemas/*.ts (Zod schemas only)
+    - infra/config/index.ts (export getConfig())
+    - infra/telemetry/logger.ts (logging adapter)
+
+  Checkpoint: Run `cda run --exec` -> Expect 0 violations
+
+... phases 2-5 continue ...
+```
 ### Sample `cda.agents.json`
 `cda init` scaffolds a default config unless `--no-agents` is supplied:
 
@@ -71,7 +128,7 @@ This placement keeps the most actionable "where/how" guidance in the agent's wor
       "prompt_file_arg": "--prompt-file",
       "prompt_preamble": "You are a verification agent. Execute CDA architectural constraint detection steps strictly.",
       "postscript": "Return ONLY the populated agent report format. Do not paraphrase instructions.",
-      "max_length": 40000,
+      "max_length": 60000,
       "agent_model": "gpt-5"
     },
     "copilot-stdin": {

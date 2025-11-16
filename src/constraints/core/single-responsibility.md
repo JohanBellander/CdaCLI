@@ -7,6 +7,28 @@ enabled: true
 version: 1
 group: best-practices
 quick_tip: "Max 3 exports per file (5 for index.ts barrels or feature entry files)"
+quick_example: |
+  TOO MANY (6 exports):
+    // domain/contact/contact.ts
+    export class Contact { ... }
+    export class ContactList { ... }
+    export interface ContactRepository { ... }
+    export type ContactId = string;
+    export const validateEmail = ...;
+    export const formatName = ...;
+
+  SPLIT (3 exports each):
+    // domain/contact/contact.ts
+    export class Contact { ... }
+    export type ContactId = string;
+    export const validateEmail = ...;
+
+    // domain/contact/contact-list.ts
+    export class ContactList { ... }
+
+    // domain/contact/contact-repository.ts
+    export interface ContactRepository { ... }
+checklist_item: "Am I keeping files under 3 exports (5 for index.ts barrels)?"
 ---
 
 HEADER

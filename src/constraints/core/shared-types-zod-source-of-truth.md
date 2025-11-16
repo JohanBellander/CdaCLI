@@ -8,6 +8,31 @@ optional: false
 version: 1
 group: contracts
 quick_tip: "All Zod schemas belong in packages/shared-types; import via @shared-types workspace alias"
+quick_example: |
+  CORRECT STRUCTURE:
+    // packages/shared-types/schemas/contact.ts
+    import { z } from 'zod';
+    export const ContactSchema = z.object({
+      id: z.string().uuid(),
+      name: z.string().min(1),
+      email: z.string().email()
+    });
+    export type Contact = z.infer<typeof ContactSchema>;
+
+  USAGE IN API:
+    // apps/api/src/routes/contacts.ts
+    import { ContactSchema } from '@shared-types/schemas/contact';
+
+    app.post('/contacts', async (req, res) => {
+      const data = ContactSchema.parse(req.body);
+      // ...
+    });
+
+  WRONG (Zod in domain):
+    // domain/contact/contact.ts
+    import { z } from 'zod';  // NO ZOD IN DOMAIN
+    export const ContactSchema = z.object({ ... });
+checklist_item: "Will I put all Zod schemas in packages/shared-types and import via @shared-types?"
 ---
 
 HEADER

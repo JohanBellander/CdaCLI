@@ -7,7 +7,23 @@ enabled: true
 optional: true
 version: 1
 group: best-practices
-quick_tip: "Tests mirror production structure: src/domain/contact.ts -> tests/domain/contact.test.ts"
+quick_tip: "Tests mirror production structure: src/domain/contact.ts -> src/domain/contact.test.ts"
+quick_example: |
+  Given production file:
+    apps/api/src/features/contacts/domain/contact.ts
+
+  Create test file:
+    apps/api/src/features/contacts/domain/contact.test.ts
+
+  Pattern: {same-directory}/{filename}.test.{extension}
+
+  More examples:
+    packages/shared-types/schemas/contact.ts
+    -> packages/shared-types/schemas/contact.test.ts
+
+    apps/web/src/components/ContactList.tsx
+    -> apps/web/src/components/ContactList.test.tsx
+checklist_item: "Do I know where test files go? (same directory as production, add .test suffix)"
 ---
 
 HEADER

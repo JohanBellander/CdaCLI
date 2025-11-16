@@ -1,6 +1,4 @@
 import path from "node:path";
-import { EventEmitter } from "node:events";
-
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 
 import { runAgentCommand } from "../../src/cli/commands/agent.js";
@@ -51,17 +49,17 @@ describe("cda agent integration", () => {
     expect(output).not.toContain("===== COMMON FIRST-RUN PITFALLS =====");
   });
 
-  it("pipes quick tips to the spawned agent when executing", async () => {
-    const { child, writeSpy } = createSpawnChild();
-    spawnMock.mockImplementation(() => child);
-
-    await runAgentCommand(["--agent", "copilot-stdin"], {
+  it("includes guidance sections when previewing a specific agent", async () => {
+    await runAgentCommand(["--dry-run", "--agent", "copilot-stdin"], {
       cwd: path.join(fixturesDir, "valid"),
     });
 
-    const promptPayload = writeSpy.mock.calls.map((call) => call[0]).join("");
-    expect(promptPayload).toContain("===== COMMON FIRST-RUN PITFALLS =====");
-    expect(promptPayload).toMatch(/Based on your active constraints/i);
+    const output = collectLogs(logSpy);
+    expect(output).toContain("AGENT COMMAND: copilot");
+    expect(output).toContain("===== COMMON FIRST-RUN PITFALLS =====");
+    expect(output).toContain("PATTERN EXAMPLES (Concrete Implementation)");
+    expect(output).toContain("ARCHITECTURE CHECKLIST (Review Before Coding)");
+    expect(output).toContain("RECOMMENDED IMPLEMENTATION ORDER");
   });
 });
 
@@ -71,28 +69,4 @@ function collectLogs(
   return spy.mock.calls
     .map((args: unknown[]) => String(args[0]))
     .join("\n");
-}
-
-function createSpawnChild(): {
-  child: EventEmitter & {
-    stdin: { write: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> };
-  };
-  writeSpy: ReturnType<typeof vi.fn>;
-} {
-  const child = new EventEmitter() as EventEmitter & {
-    stdin: { write: ReturnType<typeof vi.fn>; end: ReturnType<typeof vi.fn> };
-  };
-  const writeSpy = vi.fn();
-  const endSpy = vi.fn();
-  child.stdin = {
-    write: writeSpy,
-    end: endSpy,
-  };
-  setImmediate(() => {
-    child.emit("spawn");
-    setImmediate(() => {
-      child.emit("close", 0);
-    });
-  });
-  return { child, writeSpy };
 }
