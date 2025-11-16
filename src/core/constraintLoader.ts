@@ -146,6 +146,14 @@ async function parseConstraintFile(filePath: string): Promise<ConstraintDocument
   );
   const version = asNumber(frontmatter.version, "version", filePath, id);
   const group = asConstraintGroup(frontmatter.group, filePath, id);
+  let quickTip: string | undefined;
+  if (frontmatter.quick_tip !== undefined) {
+    const parsedTip = asString(frontmatter.quick_tip, "quick_tip", filePath, id).trim();
+    if (parsedTip.length === 0) {
+      throw bundleError(id, `quick_tip in ${filePath} must be a non-empty string when provided.`);
+    }
+    quickTip = parsedTip;
+  }
 
   const sections = extractSections(body, id, filePath);
   const headerFields = parseKeyValueBlock(sections.HEADER, id, filePath, "HEADER");
@@ -192,6 +200,7 @@ async function parseConstraintFile(filePath: string): Promise<ConstraintDocument
     version,
     enforcementOrder: header.enforcementOrder,
     group,
+    quick_tip: quickTip,
   };
 
   return {

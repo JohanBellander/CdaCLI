@@ -11,6 +11,7 @@ export interface ConstraintMeta {
     version: number;
     enforcementOrder: number;
     group: ConstraintGroup;
+    quick_tip?: string;
 }
 export interface ConstraintOverrideConfig {
     enabled: boolean;

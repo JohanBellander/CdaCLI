@@ -117,6 +117,7 @@ export async function runAgentCommand(
     postscript: agentDefinition?.postscript,
     legacyFormat: parsed.legacyFormat,
     disabledConstraints: disabledConstraintIds,
+    enabledConstraints: activeConstraints,
   });
 
   if (agentDefinition?.maxLength && promptResult.charCount > agentDefinition.maxLength) {

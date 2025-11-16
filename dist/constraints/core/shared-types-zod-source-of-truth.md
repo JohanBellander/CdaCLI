@@ -7,6 +7,7 @@ enabled: true
 optional: false
 version: 1
 group: contracts
+quick_tip: "All Zod schemas belong in packages/shared-types; import via @shared-types workspace alias"
 ---
 
 HEADER

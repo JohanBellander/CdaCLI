@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: contracts
+quick_tip: "Create DTOs and mapper functions in infra layer; never expose domain entities directly"
 ---
 
 HEADER

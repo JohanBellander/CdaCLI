@@ -47,6 +47,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - `loadConstraints` enforces frontmatter types, section ordering, non-empty content, severity consistency (`error` only), and alignment between frontmatter `id` and HEADER `constraint_id`.
 - Constraints are sorted by `enforcement_order` (ties resolved by `id`) before being surfaced to the CLI.
 - Default ignored paths for instruction packages: `node_modules`, `dist`, `build`, `.git`.
+- Constraints may define an optional `quick_tip` string in frontmatter to surface <100 character, action-first reminders (where Zod schemas live, how logging adapters work, etc.). Tips should answer concrete "where/how" questions and are used to populate the Common First-Run Pitfalls prompt block.
 
 ## 6. Generated Artifacts (`cda init`)
 - Writes `cda.config.json` containing `{ "version": 1, "constraints": "builtin", "constraint_overrides": {} }`. The overrides object maps constraint ids to `{ "enabled": true|false }` and is used to toggle optional rules (see `SPECIFICATION_OPTIONAL.md`).
@@ -91,6 +92,7 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - Prompt assembly (`assemblePrompt`):
   - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, `token_estimate_method`, and `disabled_constraints: []` (list of ids skipped by configuration).
   - Optional `prompt_preamble`/`postscript` from config flank the instruction text.
+  - When enabled constraints provide `quick_tip` metadata, injects a `===== COMMON FIRST-RUN PITFALLS =====` block between the instruction text and the directive block, listing each tip as `- ...` and skipping the section entirely (or under legacy format) when no tips exist.
   - Appends a directive block that enforces detection-only execution (no fixes, no shell commands) and prescribes report population rules.
   - Adds `original_char_count` and `approx_token_length` (char count ÷ 4 heuristic).
 - Execution path (active constraints only):

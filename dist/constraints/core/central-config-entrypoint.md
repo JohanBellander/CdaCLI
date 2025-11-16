@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: architecture
+quick_tip: "Never use process.env directly; create single infra/config/index.ts exporting getConfig()"
 ---
 
 HEADER

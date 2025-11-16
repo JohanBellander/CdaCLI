@@ -36,10 +36,26 @@ Legacy wrappers (`cda validate` and `cda agent`) now forward arguments to `cda r
 2. Metadata block: `run_id`, ISO timestamp, `instruction_format_version`, `agent_name`, optional `agent_model`, `token_estimate_method`.
 3. Optional `prompt_preamble` from `cda.agents.json`.
 4. Raw instruction package emitted by `cda run` (batch or single constraint) with AGENT ACTION REQUIRED / DO NOT blocks and the expanded report skeleton.
-5. Directive block reminding the agent to execute detection/remediation steps verbatim.
-6. Optional `postscript`.
-7. Metrics: `original_char_count` and `approx_token_length` (chars ÷ 4 heuristic). CDA enforces any `max_length` in the agent definition.
+5. Optional **Common First-Run Pitfalls** block generated from enabled constraints that define a `quick_tip` frontmatter field.
+6. Directive block reminding the agent to execute detection/remediation steps verbatim.
+7. Optional `postscript`.
+8. Metrics: `original_char_count` and `approx_token_length` (chars / 4 heuristic). CDA enforces any `max_length` in the agent definition.
 
+#### Common First-Run Pitfalls Section
+Each constraint Markdown file can include a one-line `quick_tip: "<100 char reminder>"` entry in its frontmatter. When that constraint is currently enabled, CDA surfaces the tip in a bulleted list between the instruction package and the directive block. The section is skipped automatically when no enabled constraint defines `quick_tip` or when `--legacy-format` is requested.
+
+```
+===== COMMON FIRST-RUN PITFALLS =====
+
+Based on your active constraints, avoid these common mistakes:
+
+- Domain entities use plain TypeScript only -- no Zod, ORM decorators, or framework imports
+- Never use process.env directly; create single infra/config/index.ts exporting getConfig()
+
+===== END PITFALLS =====
+```
+
+This placement keeps the most actionable "where/how" guidance in the agent's working set without re-reading every constraint. Tips live next to their constraints, so updating a single Markdown file updates both enforcement rules and prompt guidance.
 ### Sample `cda.agents.json`
 `cda init` scaffolds a default config unless `--no-agents` is supplied:
 

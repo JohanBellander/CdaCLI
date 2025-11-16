@@ -12,8 +12,30 @@ const DIRECTIVE_BLOCK = [
     "5. Set execution_state to 'validated' if detection completed successfully, regardless of whether violations were found.",
     "6. You MUST report all detected violations; do not omit them or attempt to fix them.",
 ];
+/**
+ * Generate a formatted quick tips section from enabled constraints that define quick_tip copy.
+ */
+export function buildQuickTipsSection(enabledConstraints) {
+    const tips = enabledConstraints
+        .map((doc) => doc.meta.quick_tip?.trim())
+        .filter((tip) => Boolean(tip));
+    if (tips.length === 0) {
+        return "";
+    }
+    const lines = [];
+    lines.push("");
+    lines.push("===== COMMON FIRST-RUN PITFALLS =====");
+    lines.push("");
+    lines.push("Based on your active constraints, avoid these common mistakes:");
+    lines.push("");
+    lines.push(...tips.map((tip) => `- ${tip}`));
+    lines.push("");
+    lines.push("===== END PITFALLS =====");
+    lines.push("");
+    return lines.join("\n");
+}
 export function assemblePrompt(options) {
-    const { runId, instructionText, agentName, promptPreamble, postscript, legacyFormat = false, disabledConstraints = [], } = options;
+    const { runId, instructionText, agentName, promptPreamble, postscript, legacyFormat = false, disabledConstraints = [], enabledConstraints = [], } = options;
     const instructionFormatVersion = options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
     const generatedAt = (options.generatedAt ?? new Date()).toISOString();
     const lines = [];
@@ -38,6 +60,12 @@ export function assemblePrompt(options) {
         lines.push("");
     }
     lines.push(instructionText);
+    if (!legacyFormat) {
+        const quickTipsSection = buildQuickTipsSection(enabledConstraints);
+        if (quickTipsSection) {
+            lines.push(quickTipsSection);
+        }
+    }
     if (!legacyFormat) {
         lines.push("");
         lines.push(...DIRECTIVE_BLOCK);

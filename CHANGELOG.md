@@ -4,6 +4,11 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.5.9 - 2025-11-16
+- Added dynamic quick tips to `cda run --plan/--exec` prompts: enabled constraints with `quick_tip` frontmatter now render a **Common First-Run Pitfalls** section between the instruction package and directive block, reducing early violation counts.
+- Changed the prompt assembler, CLI agent command, README, and Vitest coverage to document/verify the new section (unit + integration tests, regenerated snapshots, updated prompt structure docs).
+- Added curated `quick_tip` copy to ten high-priority core constraints so the feature ships with actionable guidance out of the box.
+
 ## 0.5.6 — 2025-11-14
 - Improved constraint semantics to reduce false positives in real-world projects:
 	- `clean-layer-direction`: Recognizes composition roots (`src/index.ts`, `src/main.ts`, `src/bootstrap.ts`, `src/composition/**`) and allows them to import across layers for dependency wiring.

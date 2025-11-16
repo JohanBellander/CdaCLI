@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: architecture
+quick_tip: "Dependencies flow: UI -> App -> Domain -> Infra (infra implements domain ports, domain imports nothing)"
 ---
 
 HEADER

@@ -63,6 +63,7 @@ export async function runAgentCommand(argv = [], options = {}) {
         postscript: agentDefinition?.postscript,
         legacyFormat: parsed.legacyFormat,
         disabledConstraints: disabledConstraintIds,
+        enabledConstraints: activeConstraints,
     });
     if (agentDefinition?.maxLength && promptResult.charCount > agentDefinition.maxLength) {
         throw createError("CONFIG_ERROR", `Prompt length ${promptResult.charCount} exceeds max_length ${agentDefinition.maxLength}.`);

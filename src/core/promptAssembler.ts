@@ -1,5 +1,6 @@
 // Beads: CDATool-xfm CDATool-0xi CDATool-gnl CDATool-0nz CDATool-80h
 
+import type { ConstraintDocument } from "./constraintLoader.js";
 import { INSTRUCTION_FORMAT_VERSION } from "./instructionFormat.js";
 
 export interface PromptAssemblerOptions {
@@ -13,6 +14,7 @@ export interface PromptAssemblerOptions {
   postscript?: string;
   legacyFormat?: boolean;
   disabledConstraints?: string[];
+  enabledConstraints?: ConstraintDocument[];
 }
 
 export interface PromptAssemblyResult {
@@ -38,6 +40,34 @@ const DIRECTIVE_BLOCK = [
   "6. You MUST report all detected violations; do not omit them or attempt to fix them.",
 ];
 
+/**
+ * Generate a formatted quick tips section from enabled constraints that define quick_tip copy.
+ */
+export function buildQuickTipsSection(
+  enabledConstraints: ConstraintDocument[],
+): string {
+  const tips = enabledConstraints
+    .map((doc) => doc.meta.quick_tip?.trim())
+    .filter((tip): tip is string => Boolean(tip));
+
+  if (tips.length === 0) {
+    return "";
+  }
+
+  const lines: string[] = [];
+  lines.push("");
+  lines.push("===== COMMON FIRST-RUN PITFALLS =====");
+  lines.push("");
+  lines.push("Based on your active constraints, avoid these common mistakes:");
+  lines.push("");
+  lines.push(...tips.map((tip) => `- ${tip}`));
+  lines.push("");
+  lines.push("===== END PITFALLS =====");
+  lines.push("");
+
+  return lines.join("\n");
+}
+
 export function assemblePrompt(
   options: PromptAssemblerOptions,
 ): PromptAssemblyResult {
@@ -49,6 +79,7 @@ export function assemblePrompt(
     postscript,
     legacyFormat = false,
     disabledConstraints = [],
+    enabledConstraints = [],
   } = options;
   const instructionFormatVersion =
     options.instructionFormatVersion ?? INSTRUCTION_FORMAT_VERSION;
@@ -80,6 +111,13 @@ export function assemblePrompt(
   }
 
   lines.push(instructionText);
+
+  if (!legacyFormat) {
+    const quickTipsSection = buildQuickTipsSection(enabledConstraints);
+    if (quickTipsSection) {
+      lines.push(quickTipsSection);
+    }
+  }
 
   if (!legacyFormat) {
     lines.push("");

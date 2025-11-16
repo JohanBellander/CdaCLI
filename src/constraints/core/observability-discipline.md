@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: best-practices
+quick_tip: "No console.log in features; create infra/telemetry adapter for all logging"
 ---
 
 HEADER

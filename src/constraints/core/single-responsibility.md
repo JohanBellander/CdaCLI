@@ -6,6 +6,7 @@ severity: error
 enabled: true
 version: 1
 group: best-practices
+quick_tip: "Max 3 exports per file (5 for index.ts barrels or feature entry files)"
 ---
 
 HEADER

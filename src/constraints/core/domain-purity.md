@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: architecture
+quick_tip: "Domain entities use plain TypeScript only -- no Zod, ORM decorators, or framework imports"
 ---
 
 HEADER

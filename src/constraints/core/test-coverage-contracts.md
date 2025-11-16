@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: best-practices
+quick_tip: "Tests mirror production structure: src/domain/contact.ts -> tests/domain/contact.test.ts"
 ---
 
 HEADER

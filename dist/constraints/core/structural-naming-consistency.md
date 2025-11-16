@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: best-practices
+quick_tip: "Feature folders must match across layers: domain/contacts/, app/contacts/, infra/contacts/"
 ---
 
 HEADER

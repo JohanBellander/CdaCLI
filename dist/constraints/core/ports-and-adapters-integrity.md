@@ -7,6 +7,7 @@ enabled: true
 optional: true
 version: 1
 group: patterns
+quick_tip: "Domain defines ports (interfaces), infra provides adapters (implementations)"
 ---
 
 HEADER
