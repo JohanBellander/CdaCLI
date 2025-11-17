@@ -15,7 +15,15 @@ severity: error
 enforcement_order: 29
 
 PURPOSE
-Establish a single canonical Zod definition for every cross-boundary contract so all layers share identical DTOs, enums, and validators regardless of repository shape. The principle is “pick one source of truth and make it easy for every consumer to import,” not “force a specific directory layout.”
+Establish a single canonical Zod definition for every cross-boundary contract so all layers share identical DTOs, enums, and validators regardless of repository shape. The principle is "pick one source of truth and make it easy for every consumer to import," not "force a specific directory layout."
+
+CRITICAL PATTERNS:
+✅ Pattern 1 (Monorepo): packages/shared-types/src/** for multiple apps
+✅ Pattern 2 (Single Package): src/contracts/** OR src/domain/schemas/** for one app  
+✅ Pattern 3 (Feature-Collocated): src/domain/<feature>/*.schema.ts re-exported via src/contracts/<feature>.ts
+❌ ANTI-PATTERN: Same schema duplicated in domain/ AND app/ AND ui/ (no canonical source)
+
+Allow feature-collocated schemas WHEN contracts/ re-exports them (Pattern 3 valid). Only flag duplicates WITHOUT re-export relationship.
 
 SCOPE
 include_paths: ["src","apps","packages"]

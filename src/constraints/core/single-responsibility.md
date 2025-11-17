@@ -16,6 +16,14 @@ enforcement_order: 5
 PURPOSE
 Each implementation file MUST focus on a single responsibility with minimal exports.
 
+CRITICAL EXAMPLES:
+✅ ALLOWED: contact.ts with Contact + ContactSchema + CreateContactInput + UpdateContactInput (4 exports) = single "Contact" responsibility
+✅ ALLOWED: index.ts barrel files with ANY number of re-exports (aggregation is their purpose)
+✅ ALLOWED: formatters.ts with 6 amount formatting functions = single "amount formatting" responsibility
+❌ FORBIDDEN: crm.ts with ContactService + BillingService + ReportService (3 exports but MIXED responsibilities)
+
+Focus on detecting MIXED RESPONSIBILITIES, not counting exports. Files with 4-7 cohesive exports sharing a concept are acceptable.
+
 SCOPE
 include_paths: all `.ts` and `.tsx` files under `src/`
 exclude_paths: ["node_modules","dist","build",".git","src/constraints"]
@@ -23,18 +31,19 @@ exclude_paths: ["node_modules","dist","build",".git","src/constraints"]
 DEFINITIONS
 exported_symbol: any exported class, function, constant, or type alias
 responsibility_category: classifier derived from exported_symbol kind (service, model, component, util)
-single_responsibility_file: file containing <= 3 exports all within the same responsibility_category
+cohesive_exports: exports sharing a common slug/prefix (Contact*, amount*, user*) or single domain concept
+single_responsibility_file: file where all exports serve the same responsibility (cohesive_exports = true)
 
 FORBIDDEN
-- More than 3 exported_symbol entries per file (except barrel/entry files, see ALLOWED)
-- Mixing controllers, services, and DTOs in the same file
-- Exporting unrelated helper utilities together with primary logic
+- Mixing unrelated responsibilities (contacts + billing + reports in one file)
+- Controllers + services + DTOs + utilities together (multiple concerns)
+- Export count >12 with mixed categories (god-module signal)
 
 ALLOWED
-- Exporting one primary class plus tightly-related helpers (e.g., factory + interface)
-- Exporting multiple types when they are variants of the same domain concept
-- Barrel files (index.ts) or feature entry files (<feature-slug>.ts at feature root) may export up to 5 symbols when aggregating related interfaces/ports/types from the same feature
-- Feature root entry files that re-export submodules to provide a clean public API
+- Entity + schema + input DTOs sharing a domain slug (Contact, ContactSchema, CreateContactInput)
+- Multiple related utility functions (formatAmount, parseAmount, validateAmount)
+- Barrel files (index.ts) with unlimited re-exports (aggregation is their purpose)
+- Feature entry files (<feature-slug>.ts) re-exporting submodules for clean API
 
 REQUIRED DATA COLLECTION
 exports_by_file: Record<string, { name: string; kind: string }[]>
@@ -42,10 +51,14 @@ category_counts: Record<string, Record<string, number>>
 violations_initial: ViolationRecord[]
 
 VALIDATION ALGORITHM (PSEUDOCODE)
+IMPORTANT: Focus on detecting MIXED RESPONSIBILITIES, not enforcing arbitrary export counts.
+
 detection_steps:
 - Enumerate .ts/.tsx files under src.
-- Parse every export (functions, classes, consts, types) plus inferred category.
-- Flag files exceeding three exports or mixing multiple responsibility categories.
+- Parse every export (functions, classes, consts, types) and derive slugs/categories.
+- Analyze cohesion: Do exports share a common prefix/slug? Do they serve the same domain concept?
+- Flag files with MIXED categories (controller + service + DTO in one file) OR >12 exports with unrelated slugs.
+- DO NOT flag: Cohesive files with 4-7 exports sharing a slug (Contact*), barrel files (index.ts), utility clusters (amount formatting).
 ```
 files = listFiles('src', extensions=['.ts','.tsx'])
 for file in files:
@@ -90,8 +103,10 @@ if len(violations_after) > 0:
 ```
 
 SUCCESS CRITERIA (MUST)
-- export_count <= 3 for every file.
-- All exports in a file share the same responsibility_category.
+- No files mix unrelated responsibility categories (controller + service + DTO violations removed).
+- Cohesive files with shared slugs/concepts are not flagged (Contact + ContactSchema + DTOs acceptable).
+- Barrel files (index.ts) and feature entry files exempted from export limits.
+- Only god-modules (>12 exports with unrelated categories) trigger violations.
 - revalidated_zero equals true.
 
 FAILURE HANDLING

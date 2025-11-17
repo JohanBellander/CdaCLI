@@ -15,7 +15,15 @@ severity: error
 enforcement_order: 17
 
 PURPOSE
-Keep modules readable by balancing size with cohesion. The principle is “one file owns one idea.” Use heuristics to decide when a module is doing too much instead of blindly splitting at arbitrary limits.
+Keep modules readable by balancing size with cohesion. The principle is "one file owns one idea." Use heuristics to decide when a module is doing too much instead of blindly splitting at arbitrary limits.
+
+CRITICAL EXAMPLES:
+✅ ALLOWED: contact.ts with Contact + ContactSchema + CreateContactInput + UpdateContactInput (4 exports, 180 lines) = cohesive cluster sharing "Contact" slug
+✅ ALLOWED: contracts/index.ts with 15 re-exports (barrel files exempt from export limits)
+✅ ALLOWED: formatters.ts with 6 amount formatting functions (single concept variations)
+❌ FORBIDDEN: crm.ts with ContactRepo + BillingService + ReportGen (3 exports but MIXED concerns)
+
+Only flag violations when BOTH: (1) high export count (>12) or lines (>550) AND (2) multiple unrelated responsibility clusters detected.
 
 SCOPE
 include_paths: ["src"]
