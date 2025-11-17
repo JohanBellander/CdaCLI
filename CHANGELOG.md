@@ -4,6 +4,13 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.6.3 — 2025-11-17
+- **CRITICAL FIX**: Discovered that `instructionEmitter.ts` only extracts specific sections (PURPOSE, VALIDATION ALGORITHM, etc.) and was ignoring the EXAMPLES sections added in v0.6.2.
+- Moved critical examples from EXAMPLES section INTO PURPOSE section so they appear in emitted prompts.
+- Fixed `single-responsibility` constraint that was still enforcing hard "≤3 exports per file" limit, conflicting with `module-complexity-guardrails` rewrite that allows cohesive 4-7 exports.
+- Updated `single-responsibility` to match principle-based approach: Focus on detecting MIXED responsibilities (controller + service + DTO together), not counting exports. Cohesive files with shared slugs (Contact + ContactSchema + DTOs) now explicitly allowed.
+- Verified examples now appear in agent prompts under "objective" field.
+
 ## 0.6.2 — 2025-11-17
 - Added concrete code examples to `module-complexity-guardrails` and `shared-types-zod-source-of-truth` constraints. Examples appear BEFORE validation algorithm pseudocode with "CRITICAL - READ THESE FIRST" label to guide AI agents toward correct interpretation.
 - Clarified barrel file exemption: Index files with pure re-exports (no logic) are explicitly allowed to have high export counts.
