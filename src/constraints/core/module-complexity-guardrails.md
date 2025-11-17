@@ -42,6 +42,82 @@ ALLOWED
 - Barrel files that simply re-export symbols without additional logic.
 - Generated files excluded via scope filters.
 
+EXAMPLES (CRITICAL - READ THESE FIRST)
+
+ALLOWED - Cohesive Contact Module:
+```typescript
+// src/domain/contact/contact.ts (180 lines, 4 exports)
+export interface Contact {
+  id: string;
+  name: string;
+  email: string;
+  // ... 20 more properties
+}
+
+export const ContactSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  email: z.string().email(),
+  // ... schema definitions
+});
+
+export const CreateContactInput = ContactSchema.omit({ id: true });
+export const UpdateContactInput = CreateContactInput.partial();
+
+// ✅ REASON: All 4 exports share "Contact" slug and work together
+// ✅ Lines: 180 (under soft_threshold of 400)
+// ✅ Exports: 4 related types (cohesive cluster)
+```
+
+FORBIDDEN - God Module Mixing Concerns:
+```typescript
+// src/services/crm.ts (450 lines, 15 exports)
+export class ContactRepository { /* database logic */ }
+export class BillingService { /* payment logic */ }
+export class ReportGenerator { /* analytics */ }
+export class EmailSender { /* notifications */ }
+// ... 11 more unrelated exports
+
+// ❌ REASON: Multiple unrelated clusters (contacts, billing, reports, email)
+// ❌ Lines: 450 (exceeds soft_threshold, approaching hard limit)
+// ❌ Exports: 15 spanning unrelated responsibilities (god module)
+```
+
+ALLOWED - Utility Variations:
+```typescript
+// src/utils/formatters.ts (120 lines, 6 exports)
+export function formatAmount(cents: number): string { /* */ }
+export function parseAmount(input: string): number { /* */ }
+export function validateAmount(value: unknown): boolean { /* */ }
+export function roundAmount(cents: number): number { /* */ }
+export function compareAmounts(a: number, b: number): number { /* */ }
+export function normalizeAmount(input: string): number { /* */ }
+
+// ✅ REASON: All exports are variations on "amount formatting" concept
+// ✅ Lines: 120 (well under threshold)
+// ✅ Exports: 6 related helpers (single responsibility)
+```
+
+ALLOWED - Barrel/Index Files:
+```typescript
+// src/contracts/index.ts (20 lines, 15 exports - ALL RE-EXPORTS)
+export { ContactSchema, CreateContactInput, UpdateContactInput, type Contact } from './contact';
+export { CompanySchema, CreateCompanyInput, UpdateCompanyInput, type Company } from './company';
+export { LeadSchema, CreateLeadInput, UpdateLeadInput, type Lead } from './lead';
+// ... more re-exports
+
+// ✅ REASON: Barrel file with only re-exports (no logic)
+// ✅ High export count is EXPECTED and CORRECT for index files
+// ✅ This is the canonical import hub pattern
+```
+
+DO NOT SPLIT - These are intentionally cohesive:
+```typescript
+// DON'T split contact.ts into contact-schema.ts + contact-types.ts + contact-inputs.ts
+// KEEP entity + schema + DTOs together when they share the same domain concept
+// ONLY split when you have UNRELATED concerns (contacts + billing + reports)
+```
+
 REQUIRED DATA COLLECTION
 module_metrics: {
   file_path: string;
@@ -67,16 +143,30 @@ violations_complexity: {
 }[]
 
 VALIDATION ALGORITHM (PSEUDOCODE)
+IMPORTANT: The goal is detecting GOD MODULES (mixed responsibilities), not enforcing arbitrary export counts.
+
 detection_steps:
 - Iterate over all source modules within scope, skipping tests and generated directories.
-- Compute module_metrics and derive responsibility-clusters by grouping exports with similar slugs.
-- Flag god-module signals when:
-  - export_count > guiding_thresholds.exports_red_flag,
-  - logical_lines > guiding_thresholds.lines_hard,
-  - clusters span unrelated prefixes (contacts*, billing*, invoices*),
-  - files mix UI, domain, and infra artifacts simultaneously.
-- Treat exports_soft and lines_soft as “review” triggers: if thresholds are exceeded but clusters remain cohesive (single slug), annotate rather than fail.
-- Inspect functions whose cyclomatic complexity or nesting crosses limits; record violations with context (e.g., orchestrator bundling 6 concerns).
+- Compute module_metrics and derive responsibility-clusters by grouping exports with similar slugs/prefixes.
+- Analyze cohesion:
+  - COHESIVE: All exports share a slug (Contact*, contact*) or single concept (amount formatting)
+  - GOD_MODULE: Multiple unrelated clusters (contacts + billing), or mixing layer concerns (UI + domain + infra)
+
+VIOLATION LOGIC (only flag when BOTH conditions true):
+1. IF export_count > exports_red_flag (12) AND multiple unrelated clusters → VIOLATION
+2. IF logical_lines > lines_hard (550) AND multiple unrelated clusters → VIOLATION
+3. IF cyclomatic_complexity > 12 in any function → VIOLATION (always, regardless of cohesion)
+4. IF nesting > 4 in any function → VIOLATION (always, regardless of cohesion)
+
+DO NOT FLAG:
+- Cohesive modules under soft thresholds (400 lines, 7 exports) even if they're "large"
+- Modules with 4-7 exports if all share a common slug (Contact entity + schema + DTOs)
+- Barrel files that only re-export (no logic, high export count is expected)
+
+Example decisions:
+- contact.ts with Contact + ContactSchema + CreateContactInput + UpdateContactInput (4 exports, 180 lines) → NO VIOLATION (cohesive)
+- crm.ts with ContactRepo + BillingService + ReportGen (3 exports, 200 lines) → VIOLATION (mixed concerns despite low counts)
+- formatters.ts with 6 amount formatting functions (6 exports, 120 lines) → NO VIOLATION (single concept variations)
 ```
 files = findFiles('src', { ignore: ['tests','__tests__','*.d.ts'] })
 for file in files:

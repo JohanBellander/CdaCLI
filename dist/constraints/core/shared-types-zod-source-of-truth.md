@@ -42,8 +42,73 @@ ALLOWED
 - Shared package pattern when multiple apps consume contracts (monorepo default).
 - Domain-schemas pattern when the repo is a single package; canonical modules can live under `src/domain/schemas/**` or `src/contracts/**`.
 - Feature-collocated schemas when they are tightly coupled to a specific entity and immediately re-exported from a contracts index (`src/contracts/contacts.ts`).
-- Internal-only schemas (pure UI/local state) that never cross a process boundary; they are outside this constraint’s scope.
+- Internal-only schemas (pure UI/local state) that never cross a process boundary; they are outside this constraint's scope.
 - Temporary migrations where a canonical module exports both V1 and V2 schemas intentionally (document the window in comments/bd).
+
+EXAMPLES (CRITICAL - READ THESE FIRST)
+
+PATTERN 1 - Monorepo (multiple apps):
+```
+packages/
+  shared-types/
+    src/
+      contacts/schema.ts         ← ContactSchema (canonical)
+      companies/schema.ts        ← CompanySchema (canonical)
+      index.ts                   ← Re-exports all schemas
+apps/
+  api/
+    src/features/contacts/
+      handler.ts                 ← Imports from @shared-types/contacts
+  web/
+    src/components/contact-form.tsx  ← Imports from @shared-types/contacts
+
+✅ REASON: Multiple apps need shared contracts, packages/shared-types is the import hub
+```
+
+PATTERN 2 - Single Package (one app):
+```
+src/
+  contracts/
+    contact.ts                   ← ContactSchema (canonical)
+    company.ts                   ← CompanySchema (canonical)
+    index.ts                     ← Re-exports all schemas
+  domain/
+    contacts/
+      contact.entity.ts          ← Imports from src/contracts/contact
+  app/
+    contacts/
+      register-contact.ts        ← Imports from src/contracts/contact
+  ui/
+    contact-form.tsx             ← Imports from src/contracts/contact
+
+✅ REASON: Single package, src/contracts/ provides one import path for all layers
+```
+
+PATTERN 3 - Feature-Collocated (with re-export):
+```
+src/
+  domain/
+    contacts/
+      contact.schema.ts          ← ContactSchema definition
+      contact.entity.ts          ← Uses schema
+  contracts/
+    contacts.ts                  ← Re-exports from domain/contacts/contact.schema.ts (canonical entry)
+    index.ts                     ← Re-exports all contracts
+  app/
+    register-contact.ts          ← Imports from src/contracts/contacts (NOT domain/contacts)
+
+✅ REASON: Schema defined near entity, but contracts/ provides discoverable canonical path
+```
+
+ANTI-PATTERN - Duplicated Schemas:
+```
+src/
+  domain/contacts/contact.schema.ts     ← ContactSchema V1
+  app/contacts/contact-dto.schema.ts    ← ContactSchema V2 (copy-pasted)
+  ui/contact-form.schema.ts             ← ContactSchema V3 (diverged)
+
+❌ REASON: Three copies, no canonical source, types drift over time
+```
 
 REQUIRED DATA COLLECTION
 schema_registry: {
@@ -64,11 +129,36 @@ duplicate_schemas: {
 }[]
 
 VALIDATION ALGORITHM (PSEUDOCODE)
+IMPORTANT: The goal is ensuring ONE canonical source per schema, not enforcing specific directory names.
+
 detection_steps:
-- Enumerate all Zod schemas in scope and classify their pattern based on path heuristics.
-- Mark one canonical_schema_module per contract when it lives in an approved pattern; everything else referencing that schema_name is a duplicate.
-- Scan controllers, handlers, presenters, and UI adapters to see how they import DTOs. Flag consumers that: (a) import from non-canonical modules, (b) recreate interfaces, or (c) use literal objects without schema backing.
-- Allow feature_collocated schemas only when a contracts index (`src/contracts/**`) re-exports the schema.
+- Enumerate all Zod schemas in scope and classify their pattern based on path heuristics:
+  - Pattern 1 (Monorepo): packages/shared-types/src/**
+  - Pattern 2 (Single Package): src/contracts/** OR src/domain/schemas/**
+  - Pattern 3 (Feature-Collocated): src/domain/<feature>/*.schema.ts with re-export from src/contracts/<feature>.ts
+
+- For each schema name, identify the canonical_schema_module:
+  - IF monorepo: packages/shared-types/src/<feature>/schema.ts is canonical
+  - IF single package: src/contracts/<feature>.ts is canonical (even if schema defined elsewhere)
+  - IF feature-collocated: src/contracts/<feature>.ts that re-exports domain schema is canonical
+
+- Detect duplicates: Any schema with the same name in multiple places WITHOUT a clear re-export relationship
+- Scan boundary consumers (controllers, handlers, UI components): Flag imports that bypass the canonical module
+
+VIOLATION LOGIC:
+1. Duplicate schema definitions (same name, different files, no re-export) → VIOLATION
+2. Consumer imports schema from domain/features instead of contracts/ (when contracts/ exists) → VIOLATION
+3. Boundary code creates ad-hoc interfaces instead of importing canonical types → VIOLATION
+
+DO NOT FLAG:
+- Feature-collocated schemas WHEN contracts/ re-exports them (this is Pattern 3, not a duplicate)
+- Internal UI state schemas that never cross process boundaries (out of scope)
+- Temporary V1/V2 schemas during migration (document in comments)
+
+Example decisions:
+- src/domain/contacts/contact.schema.ts + src/contracts/contacts.ts (re-exports schema) → NO VIOLATION (Pattern 3)
+- src/domain/contacts/contact.schema.ts + handler imports from contracts/contacts → NO VIOLATION (canonical path)
+- src/domain/contacts/contact.schema.ts + src/app/contacts/dto.schema.ts (different ContactSchema) → VIOLATION (duplicate)
 ```
 schemas = listZodSchemas(["src","apps","packages"])
 for schema in schemas:
