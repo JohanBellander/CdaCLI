@@ -17,6 +17,8 @@ enforcement_order: 16
 PURPOSE
 Keep feature folders and entry files aligned across layers so contributors can navigate by instinct. The principle: pick a naming style (short vs long, hyphenated slug) and consistently reuse it. Consistency reduces cognitive load and prevents duplicate folders such as `infra/` plus `infrastructure/`.
 
+CRITICAL: This constraint checks for CONSISTENCY, not preference. Using `application` throughout is fine; using both `app` AND `application` is not. Accept verbose names (`application`, `presentation`, `infrastructure`) as valid choices.
+
 SCOPE
 include_paths: ["src/ui","src/app","src/domain","src/infra"]
 exclude_paths: ["node_modules","dist","build",".git","tests"]
@@ -107,6 +109,8 @@ for group in groups:
 
 alias_report = layers.map(layer => {
   aliases = detectAliases(layer)
+  # Only flag if MULTIPLE aliases exist for same layer (e.g., both src/app AND src/application)
+  # Using verbose names consistently (application, presentation, infrastructure) is acceptable
   return { layer: layerName(layer), detected_aliases: aliases, inconsistent: aliases.length > 1 }
 })
 ```
@@ -131,6 +135,7 @@ SUCCESS CRITERIA (MUST)
 - Each feature root exposes an entry file that begins with the slug.
 - slug_collisions array empty.
 - layer_aliases show exactly one alias per canonical layer (no simultaneous `infra`/`infrastructure`).
+- IMPORTANT: Accept verbose aliases (application, presentation, infrastructure) if used consistently. Only flag when MULTIPLE aliases coexist (e.g., both src/app and src/application folders).
 
 FAILURE HANDLING
 If framework-imposed names (e.g., Next.js `pages`) conflict with this rule, document the exception and ensure only that directory is excluded from enforcement via README annotation.

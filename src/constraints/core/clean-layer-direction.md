@@ -67,6 +67,10 @@ detection_steps:
 - Run cycle detection across the import graph limited to classified nodes and record any strongly connected components larger than one.
 - Summarize violations with precise file_path, line, specifier, source_layer, and target_layer details.
 ```
+composition_roots = [
+  'src/index.ts', 'src/main.ts', 'src/bootstrap.ts'
+].concat(findFiles('src/composition'))
+
 layers = {
   ui: findFiles('src/ui'),
   app: findFiles('src/app'),
@@ -76,6 +80,9 @@ layers = {
 }
 
 for each file in union(layers.*):
+  # Skip composition roots - they wire dependencies and can import from all layers
+  if file in composition_roots: continue
+  
   imports = parseImports(file)
   for each imp in imports:
     targetLayer = resolveLayer(imp.resolvedPath)
