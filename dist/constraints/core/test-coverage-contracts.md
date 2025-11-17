@@ -17,6 +17,72 @@ enforcement_order: 21
 PURPOSE
 Tie architecture layers to matching test suites so every critical module has the correct test counterpart (unit for domain, integration for app/infra, interaction for UI).
 
+CRITICAL TEST CREATION GUIDE:
+
+✅ DOMAIN TEST EXAMPLE (tests/domain/contacts/contact.test.ts):
+```typescript
+import { describe, it, expect } from 'vitest';
+import { ContactSchema, validateEmail } from '../../../src/domain/contacts/contact';
+
+describe('Contact Domain', () => {
+  it('should validate contact schema', () => {
+    const valid = { id: '123', firstName: 'John', lastName: 'Doe', email: 'john@example.com' };
+    expect(() => ContactSchema.parse(valid)).not.toThrow();
+  });
+  
+  it('should validate email format', () => {
+    expect(validateEmail('test@example.com')).toBe(true);
+    expect(validateEmail('invalid')).toBe(false);
+  });
+});
+```
+
+✅ APPLICATION SERVICE TEST (tests/application/services/contact-service.test.ts):
+```typescript
+import { describe, it, expect, vi } from 'vitest';
+import { ContactService } from '../../../src/application/services/contact-service';
+import type { IContactRepository } from '../../../src/domain/ports/contact-repository';
+
+describe('ContactService', () => {
+  it('should create contact via repository port', async () => {
+    const mockRepo: IContactRepository = {
+      create: vi.fn().mockResolvedValue({ id: '1', firstName: 'John' }),
+      findById: vi.fn(),
+      findAll: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn()
+    };
+    const service = new ContactService(mockRepo);
+    const result = await service.createContact({ firstName: 'John', lastName: 'Doe', email: 'j@ex.com' });
+    expect(result.id).toBe('1');
+    expect(mockRepo.create).toHaveBeenCalled();
+  });
+});
+```
+
+✅ INFRASTRUCTURE ADAPTER TEST (tests/infra/repositories/contact-repository.test.ts):
+```typescript
+import { describe, it, expect, beforeEach } from 'vitest';
+import { InMemoryContactRepository } from '../../../src/infra/repositories/contact-repository';
+
+describe('InMemoryContactRepository', () => {
+  let repo: InMemoryContactRepository;
+  
+  beforeEach(() => {
+    repo = new InMemoryContactRepository();
+  });
+  
+  it('should store and retrieve contacts', async () => {
+    const contact = { firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com' };
+    const created = await repo.create(contact);
+    const found = await repo.findById(created.id);
+    expect(found?.firstName).toBe('Jane');
+  });
+});
+```
+
+When creating tests: Use vitest (or jest), mirror directory structure exactly, mock ports not implementations, test public contracts not internals.
+
 SCOPE
 include_paths: ["src/domain","src/app","src/infra","src/ui"]
 test_roots: {
@@ -39,9 +105,11 @@ FORBIDDEN
 - Domain tests that boot application services or infra layers
 
 ALLOWED
+- Minimal "smoke tests" that verify module loads and key exports exist (better than no test)
 - Aggregated integration tests covering multiple controllers as long as every production module participates
 - Shared helpers located under tests/support
 - Additional exploratory tests (performance, contract) referenced in the report
+- Single test case per file for rapid prototyping (can expand coverage later)
 
 REQUIRED DATA COLLECTION
 coverage_matrix: {
@@ -111,10 +179,15 @@ REPORTING CONTRACT
 REQUIRED keys: constraint_id, violation_type, file_path, details. Optional keys: expected_test_path, layer, coverage_kind, specifier. Report each missing test and improper import individually.
 
 FIX SEQUENCE (STRICT)
-1. Create the missing mirrored test files with the appropriate isolation level per layer.
-2. Refactor tests to mock infra adapters when running in domain/app layers; move full-stack scenarios to integration suites.
-3. Update UI tests to include user interactions (click, type) and explicit assertions on outcomes.
-4. Re-run coverage analysis to confirm all matrices show test_exists true with correct coverage kinds.
+1. Install test framework if missing: `npm install -D vitest @vitest/ui` or `npm install -D jest @types/jest ts-jest`
+2. Create package.json test script: `"test": "vitest"` or `"test": "jest"`
+3. For EACH missing test file, create mirrored test with structure from PURPOSE examples:
+   - Domain: Test pure functions, Zod schema validation, business logic (no mocks needed)
+   - Application: Test service orchestration with MOCKED repository ports (use vi.fn() or jest.fn())
+   - Infrastructure: Test adapter implementations with real logic (can use in-memory stores)
+   - Presentation: Test route handlers with mocked services
+4. Ensure test imports respect layer boundaries (domain tests should NOT import from infra)
+5. Re-run validation to confirm all coverage_matrix entries show test_exists = true
 
 REVALIDATION LOOP
 ```
