@@ -1,0 +1,141 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`phase-gated workflow end-to-end > keeps { phase: 'application', expected: 25 } prompt smaller than full run and maintains cumulative constraints > application-prompt-header 1`] = `
+"AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION
+========================================
+CDA AGENT PROMPT - PHASE 4: APPLICATION LAYER
+========================================
+
+Phase Mode: application (Phase 4 of 5)
+Included Phases: foundation, domain, infrastructure, application
+Constraints in This Phase: 6
+Cumulative Constraints: 25 (Phase 1-4)
+Next Phase: presentation
+
+run_id: <redacted>
+generated_at: <redacted>
+instruction_format_version: 2
+agent_name: unspecified
+token_estimate_method: heuristic_chars_div_4
+disabled_constraints: []
+
+=== PHASE 4 OBJECTIVE ===
+Orchestrate domain behaviors through use cases that depend on ports rather than concrete adapters.
+Enforce MVC/MVP/MVVM boundaries and add regression tests that prove business flows end-to-end.
+
+Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer and Phase 4: Application Layer constraints.
+Previous phase (Phase 3: Infrastructure Layer) should already be validated and passing.
+"
+`;
+
+exports[`phase-gated workflow end-to-end > keeps { phase: 'domain', expected: 14 } prompt smaller than full run and maintains cumulative constraints > domain-prompt-header 1`] = `
+"AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION
+========================================
+CDA AGENT PROMPT - PHASE 2: DOMAIN LAYER
+========================================
+
+Phase Mode: domain (Phase 2 of 5)
+Included Phases: foundation, domain
+Constraints in This Phase: 7
+Cumulative Constraints: 14 (Phase 1-2)
+Next Phase: infrastructure
+
+run_id: <redacted>
+generated_at: <redacted>
+instruction_format_version: 2
+agent_name: unspecified
+token_estimate_method: heuristic_chars_div_4
+disabled_constraints: []
+
+=== PHASE 2 OBJECTIVE ===
+Implement pure business logic with value objects, aggregates, and services that have zero side effects.
+Model every shared contract with Zod schemas and reuse inferred types across the codebase.
+
+Validation scope: This prompt checks Phase 1: Foundation Layer and Phase 2: Domain Layer constraints.
+Previous phase (Phase 1: Foundation Layer) should already be validated and passing.
+"
+`;
+
+exports[`phase-gated workflow end-to-end > keeps { phase: 'foundation', expected: 7 } prompt smaller than full run and maintains cumulative constraints > foundation-prompt-header 1`] = `
+"AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION
+========================================
+CDA AGENT PROMPT - PHASE 1: FOUNDATION LAYER
+========================================
+
+Phase Mode: foundation (Phase 1 of 5)
+Included Phases: foundation
+Constraints in This Phase: 7
+Cumulative Constraints: 7 (Phase 1)
+Next Phase: domain
+
+run_id: <redacted>
+generated_at: <redacted>
+instruction_format_version: 2
+agent_name: unspecified
+token_estimate_method: heuristic_chars_div_4
+disabled_constraints: []
+
+=== PHASE 1 OBJECTIVE ===
+Stand up centralized configuration, logging, and observability before touching product code.
+Lock folder/file naming conventions and directory depth guardrails to avoid future refactors.
+
+Validation scope: This prompt checks Phase 1: Foundation Layer constraints.
+This is the foundation phase; everything else depends on it.
+"
+`;
+
+exports[`phase-gated workflow end-to-end > keeps { phase: 'infrastructure', expected: 19 } prompt smaller than full run and maintains cumulative constraints > infrastructure-prompt-header 1`] = `
+"AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION
+========================================
+CDA AGENT PROMPT - PHASE 3: INFRASTRUCTURE LAYER
+========================================
+
+Phase Mode: infrastructure (Phase 3 of 5)
+Included Phases: foundation, domain, infrastructure
+Constraints in This Phase: 5
+Cumulative Constraints: 19 (Phase 1-3)
+Next Phase: application
+
+run_id: <redacted>
+generated_at: <redacted>
+instruction_format_version: 2
+agent_name: unspecified
+token_estimate_method: heuristic_chars_div_4
+disabled_constraints: []
+
+=== PHASE 3 OBJECTIVE ===
+Connect the domain to databases, APIs, and external systems through clean ports and adapters.
+Keep Prisma repositories, HTTP clients, and file adapters isolated from the domain layer.
+
+Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer and Phase 3: Infrastructure Layer constraints.
+Previous phase (Phase 2: Domain Layer) should already be validated and passing.
+"
+`;
+
+exports[`phase-gated workflow end-to-end > keeps { phase: 'presentation', expected: 29 } prompt smaller than full run and maintains cumulative constraints > presentation-prompt-header 1`] = `
+"AGENT VERIFICATION MODE: PROMPT INTENDED FOR AUTOMATED EXECUTION
+========================================
+CDA AGENT PROMPT - PHASE 5: PRESENTATION LAYER
+========================================
+
+Phase Mode: presentation (Phase 5 of 5)
+Included Phases: foundation, domain, infrastructure, application, presentation
+Constraints in This Phase: 4
+Cumulative Constraints: 29 (Phase 1-5)
+Next Phase: None (final presentation phase)
+
+run_id: <redacted>
+generated_at: <redacted>
+instruction_format_version: 2
+agent_name: unspecified
+token_estimate_method: heuristic_chars_div_4
+disabled_constraints: []
+
+=== PHASE 5 OBJECTIVE ===
+Expose APIs and UI with Fastify, Next.js, and React only after inner layers are validated.
+Keep controllers and components thin while delegating async state to TanStack Query.
+
+Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer, Phase 4: Application Layer and Phase 5: Presentation Layer constraints.
+Previous phase (Phase 4: Application Layer) should already be validated and passing.
+"
+`;

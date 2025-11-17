@@ -16,6 +16,12 @@ import {
   formatSingleInstructionPackage,
 } from "../formatters.js";
 import { logDisabledConstraints } from "../constraintLogging.js";
+import {
+  assertValidPhase,
+  filterConstraintsByPhase,
+  formatPhaseWarnings,
+} from "../../core/phaseUtils.js";
+import type { Phase } from "../../core/types.js";
 
 interface ValidateCommandOptions {
   cwd?: string;
@@ -51,15 +57,28 @@ export async function runValidateCommand(
     throw createError("CONFIG_ERROR", "No active constraints available.");
   }
 
+  let workingConstraints = activeConstraints;
+  if (parsed.phase) {
+    const result = filterConstraintsByPhase({
+      phase: parsed.phase,
+      activeConstraints,
+      disabledConstraints: disabled,
+      allConstraints: constraints,
+    });
+    workingConstraints = result.constraints;
+    const warnings = formatPhaseWarnings(result);
+    warnings.forEach((message) => console.warn(message));
+  }
+
   const runId = generateRunId();
 
   if (parsed.constraintId || parsed.sequential) {
     const targetId =
-      parsed.constraintId ?? activeConstraints[0]?.meta.id;
+      parsed.constraintId ?? workingConstraints[0]?.meta.id;
     if (!targetId) {
       throw createError("CONFIG_ERROR", "No constraints available.");
     }
-    const constraint = activeConstraints.find(
+    const constraint = workingConstraints.find(
       (doc) => doc.meta.id === targetId,
     );
     if (!constraint) {
@@ -86,7 +105,10 @@ export async function runValidateCommand(
     return;
   }
 
-  const pkg = buildBatchInstructionPackage({ runId, constraints: activeConstraints });
+  const pkg = buildBatchInstructionPackage({
+    runId,
+    constraints: workingConstraints,
+  });
   const rendered = parsed.legacyFormat
     ? formatLegacyBatchInstructionPackage(pkg)
     : formatBatchInstructionPackage(pkg);
@@ -97,11 +119,13 @@ function parseValidateArgs(args: string[]): {
   constraintId?: string;
   sequential: boolean;
   legacyFormat: boolean;
+  phase?: Phase;
 } {
   const result: {
     constraintId?: string;
     sequential: boolean;
     legacyFormat: boolean;
+    phase?: Phase;
   } = {
     sequential: false,
     legacyFormat: false,
@@ -132,6 +156,19 @@ function parseValidateArgs(args: string[]): {
       continue;
     }
 
+    if (arg === "--phase") {
+      const next = args[i + 1];
+      if (!next) {
+        throw createError(
+          "CONFIG_ERROR",
+          "Expected phase name after --phase.",
+        );
+      }
+      result.phase = assertValidPhase(next);
+      i += 1;
+      continue;
+    }
+
     throw createError("CONFIG_ERROR", `Unknown option '${arg}'.`);
   }
 
@@ -139,6 +176,20 @@ function parseValidateArgs(args: string[]): {
     throw createError(
       "CONFIG_ERROR",
       "Use either --constraint or --sequential, not both.",
+    );
+  }
+
+  if (result.phase && result.constraintId) {
+    throw createError(
+      "CONFIG_ERROR",
+      "Use either --phase or --constraint, not both.",
+    );
+  }
+
+  if (result.phase && result.sequential) {
+    throw createError(
+      "CONFIG_ERROR",
+      "Use either --phase or --sequential, not both.",
     );
   }
 
@@ -155,5 +206,8 @@ function printValidateHelp(): void {
   );
   console.log(
     "  --legacy-format         Emit the deprecated pre-update output (instruction-only banner omitted).",
+  );
+  console.log(
+    "  --phase <name>          Limit validation output to a cumulative implementation phase.",
   );
 }

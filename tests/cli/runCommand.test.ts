@@ -61,6 +61,20 @@ describe("runRunCommand", () => {
     );
   });
 
+  it("passes --phase flag through to subcommands", async () => {
+    await runRunCommand(["--phase", "foundation"], { cwd: "/tmp/project" });
+    expect(runValidateCommand).toHaveBeenCalledWith(
+      ["--phase", "foundation"],
+      { cwd: "/tmp/project" },
+    );
+
+    await runRunCommand(["--plan", "--phase", "domain"], { cwd: "/tmp/project" });
+    expect(runAgentCommand).toHaveBeenLastCalledWith(
+      ["--phase", "domain", "--dry-run"],
+      { cwd: "/tmp/project" },
+    );
+  });
+
   it("rejects invalid mode combinations", async () => {
     await expect(runRunCommand(["--plan", "--exec"])).rejects.toThrow(/one of --plan, --exec, or --audit/);
   });

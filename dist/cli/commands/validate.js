@@ -5,6 +5,7 @@ import { createError } from "../../core/errors.js";
 import { loadProjectConfig } from "../../core/projectConfig.js";
 import { formatBatchInstructionPackage, formatLegacyBatchInstructionPackage, formatLegacySingleInstructionPackage, formatSingleInstructionPackage, } from "../formatters.js";
 import { logDisabledConstraints } from "../constraintLogging.js";
+import { assertValidPhase, filterConstraintsByPhase, formatPhaseWarnings, } from "../../core/phaseUtils.js";
 export async function runValidateCommand(args = [], options = {}) {
     if (args.includes("-h") || args.includes("--help")) {
         printValidateHelp();
@@ -27,13 +28,25 @@ export async function runValidateCommand(args = [], options = {}) {
     if (activeConstraints.length === 0) {
         throw createError("CONFIG_ERROR", "No active constraints available.");
     }
+    let workingConstraints = activeConstraints;
+    if (parsed.phase) {
+        const result = filterConstraintsByPhase({
+            phase: parsed.phase,
+            activeConstraints,
+            disabledConstraints: disabled,
+            allConstraints: constraints,
+        });
+        workingConstraints = result.constraints;
+        const warnings = formatPhaseWarnings(result);
+        warnings.forEach((message) => console.warn(message));
+    }
     const runId = generateRunId();
     if (parsed.constraintId || parsed.sequential) {
-        const targetId = parsed.constraintId ?? activeConstraints[0]?.meta.id;
+        const targetId = parsed.constraintId ?? workingConstraints[0]?.meta.id;
         if (!targetId) {
             throw createError("CONFIG_ERROR", "No constraints available.");
         }
-        const constraint = activeConstraints.find((doc) => doc.meta.id === targetId);
+        const constraint = workingConstraints.find((doc) => doc.meta.id === targetId);
         if (!constraint) {
             const disabledMatch = constraints.find((doc) => doc.meta.id === targetId);
             if (disabledMatch) {
@@ -48,7 +61,10 @@ export async function runValidateCommand(args = [], options = {}) {
         console.log(rendered);
         return;
     }
-    const pkg = buildBatchInstructionPackage({ runId, constraints: activeConstraints });
+    const pkg = buildBatchInstructionPackage({
+        runId,
+        constraints: workingConstraints,
+    });
     const rendered = parsed.legacyFormat
         ? formatLegacyBatchInstructionPackage(pkg)
         : formatBatchInstructionPackage(pkg);
@@ -78,10 +94,25 @@ function parseValidateArgs(args) {
             result.legacyFormat = true;
             continue;
         }
+        if (arg === "--phase") {
+            const next = args[i + 1];
+            if (!next) {
+                throw createError("CONFIG_ERROR", "Expected phase name after --phase.");
+            }
+            result.phase = assertValidPhase(next);
+            i += 1;
+            continue;
+        }
         throw createError("CONFIG_ERROR", `Unknown option '${arg}'.`);
     }
     if (result.constraintId && result.sequential) {
         throw createError("CONFIG_ERROR", "Use either --constraint or --sequential, not both.");
+    }
+    if (result.phase && result.constraintId) {
+        throw createError("CONFIG_ERROR", "Use either --phase or --constraint, not both.");
+    }
+    if (result.phase && result.sequential) {
+        throw createError("CONFIG_ERROR", "Use either --phase or --sequential, not both.");
     }
     return result;
 }
@@ -92,4 +123,5 @@ function printValidateHelp() {
     console.log("  --constraint, -c <id>   Emit instructions for a single constraint.");
     console.log("  --sequential            Alias for the first constraint in recommended order.");
     console.log("  --legacy-format         Emit the deprecated pre-update output (instruction-only banner omitted).");
+    console.log("  --phase <name>          Limit validation output to a cumulative implementation phase.");
 }

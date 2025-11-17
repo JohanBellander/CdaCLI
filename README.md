@@ -18,6 +18,7 @@ Modes:
 
 Key flags:
 - `--constraint <id>` / `--sequential` – Single-constraint modes. Works across all modes.
+- `--phase <name>` � Filter prompts/validation to a cumulative phase (`foundation`, `domain`, `infrastructure`, `application`, `presentation`). Mutually exclusive with `--constraint`/`--sequential`.
 - `--agent <name>` – Override the default `cda.agents.json` entry for `--plan`/`--exec`.
 - `--output <file>` – Persist the assembled prompt before printing/executing.
 - `--legacy-format` – Emit the pre-Spec-Update-1 layout (no banner/directive/metrics).
@@ -39,6 +40,34 @@ Legacy wrappers (`cda validate` and `cda agent`) now forward arguments to `cda r
 5. Directive block reminding the agent to execute detection/remediation steps verbatim.
 6. Optional `postscript`.
 7. Metrics: `original_char_count` and `approx_token_length` (chars ÷ 4 heuristic). CDA enforces any `max_length` in the agent definition.
+
+
+## Phase-Gated Validation Workflow (v0.6.0+)
+
+`--phase <name>` activates the phased implementation flow defined in `SPEC_PHASES.md` and the generated `CDA.md` onboarding guide. Each phase emits a focused prompt (5-8KB) that revalidates every prior layer cumulatively.
+
+Recommended loop per phase:
+1. `cda agent --phase <name> --dry-run` ? archive the prompt + run_id.
+2. Implement only the artifacts covered by that phase (see `PHASE_GUIDE.md` for detailed examples and checklists).
+3. `npm run build` ? ensure the codebase compiles after the changes.
+4. `cda run --phase <name> --exec` ? validate the cumulative constraint set before advancing to the next phase.
+
+Phase summary:
+
+| Phase | Focus | Constraints (cumulative) |
+|-------|-------|--------------------------|
+| foundation | Config entrypoint, logging, folder/file structure | 7 |
+| domain | Pure business logic, Zod contracts | 14 |
+| infrastructure | Ports/adapters, Prisma, HTTP clients | 19 |
+| application | Use cases, MVC/MVP/MVVM guardrails, test coverage | 25 |
+| presentation | Fastify routes, Next.js App Router, React + TanStack Query | 29 |
+
+CLI behavior:
+- `cda agent --phase <name>` filters the instruction package, writes a phase banner (phase mode, number, included phases, constraint counts, next phase), and injects phase objective/context/next-step sections ahead of the instruction text.
+- `cda run --phase <name> --plan/--exec` obeys the same filtering logic and enforces mutual exclusivity with `--constraint`/`--sequential`.
+- `cda validate --phase <name>` emits only the relevant constraint blocks so transcripts stay focused on the current checkpoint.
+
+If a phase contains disabled or missing constraints, CDA prints warnings (disabled ids, missing ids) before continuing. If every constraint mapped to a phase is disabled, the command fails with a configuration error so teams cannot skip foundational guardrails.
 
 ### Sample `cda.agents.json`
 `cda init` scaffolds a default config unless `--no-agents` is supplied:

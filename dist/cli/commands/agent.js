@@ -12,6 +12,7 @@ import { generateRunId } from "../../core/runId.js";
 import { createError } from "../../core/errors.js";
 import { loadProjectConfig } from "../../core/projectConfig.js";
 import { logDisabledConstraints } from "../constraintLogging.js";
+import { assertValidPhase, buildPhasePromptContext, filterConstraintsByPhase, formatPhaseWarnings, } from "../../core/phaseUtils.js";
 export async function runAgentCommand(argv = [], options = {}) {
     const parsed = parseAgentArgs(argv);
     if (parsed.helpRequested) {
@@ -31,9 +32,23 @@ export async function runAgentCommand(argv = [], options = {}) {
     if (activeConstraints.length === 0) {
         throw createError("CONFIG_ERROR", "No active constraints available.");
     }
+    let workingConstraints = activeConstraints;
+    let phaseContext = undefined;
+    if (parsed.phase) {
+        const result = filterConstraintsByPhase({
+            phase: parsed.phase,
+            activeConstraints,
+            disabledConstraints: disabled,
+            allConstraints: constraints,
+        });
+        workingConstraints = result.constraints;
+        const warnings = formatPhaseWarnings(result);
+        warnings.forEach((message) => console.warn(message));
+        phaseContext = buildPhasePromptContext(result.info);
+    }
     const runId = generateRunId();
     const { instructionText, constraintIdUsed } = buildInstructionText({
-        activeConstraints,
+        activeConstraints: workingConstraints,
         allConstraints: constraints,
         explicitConstraintId: parsed.constraintId,
         sequential: parsed.sequential,
@@ -63,6 +78,7 @@ export async function runAgentCommand(argv = [], options = {}) {
         postscript: agentDefinition?.postscript,
         legacyFormat: parsed.legacyFormat,
         disabledConstraints: disabledConstraintIds,
+        phaseContext,
     });
     if (agentDefinition?.maxLength && promptResult.charCount > agentDefinition.maxLength) {
         throw createError("CONFIG_ERROR", `Prompt length ${promptResult.charCount} exceeds max_length ${agentDefinition.maxLength}.`);
@@ -397,6 +413,15 @@ function parseAgentArgs(args) {
                 i += 1;
                 break;
             }
+            case "--phase": {
+                const next = args[i + 1];
+                if (!next) {
+                    throw createError("CONFIG_ERROR", "Expected phase name after --phase.");
+                }
+                parsed.phase = assertValidPhase(next);
+                i += 1;
+                break;
+            }
             case "--dry-run": {
                 parsed.dryRun = true;
                 break;
@@ -427,6 +452,12 @@ function parseAgentArgs(args) {
     if (parsed.constraintId && parsed.sequential) {
         throw createError("CONFIG_ERROR", "Use either --constraint or --sequential, not both.");
     }
+    if (parsed.phase && parsed.constraintId) {
+        throw createError("CONFIG_ERROR", "Use either --phase or --constraint, not both.");
+    }
+    if (parsed.phase && parsed.sequential) {
+        throw createError("CONFIG_ERROR", "Use either --phase or --sequential, not both.");
+    }
     return parsed;
 }
 function printAgentHelp() {
@@ -436,6 +467,7 @@ function printAgentHelp() {
     console.log("  --agent <name>       Select agent defined in cda.agents.json");
     console.log("  --constraint <id>    Emit single-constraint instructions");
     console.log("  --sequential         Shortcut for first recommended constraint");
+    console.log("  --phase <name>       Filter prompts to a cumulative implementation phase");
     console.log("  --dry-run            Print prompt and intended command without executing");
     console.log("  --no-exec            Print prompt only (implies --dry-run)");
     console.log("  --output <path>      Write prompt to file");

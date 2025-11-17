@@ -1,5 +1,8 @@
 export declare const CONSTRAINT_GROUPS: readonly ["patterns", "architecture", "best-practices", "frameworks", "contracts"];
 export type ConstraintGroup = (typeof CONSTRAINT_GROUPS)[number];
+export declare const PHASES: readonly ["foundation", "domain", "infrastructure", "application", "presentation"];
+export type Phase = (typeof PHASES)[number];
+export declare const PHASE_CONSTRAINTS: Record<Phase, string[]>;
 export interface ConstraintMeta {
     id: string;
     name: string;

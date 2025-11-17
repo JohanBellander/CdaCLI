@@ -32,9 +32,9 @@ describe("cda onboard command", () => {
     await runOnboardCommand([], { cwd });
 
     const guide = await readFile(path.join(cwd, "CDA.md"), "utf8");
-    expect(guide).toMatch(/STOP - Mandatory Command Sequence/);
-    expect(guide).toMatch(/cda run --plan/);
-    expect(guide).toMatch(/cda run --exec/);
+    expect(guide).toMatch(/STOP - Mandatory Phase-Gated Command Sequence/);
+    expect(guide).toMatch(/cda agent --phase foundation --dry-run/);
+    expect(guide).toMatch(/cda run --phase foundation --exec/);
     expect(guide).toMatch(/Evidence Checklist/);
 
     const configRaw = await readFile(path.join(cwd, "cda.config.json"), "utf8");
@@ -63,7 +63,7 @@ describe("cda onboard command", () => {
     await runOnboardCommand(["--output", "docs/onboarding.md"], { cwd });
 
     const guide = await readFile(path.join(cwd, "docs", "onboarding.md"), "utf8");
-    expect(guide).toMatch(/STOP - Mandatory Command Sequence/);
+    expect(guide).toMatch(/STOP - Mandatory Phase-Gated Command Sequence/);
 
     // Config artifacts should still be created in the repo root
     await expect(readFile(path.join(cwd, "cda.config.json"), "utf8")).resolves.toBeTruthy();

@@ -1,3 +1,4 @@
+import type { PhasePromptContext } from "./phaseUtils.js";
 export interface PromptAssemblerOptions {
     runId: string;
     instructionFormatVersion?: number;
@@ -9,6 +10,7 @@ export interface PromptAssemblerOptions {
     postscript?: string;
     legacyFormat?: boolean;
     disabledConstraints?: string[];
+    phaseContext?: PhasePromptContext;
 }
 export interface PromptAssemblyResult {
     prompt: string;

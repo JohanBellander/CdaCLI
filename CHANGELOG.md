@@ -4,6 +4,13 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.6.0 �?" 2025-11-16
+- Introduced the phase-gated validation workflow with `--phase <name>` support across `cda agent`, `cda run`, and `cda validate` (foundation → presentation). Phases are cumulative, mutually exclusive with `--constraint`/`--sequential`, and emit warnings for disabled or missing constraints.
+- Added `PHASES`, `Phase`, and `PHASE_CONSTRAINTS` constants plus helper utilities (`filterConstraintsByPhase`, `buildPhasePromptContext`) to `src/core/types.ts`/`phaseUtils.ts`. Prompts now render phase banners, objectives, architectural context, and explicit next-step navigation hints.
+- Refreshed `buildOnboardingGuide()` to generate the 22-step phased command sequence along with a rationale/FAQ section. Added a standalone `PHASE_GUIDE.md` with per-phase expected artifacts, common mistakes, and troubleshooting tips.
+- Documented the workflow (README phase section, SPEC updates, CHANGELOG notes) and added comprehensive tests: unit coverage for phase utilities, CLI error/integration suites, and an end-to-end workflow test that snapshots phase headers and validates cumulative constraints.
+- Extended fixtures (`tests/fixtures/projects/full-stack/next-baseline`) to enable optional MVC/MVP/MVVM/test coverage constraints so phase counts reach the canonical totals (7/14/19/25/29).
+
 ## 0.5.6 — 2025-11-14
 - Improved constraint semantics to reduce false positives in real-world projects:
 	- `clean-layer-direction`: Recognizes composition roots (`src/index.ts`, `src/main.ts`, `src/bootstrap.ts`, `src/composition/**`) and allows them to import across layers for dependency wiring.

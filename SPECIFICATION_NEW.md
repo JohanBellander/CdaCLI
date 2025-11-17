@@ -74,25 +74,27 @@ The Constraint-Driven Architecture CLI (`cda`) emits deterministic instruction p
 - Emits selected sections (PURPOSE, VALIDATION ALGORITHM, REPORTING CONTRACT, FIX SEQUENCE, SUCCESS CRITERIA, POST-FIX ASSERTIONS) for active constraints.
 - Errors with `CONFIG_ERROR` if the constraint id is unknown **or** disabled by configuration.
 
-### 7.4 `cda validate [--constraint <id>|--sequential] [--legacy-format]`
+### 7.4 `cda validate [--phase <name>] [--constraint <id>|--sequential] [--legacy-format]`
 - Generates instruction packages with a fresh `run_id` (ISO timestamp + 6-character base36 suffix) using only active constraints (after applying `constraint_overrides`).
 - Modes:
   - Batch (default) → includes all constraints.
   - Single (`--constraint <id>`) → emits selected constraint.
   - Sequential (`--sequential`) → alias for the first constraint in recommended order.
 - `--legacy-format` omits Spec Update 1/2 decorations, restoring the pre-update layout.
-- Throws `CONFIG_ERROR` if unknown options are provided, mutually exclusive flags are combined, no active constraints remain, or a disabled constraint id is requested explicitly.
+- `--phase <name>` filters output to the cumulative constraint set for a phase (`foundation`, `domain`, `infrastructure`, `application`, `presentation`). The flag is mutually exclusive with `--constraint`/`--sequential`. CDA warns when a phase references disabled or missing constraints and throws if the filtered set is empty.
+- Throws `CONFIG_ERROR` if unknown options are provided, mutually exclusive flags are combined, no active constraints remain, a disabled constraint id is requested explicitly, or an invalid phase name is supplied.
 
 ### 7.5 `cda agent [options]`
-- Options: `--agent <name>`, `--constraint <id>`, `--sequential`, `--dry-run`, `--no-exec`, `--output <path>`, `--legacy-format`, `--help`.
+- Options: `--agent <name>`, `--phase <name>`, `--constraint <id>`, `--sequential`, `--dry-run`, `--no-exec`, `--output <path>`, `--legacy-format`, `--help`.
 - Always assembles instruction text via `buildBatchInstructionPackage` or `buildSingleInstructionPackage`. Legacy flag passes through to formatter/assembler.
 - Attempts to load `cda.agents.json` when present. Resolution order: explicit `--agent`, config `default`, fallback `copilot-stdin` entry, then `copilot`.
 - When config absent, emits a warning and prints the prompt without spawning any agent process, regardless of `--dry-run`.
 - Prompt assembly (`assemblePrompt`):
   - Non-legacy prompts prepend metadata banner, run metadata, `instruction_format_version: 2`, `agent_name`, optional `agent_model`, `token_estimate_method`, and `disabled_constraints: []` (list of ids skipped by configuration).
+  - When `--phase` is provided, prompts include a phase banner (phase mode, phase number, included phases, constraint counts, next phase) plus dedicated sections for phase objectives, validation scope, architectural context, key principles, and a `NEXT STEPS` block.
   - Optional `prompt_preamble`/`postscript` from config flank the instruction text.
   - Appends a directive block that enforces detection-only execution (no fixes, no shell commands) and prescribes report population rules.
-  - Adds `original_char_count` and `approx_token_length` (char count ÷ 4 heuristic).
+  - Adds `original_char_count` and `approx_token_length` (char count A? 4 heuristic).
 - Execution path (active constraints only):
   - `--output <path>` writes the assembled prompt to disk (overwrites existing file) before further processing.
   - `--no-exec` implies `--dry-run`, suppresses command preview, and prints only the prompt.
@@ -265,3 +267,4 @@ All constraints are enforced in every instruction package with their canonical e
 - Prompt length heuristic assumes ~4 characters per token; real model limits may vary.
 - Windows command-line fallback writes temporary files but does not currently handle collisions beyond run-specific filenames.
 - Further extensions (multi-agent chaining, schema validation of responses, remote constraint packs) remain outside the current implementation.
+

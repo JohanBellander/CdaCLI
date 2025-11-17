@@ -10,7 +10,11 @@
     "tanstack-query-async": { "enabled": true },
     "axios-client-only": { "enabled": true },
     "shared-types-zod-source-of-truth": { "enabled": true },
-    "ui-isolation": { "enabled": true }
+    "ui-isolation": { "enabled": true },
+    "mvp-presenter-boundaries": { "enabled": true },
+    "mvvm-binding-integrity": { "enabled": true },
+    "test-coverage-contracts": { "enabled": true },
+    "mvc-layer-separation": { "enabled": true }
   }
 }
 

@@ -1,6 +1,8 @@
 import { runValidateCommand } from "./validate.js";
 import { runAgentCommand } from "./agent.js";
 import { createError } from "../../core/errors.js";
+import { assertValidPhase } from "../../core/phaseUtils.js";
+import type { Phase } from "../../core/types.js";
 
 type RunMode = "validate" | "plan" | "exec" | "audit";
 
@@ -13,6 +15,7 @@ interface ParsedRunArgs {
   mode: RunMode;
   constraintId?: string;
   sequential: boolean;
+  phase?: Phase;
   agentName?: string;
   auditAgentName?: string;
   legacyFormat: boolean;
@@ -63,6 +66,9 @@ function buildValidateArgs(parsed: ParsedRunArgs): string[] {
   if (parsed.sequential) {
     args.push("--sequential");
   }
+  if (parsed.phase) {
+    args.push("--phase", parsed.phase);
+  }
   if (parsed.legacyFormat) {
     args.push("--legacy-format");
   }
@@ -79,6 +85,9 @@ function buildAgentArgs(
   }
   if (parsed.sequential) {
     args.push("--sequential");
+  }
+  if (parsed.phase) {
+    args.push("--phase", parsed.phase);
   }
   if (parsed.agentName) {
     args.push("--agent", parsed.agentName);
@@ -146,6 +155,18 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
         parsed.sequential = true;
         break;
       }
+      case "--phase": {
+        const next = argv[i + 1];
+        if (!next) {
+          throw createError(
+            "CONFIG_ERROR",
+            "Expected phase name after --phase.",
+          );
+        }
+        parsed.phase = assertValidPhase(next);
+        i += 1;
+        break;
+      }
       case "--agent": {
         const next = argv[i + 1];
         if (!next) {
@@ -209,6 +230,20 @@ function parseRunArgs(argv: string[]): ParsedRunArgs {
     );
   }
 
+  if (parsed.phase && parsed.constraintId) {
+    throw createError(
+      "CONFIG_ERROR",
+      "Use either --phase or --constraint, not both.",
+    );
+  }
+
+  if (parsed.phase && parsed.sequential) {
+    throw createError(
+      "CONFIG_ERROR",
+      "Use either --phase or --sequential, not both.",
+    );
+  }
+
   if (parsed.outputPath && parsed.mode === "validate") {
     throw createError(
       "CONFIG_ERROR",
@@ -245,6 +280,9 @@ function printRunHelp(): void {
   console.log("Options:");
   console.log("  --constraint, -c <id>   Target a single constraint.");
   console.log("  --sequential            Shortcut for the first recommended constraint.");
+  console.log(
+    "  --phase <name>          Limit plan/exec/validate to a cumulative implementation phase.",
+  );
   console.log("  --agent <name>          Select agent profile (plan/exec/audit only).");
   console.log("  --output <path>         Write prompt to file (plan/exec).");
   console.log("  --legacy-format         Emit legacy instruction layout.");
