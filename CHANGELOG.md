@@ -4,6 +4,12 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.6.2 — 2025-11-17
+- Added concrete code examples to `module-complexity-guardrails` and `shared-types-zod-source-of-truth` constraints. Examples appear BEFORE validation algorithm pseudocode with "CRITICAL - READ THESE FIRST" label to guide AI agents toward correct interpretation.
+- Clarified barrel file exemption: Index files with pure re-exports (no logic) are explicitly allowed to have high export counts.
+- Updated validation logic descriptions to emphasize: "Only flag when BOTH high counts AND mixed concerns" rather than treating thresholds as absolute limits.
+- Documented three canonical schema patterns (monorepo/single-package/feature-collocated) with folder structure examples showing when each pattern applies.
+
 ## 0.6.1 — 2025-11-17
 - Rewrote the three highest-thrash constraints (`shared-types-zod-source-of-truth`, `module-complexity-guardrails`, `structural-naming-consistency`) to emphasize architectural principles over prescriptive folder paths or export counts. Agents now reason about contextual patterns (shared package vs. domain schemas vs. feature-collocated contracts, cohesive export clusters, deliberate layer aliases) instead of blindly following absolute rules.
 - Captured the CRM regression test in `history/CRM_PHASE_TEST_DEC2025.md`: Copilot CLI cleared Phase 2 in two validation runs with zero residual violations (<5 target) and never scaffolded unnecessary monorepo folders. Compared to the v0.6.0 baseline (34 initial violations, multiple forced restructures), the principle-based language cut iteration count by half and eliminated duplicate layer naming churn.
