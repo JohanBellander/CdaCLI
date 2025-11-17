@@ -4,6 +4,10 @@
 - Added the interactive `cda config` command to the main help/README, documented the TTY-only workflow, and recorded the feature in `CDA.md`/onboarding templates so teams know to manage optional constraints through the new UI.
 - Integrated `@clack/prompts` as the TUI driver, added a spike script (`scripts/tuiSpike.mjs`), and expanded the CLI/config helper tests (mandatory-only projects, duplicate state detection) to cover the new behavior.
 
+## 0.6.1 — 2025-11-17
+- Rewrote the three highest-thrash constraints (`shared-types-zod-source-of-truth`, `module-complexity-guardrails`, `structural-naming-consistency`) to emphasize architectural principles over prescriptive folder paths or export counts. Agents now reason about contextual patterns (shared package vs. domain schemas vs. feature-collocated contracts, cohesive export clusters, deliberate layer aliases) instead of blindly following absolute rules.
+- Captured the CRM regression test in `history/CRM_PHASE_TEST_DEC2025.md`: Copilot CLI cleared Phase 2 in two validation runs with zero residual violations (<5 target) and never scaffolded unnecessary monorepo folders. Compared to the v0.6.0 baseline (34 initial violations, multiple forced restructures), the principle-based language cut iteration count by half and eliminated duplicate layer naming churn.
+
 ## 0.6.0 �?" 2025-11-16
 - Introduced the phase-gated validation workflow with `--phase <name>` support across `cda agent`, `cda run`, and `cda validate` (foundation → presentation). Phases are cumulative, mutually exclusive with `--constraint`/`--sequential`, and emit warnings for disabled or missing constraints.
 - Added `PHASES`, `Phase`, and `PHASE_CONSTRAINTS` constants plus helper utilities (`filterConstraintsByPhase`, `buildPhasePromptContext`) to `src/core/types.ts`/`phaseUtils.ts`. Prompts now render phase banners, objectives, architectural context, and explicit next-step navigation hints.
