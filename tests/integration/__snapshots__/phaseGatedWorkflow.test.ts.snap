@@ -20,12 +20,12 @@ token_estimate_method: heuristic_chars_div_4
 disabled_constraints: []
 
 === PHASE 4 OBJECTIVE ===
+Constraints are contracts: do not claim Phase 4 or advance to Phase 5 while \`cda run --phase application --exec\` reports any violation.
+Follow this loop: implement/refine + \`npm run build\` + \`npm test\` + \`cda run --phase application --exec\` until the report shows 0 violations.
 Orchestrate domain behaviors through use cases that depend on ports rather than concrete adapters.
 Enforce MVC/MVP/MVVM boundaries and add regression tests that prove business flows end-to-end.
 
-Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer and Phase 4: Application Layer constraints.
-Previous phase (Phase 3: Infrastructure Layer) should already be validated and passing.
-"
+Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer and Phase 4: Application Layer constraints."
 `;
 
 exports[`phase-gated workflow end-to-end > keeps { phase: 'domain', expected: 14 } prompt smaller than full run and maintains cumulative constraints > domain-prompt-header 1`] = `
@@ -132,10 +132,10 @@ token_estimate_method: heuristic_chars_div_4
 disabled_constraints: []
 
 === PHASE 5 OBJECTIVE ===
+Do not declare Phase 5 complete until \`cda run --phase presentation --exec\` passes cleanly; constraints block the release.
+Run a tight loop: implement/refine + \`npm run build\` + start the runtime (\`npm start\`) + \`cda run --phase presentation --exec\` until the phase is green.
 Expose APIs and UI with Fastify, Next.js, and React only after inner layers are validated.
 Keep controllers and components thin while delegating async state to TanStack Query.
 
-Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer, Phase 4: Application Layer and Phase 5: Presentation Layer constraints.
-Previous phase (Phase 4: Application Layer) should already be validated and passing.
-"
+Validation scope: This prompt checks Phase 1: Foundation Layer, Phase 2: Domain Layer, Phase 3: Infrastructure Layer, Phase 4: Application Layer and Phase 5: Presentation Layer constraints."
 `;

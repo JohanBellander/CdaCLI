@@ -133,6 +133,8 @@ export function assemblePrompt(
     );
     lines.push(...phaseContext.keyPrinciples);
     lines.push("");
+    lines.push(...buildFullFidelityGuardrail(phaseContext));
+    lines.push("");
   }
 
   lines.push(instructionText);
@@ -200,4 +202,33 @@ function formatPhaseRange(phases: Phase[]): string | undefined {
   const start = PHASES.indexOf(phases[0]) + 1;
   const end = PHASES.indexOf(phases[phases.length - 1]) + 1;
   return `Phase ${start}-${end}`;
+}
+
+function buildFullFidelityGuardrail(context: PhasePromptContext): string[] {
+  const lines: string[] = [
+    "=== FULL-FIDELITY GUARDRAIL ===",
+    `Constraints are contracts. Do NOT advance while \`cda run --phase ${context.metadata.phase_mode} --exec\` reports violations.`,
+  ];
+
+  if (context.metadata.phase_mode === "application") {
+    lines.push(
+      "Loop tightly: implement/refine, run `npm run build`, run `npm test`, rerun `cda run --phase application --exec` until it reports 0 violations.",
+    );
+    lines.push(
+      "Write meaningful contract tests (import the contract, assert one valid payload passes and one invalid payload fails) before requesting Phase 5.",
+    );
+  } else if (context.metadata.phase_mode === "presentation") {
+    lines.push(
+      "Loop tightly: implement/refine, run `npm run build`, start the runtime (e.g., `npm start`), rerun `cda run --phase presentation --exec` until it reports 0 violations.",
+    );
+    lines.push(
+      "Do not claim completion without a working browser UI for the CRM and a clean final CDA report.",
+    );
+  } else {
+    lines.push(
+      "If time or token limits are reached before the phase is green, stop and report the failing constraints instead of moving forward.",
+    );
+  }
+
+  return lines;
 }

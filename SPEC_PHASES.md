@@ -130,6 +130,12 @@ This addresses critical problems identified in previous agent onboarding attempt
 - Test files: `*.test.ts` achieving 80%+ coverage
 - No direct imports of Prisma, Axios, Fastify in use case files
 
+**Completion Criteria**:
+- `npm run build` succeeds without TypeScript errors.
+- `npm test` passes and every contract module has tests that import it and cover at least one valid and one invalid payload.
+- `cda run --phase application --exec` reports **0 violations** (including `test-coverage-contracts`).
+- Agents MUST NOT advance to Phase 5 while any Phase 4 violations remain; treat constraints as blocking contracts.
+
 **Validation Scope**: Run validation with `--phase application` to check Phase 1-4 constraints.
 
 **Prompt Size Estimate**: ~6-7KB (6 constraints)
@@ -152,6 +158,12 @@ This addresses critical problems identified in previous agent onboarding attempt
 - Frontend: `apps/web/src/features/<feature>/components/`
 - Next.js: `apps/web/src/app/` App Router pages/layouts
 - React components import TanStack Query hooks, not raw Axios
+
+**Completion Criteria**:
+- `npm run build` passes and the runtime (e.g., `npm start`) boots cleanly.
+- `cda run --phase presentation --exec` completes with **0 violations** before claiming the phase is done.
+- For web-based CRM projects, ship a minimal but usable UI that lets a user create, list, and update the core CRM entities through a browser.
+- Do not declare the system complete until the final CDA pass, build, and runtime all succeed together.
 
 **Validation Scope**: Run validation with `--phase presentation` to check ALL constraints (Phase 1-5).
 

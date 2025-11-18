@@ -76,6 +76,22 @@ export function buildOnboardingGuide(): string {
     "**Reminder**: Each `--phase` run revalidates every prior phase cumulatively. Do not skip ahead until the current phase passes `cda run --phase <name> --exec`.",
   );
   lines.push("");
+  lines.push("## Full-Fidelity Phase Behavior");
+  lines.push("");
+  lines.push(
+    "- Constraints are contracts. If `cda run --phase <name> --exec` reports violations, that phase is blocked until the issues are fixed.",
+  );
+  lines.push(
+    "- Phase 4 (application) and Phase 5 (presentation) are hard-gated just like Phases 1-3. Do not advance because of time, token, or complexity pressure.",
+  );
+  lines.push(
+    "- Loop tightly: implement/refine, run `npm run build`, run the relevant tests (`npm test` for application, `npm start`/UI smoke checks for presentation), then rerun `cda run --phase <name> --exec` until it returns zero violations.",
+  );
+  lines.push(
+    "- If you cannot achieve a clean run, stop and report which constraints remain failing instead of claiming the next phase.",
+  );
+  lines.push("- See `SPEC_FF.md` for the full Phase 4-5 requirements and reference examples.");
+  lines.push("");
   lines.push("## Evidence Checklist");
   lines.push("");
   lines.push(

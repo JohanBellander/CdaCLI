@@ -37,10 +37,14 @@ const PHASE_OBJECTIVES: Record<Phase, string[]> = {
     "Keep Prisma repositories, HTTP clients, and file adapters isolated from the domain layer.",
   ],
   application: [
+    "Constraints are contracts: do not claim Phase 4 or advance to Phase 5 while `cda run --phase application --exec` reports any violation.",
+    "Follow this loop: implement/refine + `npm run build` + `npm test` + `cda run --phase application --exec` until the report shows 0 violations.",
     "Orchestrate domain behaviors through use cases that depend on ports rather than concrete adapters.",
     "Enforce MVC/MVP/MVVM boundaries and add regression tests that prove business flows end-to-end.",
   ],
   presentation: [
+    "Do not declare Phase 5 complete until `cda run --phase presentation --exec` passes cleanly; constraints block the release.",
+    "Run a tight loop: implement/refine + `npm run build` + start the runtime (`npm start`) + `cda run --phase presentation --exec` until the phase is green.",
     "Expose APIs and UI with Fastify, Next.js, and React only after inner layers are validated.",
     "Keep controllers and components thin while delegating async state to TanStack Query.",
   ],
@@ -70,12 +74,16 @@ const PHASE_KEY_PRINCIPLES: Record<Phase, string[]> = {
     "Controllers/presenters stay thin—respect MVC/MVP/MVVM boundaries.",
     "Never import infrastructure code directly; depend on domain contracts.",
     "Maintain >80% coverage with tests that exercise behavior contracts.",
+    "Every contract test imports the contract, proves one valid payload succeeds, and asserts one invalid payload fails; placeholder suites never satisfy `test-coverage-contracts`.",
+    "If time or token limits hit before zero violations, stop and report outstanding constraints instead of moving to Phase 5.",
   ],
   presentation: [
     "Fastify controllers map HTTP routes to application use cases.",
     "Next.js App Router follows the required directory conventions.",
     "React components remain pure UI; no direct data fetching side effects.",
     "Use TanStack Query for async data and caching instead of manual Axios calls.",
+    "Ship a minimal but usable browser UI (create/list/update core CRM entities) before claiming completion.",
+    "Start the app after each change (e.g., `npm start`) to prove the runtime is healthy before the final CDA pass.",
   ],
 };
 

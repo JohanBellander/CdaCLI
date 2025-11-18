@@ -17,6 +17,11 @@ enforcement_order: 21
 PURPOSE
 Tie architecture layers to matching test suites so every critical module has the correct test counterpart (unit for domain, integration for app/infra, interaction for UI).
 
+For every contract module (Zod schemas, DTO contracts, validators):
+- Create at least one mirrored test file that directly imports the contract exports.
+- Write **two** concrete examples: one valid payload that must pass and one invalid payload that must fail with meaningful assertions.
+- Treat placeholder tests (`expect(true).toBe(true)`) or suites that never touch the contract as violations�?"they do **not** satisfy this constraint.
+
 CRITICAL TEST CREATION GUIDE:
 
 ✅ DOMAIN TEST EXAMPLE (tests/domain/contacts/contact.test.ts):
@@ -103,6 +108,8 @@ FORBIDDEN
 - Tests importing real infra adapters when they should mock ports
 - UI tests lacking interaction/assertion coverage (snapshot-only)
 - Domain tests that boot application services or infra layers
+- Contract test files that never import the contract under test
+- Placeholder assertions (e.g., `expect(true).toBe(true)`) or suites without at least one valid and one invalid payload scenario
 
 ALLOWED
 - Minimal "smoke tests" that verify module loads and key exports exist (better than no test)
